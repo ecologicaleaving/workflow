@@ -2,7 +2,7 @@
 
 ## Project Info
 - **Name**: Workflow Hub
-- **Version**: v1.0.0
+- **Version**: v1.1.0
 - **Status**: production
 - **Platforms**: documentation
 - **Description**: Sistema workflow standardizzato per sviluppo collaborativo AI-assisted
@@ -25,7 +25,7 @@
 - **Deploy Method**: github-hosting
 - **Deploy Host**: github-pages (future)
 - **CI Status**: passing
-- **Last Deploy**: 2026-02-22T05:50:00Z
+- **Last Deploy**: 2026-02-22T13:00:00Z
 - **Environment Variables**: 
   - No environment variables required
 
@@ -81,10 +81,12 @@
 - **TODO**: Integration con GitHub Issues per team task management
 - **TODO**: CI/CD pipeline per validation automatica documentation changes
 - **DONE**: Core workflow documentation per tutti i ruoli team
-- **DONE**: Claudio commit skin con automazione completa
+- **DONE**: Commit automation (rinominato da claudio-commit-skin)
+- **DONE**: Claude Code skill 8020-commit-workflow con guida installazione dev
+- **DONE**: Script install-skills.sh per distribuzione skills via curl
 - **TODO**: Training materials e video guides per onboarding
 - **TODO**: Metrics collection per workflow effectiveness
 
 ---
-*Last Updated: 2026-02-22T05:50:00Z*
+*Last Updated: 2026-02-22T13:00:00Z*
 *Auto-generated from: https://app.8020solutions.org/status.html*
