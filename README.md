@@ -1,4 +1,4 @@
-# SugitUp - 80/20 Solutions Workflow Hub
+# Workflow - 80/20 Solutions Workflow Hub
 
 **Sistema di workflow standardizzato per lo sviluppo collaborativo AI-assisted**
 
@@ -54,7 +54,7 @@ graph LR
 ## 📁 Struttura Repository
 
 ```
-sugitup/
+workflow/
 ├── README.md                  # Overview e quick start
 ├── WORKFLOW_*.md             # Workflow specifici per ruolo
 ├── PROJECT_MD_TEMPLATE.md    # Template standard PROJECT.md

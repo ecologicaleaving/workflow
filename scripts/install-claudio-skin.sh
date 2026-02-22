@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Quick installer for Claudio Commit Skin
-# Downloads and installs from sugitup repository
+# Downloads and installs from workflow repository
 
 set -e
 
-echo "🚀 Installing Claudio Commit Skin from sugitup repository..."
+echo "🚀 Installing Claudio Commit Skin from workflow repository..."
 
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then
@@ -15,7 +15,7 @@ if [ ! -d ".git" ]; then
 fi
 
 # Download and execute the main installer
-curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/sugitup/main/claudio-commit-skin/install.sh" | bash
+curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/workflow/main/claudio-commit-skin/install.sh" | bash
 
 echo ""
 echo "✅ Installation complete!"

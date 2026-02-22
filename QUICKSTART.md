@@ -7,7 +7,7 @@
 ### **1-Click Installation**
 ```bash
 # Nel tuo progetto (root directory):
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/sugitup/master/scripts/install-claudio-skin.sh | bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
 ```
 
 ### **Cosa fa il skin:**
@@ -121,7 +121,7 @@ cat .commit-skin/commit.log
 
 # Reinstall skin:  
 rm -rf .commit-skin .git/hooks/pre-commit
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/sugitup/master/scripts/install-claudio-skin.sh | bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
 
 # Test installation:
 git add . && git commit -m "test: skin functionality check"

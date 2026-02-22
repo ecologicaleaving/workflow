@@ -1,7 +1,7 @@
 # PROJECT.md - Single Source of Truth
 
 ## Project Info
-- **Name**: SugitUp Workflow Hub
+- **Name**: Workflow Hub
 - **Version**: v1.0.0
 - **Status**: production
 - **Platforms**: documentation
@@ -18,10 +18,10 @@
   - PROD: GitHub repository hosting
 - **Backup**: git version control
 - **Seed Data**: N/A
-- **Admin URL**: https://github.com/ecologicaleaving/sugitup
+- **Admin URL**: https://github.com/ecologicaleaving/workflow
 
 ## Deployment
-- **Live URL**: https://github.com/ecologicaleaving/sugitup
+- **Live URL**: https://github.com/ecologicaleaving/workflow
 - **Deploy Method**: github-hosting
 - **Deploy Host**: github-pages (future)
 - **CI Status**: passing
@@ -32,7 +32,7 @@
 ## Repository
 - **Main Branch**: master
 - **Development Branch**: N/A (direct commits)
-- **GitHub**: https://github.com/ecologicaleaving/sugitup
+- **GitHub**: https://github.com/ecologicaleaving/workflow
 
 ## Tech Stack
 - **Frontend**: Markdown documentation
@@ -58,7 +58,7 @@
 
 ## Development
 - **Local Setup**: 
-  1. `git clone git@github.com:ecologicaleaving/sugitup.git`
+  1. `git clone git@github.com:ecologicaleaving/workflow.git`
   2. Edit markdown files with preferred editor
   3. Test scripts locally if needed
   4. `git commit` and `git push` for updates

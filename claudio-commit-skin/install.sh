@@ -42,7 +42,7 @@ cp "${SCRIPT_DIR}/config/version-rules.json" ".commit-skin/"
 # Create PROJECT.md if it doesn't exist
 if [ ! -f "PROJECT.md" ]; then
     echo "📄 Creating PROJECT.md from template..."
-    curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/sugitup/main/PROJECT_MD_TEMPLATE.md" > "PROJECT.md.template"
+    curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/workflow/main/PROJECT_MD_TEMPLATE.md" > "PROJECT.md.template"
     
     # Customize template with current project info
     PROJECT_NAME=$(echo "${PROJECT_DIR}" | sed 's/-/ /g' | sed 's/\b\w/\u&/g')

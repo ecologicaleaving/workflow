@@ -62,7 +62,7 @@ cd ~/projects/
 git clone git@github.com:ecologicaleaving/[project-name].git
 cd [project-name]
 # Installa skin
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/sugitup/main/scripts/install-claudio-skin.sh | bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/main/scripts/install-claudio-skin.sh | bash
 ```
 
 ### **Development Tools**
