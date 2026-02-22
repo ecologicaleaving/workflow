@@ -1,0 +1,44 @@
+{
+  "skin_version": "v1.0.0",
+  "project_name": "Project Template",
+  "project_type": "unknown",
+  "github_url": "https://github.com/ecologicaleaving/project-template",
+  "installed_at": "2026-02-22T05:45:00Z",
+  "build_config": {
+    "flutter": {
+      "build_apk": true,
+      "build_web": true,
+      "apk_path": "build/app/outputs/flutter-apk/app-release.apk",
+      "web_path": "build/web"
+    },
+    "nodejs": {
+      "build_command": "npm run build",
+      "build_output": ["build", "dist"]
+    },
+    "static": {
+      "package_files": true,
+      "exclude_patterns": ["*.git*", "node_modules/*", ".commit-skin/*", "releases/*"]
+    }
+  },
+  "version_config": {
+    "initial_version": "1.0.0",
+    "auto_increment": true,
+    "commit_type_mapping": {
+      "feat": "minor",
+      "feat!": "major",
+      "fix": "patch",
+      "docs": "patch",
+      "style": "patch",
+      "refactor": "patch",
+      "test": "patch",
+      "chore": "patch",
+      "BREAKING CHANGE": "major"
+    }
+  },
+  "artifact_config": {
+    "releases_dir": "releases",
+    "naming_pattern": "{project}-{type}-v{version}.{ext}",
+    "max_artifacts": 10,
+    "cleanup_old": true
+  }
+}

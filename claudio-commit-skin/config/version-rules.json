@@ -1,0 +1,64 @@
+{
+  "version_rules": {
+    "description": "Semantic versioning rules for 80/20 Solutions projects",
+    "format": "MAJOR.MINOR.PATCH",
+    "increment_rules": {
+      "major": {
+        "triggers": ["feat!", "BREAKING CHANGE", "breaking:"],
+        "description": "Breaking changes, major new features",
+        "resets": ["minor", "patch"]
+      },
+      "minor": {
+        "triggers": ["feat:", "feature:"],
+        "description": "New features, backwards compatible",
+        "resets": ["patch"]
+      },
+      "patch": {
+        "triggers": ["fix:", "docs:", "style:", "refactor:", "test:", "chore:"],
+        "description": "Bug fixes, documentation, internal changes",
+        "resets": []
+      }
+    },
+    "commit_message_patterns": {
+      "conventional_commits": {
+        "pattern": "^(feat|fix|docs|style|refactor|test|chore)(\\(.+\\))?!?: .+",
+        "examples": [
+          "feat: add new user authentication system",
+          "fix: resolve database connection timeout",
+          "docs: update API documentation", 
+          "feat!: redesign user interface (breaking change)"
+        ]
+      }
+    },
+    "special_cases": {
+      "initial_version": "1.0.0",
+      "pre_release": {
+        "pattern": "v{major}.{minor}.{patch}-{tag}.{increment}",
+        "tags": ["alpha", "beta", "rc"]
+      },
+      "hotfix": {
+        "pattern": "hotfix/",
+        "increment": "patch",
+        "priority": true
+      }
+    }
+  },
+  "project_status_mapping": {
+    "development": {
+      "allowed_versions": ["0.x.x", "1.x.x"],
+      "auto_increment": true,
+      "require_tests": false
+    },
+    "staging": {
+      "allowed_versions": ["1.x.x", "2.x.x"],
+      "auto_increment": true,
+      "require_tests": true
+    },
+    "production": {
+      "allowed_versions": [">=1.0.0"],
+      "auto_increment": false,
+      "require_tests": true,
+      "require_approval": true
+    }
+  }
+}
