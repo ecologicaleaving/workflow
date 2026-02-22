@@ -23,16 +23,22 @@ SugitUp centralizza e standardizza tutti i workflow di sviluppo per il team 80/2
 - [`BRANCH_STRATEGY.md`](./BRANCH_STRATEGY.md) - Git workflow strategy
 
 ### Tools e Automazioni
-- [`claudio-commit-skin/`](./claudio-commit-skin/) - Script automazione commit per Claudio
+- [`commit-automation/`](./commit-automation/) - Script automazione commit per Claude Code
 - [`scripts/`](./scripts/) - Utility condivise
 - [`templates/`](./templates/) - Template progetti
+
+### Skills Claude Code
+- [`skills/`](./skills/) - AI skills per Claude Code (caricamento automatico)
+  - [`skills/SKILLS.md`](./skills/SKILLS.md) - Guida installazione e utilizzo skills
+  - [`skills/8020-commit-workflow/`](./skills/8020-commit-workflow/) - Skill commit/push workflow
 
 ## 🚀 Quick Start
 
 ### Per Claude Code (Development)
-1. **Installa commit automation**: `./scripts/install-commit-automation.sh`
-2. **Usa workflow standardizzato**: Segui [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md)
-3. **Commit automatico**: L'automation aggiorna PROJECT.md + build + push
+1. **Installa skills**: `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-skills.sh | bash`
+2. **Installa commit automation**: `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash`
+3. **Usa workflow standardizzato**: Segui [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md)
+4. **Commit automatico**: La skill `8020-commit-workflow` guida ogni commit/push
 
 ### Per Ciccio (Orchestrator) 
 1. **Monitora progetti**: Dashboard status automatica
@@ -84,4 +90,4 @@ workflow/
 
 **Created by**: Team 80/20 Solutions  
 **Last Updated**: 2026-02-22  
-**Version**: v1.0.0
+**Version**: v1.1.0

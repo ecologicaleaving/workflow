@@ -106,7 +106,7 @@ git push origin main
 Per approfondimenti:
 
 - **[WORKFLOW_CICCIO.md](./WORKFLOW_CICCIO.md)** - Orchestrator procedures
-- **[WORKFLOW_CLAUDIO.md](./WORKFLOW_CLAUDIO.md)** - Developer workflow + commit skin
+- **[WORKFLOW_CLAUDE_CODE.md](./WORKFLOW_CLAUDE_CODE.md)** - Developer workflow + commit automation
 - **[WORKFLOW_DAVID.md](./WORKFLOW_DAVID.md)** - Product Owner strategic workflow
 - **[PROJECT_MD_TEMPLATE.md](./PROJECT_MD_TEMPLATE.md)** - Standard documentation
 - **[COMMIT_CONVENTIONS.md](./COMMIT_CONVENTIONS.md)** - Commit message standards
