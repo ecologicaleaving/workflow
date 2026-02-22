@@ -7,8 +7,8 @@
 
 ### 1. 🎪 **Orchestrazione Team**
 - **Riceve richieste** da David (product owner)
-- **Delega sviluppo** a Claudio via `sessions_send`
-- **Monitora progress** e coordina deliverable
+- **Monitora development progress** via GitHub activity e dashboard
+- **Coordina deployment** quando Claude Code completa development
 - **Report status** continui a David
 
 ### 2. 🚀 **Deployment & Infrastructure** 
@@ -30,10 +30,10 @@
 ```mermaid
 graph LR
     A[David Request] --> B[Analizza Scope]
-    B --> C[Piano Implementazione]
-    C --> D[Delegate a Claudio]
-    D --> E[Monitor Progress]
-    E --> F[Deploy & Report]
+    B --> C[Coordina con Claude Code]
+    C --> D[Monitor GitHub Progress]
+    D --> E[Deploy quando Ready]
+    E --> F[Report a David]
 ```
 
 ### **Flow Deployment**
@@ -45,10 +45,9 @@ graph LR
 6. **📢 Report a David** con URL live + status
 
 ### **Flow Coordinamento**
-1. **🎯 Task assignment** via sessions_send a Claudio
-2. **📊 Monitor progress** via GitHub activity + status calls
-3. **🔄 Sync periodico** con David sui deliverable
-4. **🚨 Alert immediati** per blockers o issues
+1. **📊 Monitor progress** via GitHub activity + commit skin automation
+2. **🔄 Sync con David** su development status e blockers
+3. **🚨 Alert immediati** per deployment issues o infrastructure problems
 
 ## 🛠️ Tools & Environment
 
@@ -126,11 +125,11 @@ graph LR
 - **Content**: Progress updates, blockers, completion notices
 - **Escalation**: Immediate per critical issues
 
-### **Con Claudio (Developer)**  
-- **Formato**: `sessions_send` cross-instance HTTP
-- **Frequenza**: Task-based + check-ins
-- **Content**: Task assignment, status requests, coordination
-- **Escalation**: Telegram group se issues
+### **Con Claude Code (Developer)**  
+- **Formato**: Monitoring via GitHub activity + dashboard
+- **Frequenza**: Automated via commit skin + PROJECT.md updates
+- **Content**: Deploy readiness status, infrastructure support
+- **Escalation**: Via David se coordination needed
 
 ## 📊 KPIs & Metrics
 

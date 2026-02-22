@@ -38,9 +38,9 @@ graph LR
 ### **🎯 Task Delegation Process**
 1. **💭 Identifica business need** o opportunity
 2. **📋 Definisce requirements** e acceptance criteria
-3. **🎯 Delega a Ciccio** via Telegram con context completo
-4. **📊 Monitor progress** via status updates
-5. **✅ Review deliverable** e approva o richiede modifiche
+3. **🎯 Assegna a Claude Code** direttamente per development
+4. **📊 Monitor progress** via GitHub + status dashboard
+5. **✅ Review deliverable** e richiedi deploy a Ciccio
 6. **🚀 Business validation** e rollout decision
 
 ### **📈 Project Review Cycle**

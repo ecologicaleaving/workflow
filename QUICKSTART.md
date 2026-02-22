@@ -2,15 +2,15 @@
 
 **Guida rapida per iniziare con i workflow 80/20 Solutions**
 
-## 🚀 Per Claudio (Developer)
+## 🚀 Per Claude Code (Developer)
 
 ### **1-Click Installation**
 ```bash
 # Nel tuo progetto (root directory):
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash
 ```
 
-### **Cosa fa il skin:**
+### **Cosa fa l'automation:**
 ✅ **Auto-update PROJECT.md** con versione e timestamp  
 ✅ **Auto-build** Flutter APK, web apps, static sites  
 ✅ **Auto-package** artifacts in releases/ directory  
@@ -22,7 +22,7 @@ curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scr
 git add .
 git commit -m "feat: add new user dashboard"
 
-# Il skin automaticamente:
+# L'automation automaticamente:
 # 1. Aggiorna PROJECT.md (v1.2.0 → v1.3.0)
 # 2. Build del progetto (flutter build apk --release)  
 # 3. Copia in releases/ (myapp-v1.3.0.apk)
@@ -116,15 +116,15 @@ Per approfondimenti:
 
 ### **Claudio Issues:**
 ```bash
-# Skin not working?
-cat .commit-skin/commit.log
+# Automation not working?
+cat .commit-automation/commit.log
 
-# Reinstall skin:  
-rm -rf .commit-skin .git/hooks/pre-commit
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
+# Reinstall automation:  
+rm -rf .commit-automation .git/hooks/pre-commit
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash
 
 # Test installation:
-git add . && git commit -m "test: skin functionality check"
+git add . && git commit -m "test: automation functionality check"
 ```
 
 ### **Ciccio Issues:**
@@ -145,9 +145,9 @@ curl https://app.8020solutions.org/status.html
 ## 🎯 Success Criteria
 
 ### **Week 1: Installation & Basic Usage**
-- [ ] Claudio: Skin installato su tutti i progetti attivi
+- [ ] Claude Code: Commit automation installato su tutti i progetti attivi
 - [ ] Ciccio: Dashboard monitoring funzionante  
-- [ ] David: Task delegation tramite Ciccio workflow
+- [ ] David: Task delegation diretto a Claude Code
 
 ### **Week 2: Full Workflow Adoption**
 - [ ] Conventional commits utilizzati consistently

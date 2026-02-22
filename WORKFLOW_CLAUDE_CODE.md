@@ -1,4 +1,4 @@
-# WORKFLOW_CLAUDIO.md - Senior Developer
+# WORKFLOW_CLAUDE_CODE.md - Senior Developer  
 
 **Ruolo**: Senior Developer, Build Engineer, Implementation Lead  
 **Responsabilità**: Development, build apps, implementazione features, code quality

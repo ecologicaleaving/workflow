@@ -14,7 +14,7 @@ SugitUp centralizza e standardizza tutti i workflow di sviluppo per il team 80/2
 
 ### Core Workflows
 - [`WORKFLOW_CICCIO.md`](./WORKFLOW_CICCIO.md) - Orchestratore, infra, deploy
-- [`WORKFLOW_CLAUDIO.md`](./WORKFLOW_CLAUDIO.md) - Development, build, push
+- [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md) - Development, build, push
 - [`WORKFLOW_DAVID.md`](./WORKFLOW_DAVID.md) - Product Owner, direzione strategica
 
 ### Standard e Template
@@ -29,10 +29,10 @@ SugitUp centralizza e standardizza tutti i workflow di sviluppo per il team 80/2
 
 ## 🚀 Quick Start
 
-### Per Claudio (Development)
-1. **Installa commit skin**: `./scripts/install-claudio-skin.sh`
-2. **Usa workflow standardizzato**: Segui [`WORKFLOW_CLAUDIO.md`](./WORKFLOW_CLAUDIO.md)
-3. **Commit automatico**: Il skin aggiorna PROJECT.md + build + push
+### Per Claude Code (Development)
+1. **Installa commit automation**: `./scripts/install-commit-automation.sh`
+2. **Usa workflow standardizzato**: Segui [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md)
+3. **Commit automatico**: L'automation aggiorna PROJECT.md + build + push
 
 ### Per Ciccio (Orchestrator) 
 1. **Monitora progetti**: Dashboard status automatica
@@ -58,7 +58,7 @@ workflow/
 ├── README.md                  # Overview e quick start
 ├── WORKFLOW_*.md             # Workflow specifici per ruolo
 ├── PROJECT_MD_TEMPLATE.md    # Template standard PROJECT.md
-├── claudio-commit-skin/      # Automazione commit Claudio
+├── commit-automation/        # Sistema automazione commit
 │   ├── install.sh
 │   ├── commit-flow.sh
 │   └── config/
@@ -70,7 +70,7 @@ workflow/
 
 - **🎯 David**: Product Owner, decisioni strategiche, requirements
 - **🧠 Ciccio**: Orchestratore, infra, deploy, coordinamento  
-- **👨‍💻 Claudio**: Senior Developer, build apps, implementazione
+- **👨‍💻 Claude Code**: Senior Developer, build apps, implementazione
 
 ## ⚡ Principi Base
 

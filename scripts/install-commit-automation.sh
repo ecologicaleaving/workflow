@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Quick installer for Claudio Commit Skin
-# Downloads and installs from workflow repository
+# Downloads and installs commit automation from workflow repository
 
 set -e
 
-echo "🚀 Installing Claudio Commit Skin from workflow repository..."
+echo "🚀 Installing Commit Automation System from workflow repository..."
 
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then
@@ -15,12 +15,12 @@ if [ ! -d ".git" ]; then
 fi
 
 # Download and execute the main installer
-curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/workflow/main/claudio-commit-skin/install.sh" | bash
+curl -sSL "https://raw.githubusercontent.com/ecologicaleaving/workflow/main/commit-automation/install.sh" | bash
 
 echo ""
 echo "✅ Installation complete!"
 echo ""
-echo "📋 The commit skin is now active. Next commit will automatically:"
+echo "📋 The commit automation is now active. Next commit will automatically:"
 echo "   1. Update PROJECT.md with new version"
 echo "   2. Build your project (Flutter APK, npm build, etc.)"
 echo "   3. Package artifacts in releases/ directory"
