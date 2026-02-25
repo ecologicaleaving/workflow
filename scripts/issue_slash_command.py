@@ -458,6 +458,145 @@ Consulta la issue per le domande specifiche e riformula con più dettagli.
 
 Verifica configurazione `gh CLI` e permessi repository."""
 
+def handle_reject_command(message: str, author: str = "davide crescentini") -> Optional[str]:
+    """
+    Handler per /reject — riporta una issue in lavorazione con feedback.
+
+    Sintassi supportata:
+      /reject #123 "schermata bianca su mobile, bottone salva non funziona"
+      /reject 123 "feedback"
+      /reject #123 - "feedback"
+    """
+    if author.lower() != "davide crescentini":
+        return "❌ Solo Davide può usare /reject."
+
+    if not message.strip().lower().startswith('/reject'):
+        return None
+
+    # Parse numero issue e feedback
+    patterns = [
+        r'/reject\s+#?(\d+)\s*[-:]\s*["\'](.+)["\']',
+        r'/reject\s+#?(\d+)\s+["\'](.+)["\']',
+        r'/reject\s+#?(\d+)\s*[-:]\s*(.+)',
+        r'/reject\s+#?(\d+)\s+(.+)',
+    ]
+
+    number = None
+    feedback = None
+    for pattern in patterns:
+        match = re.match(pattern, message.strip(), re.IGNORECASE | re.DOTALL)
+        if match:
+            number  = int(match.group(1))
+            feedback = match.group(2).strip()
+            break
+
+    if not number or not feedback:
+        return """❌ **Formato /reject non valido**
+
+**Uso corretto:**
+• `/reject #123 "schermata bianca su mobile"`
+• `/reject 123 - "bottone salva non funziona, errore 401 in console"`
+
+**Cosa succede:**
+1. Aggiungo un commento sulla issue con il tuo feedback
+2. Cambio label: review-ready/deployed-test → `needs-fix`
+3. Il monitor VPS la rileva entro 10 minuti e spawna un subagente"""
+
+    # Cerca la issue nei repo ecologicaleaving
+    try:
+        result = subprocess.run([
+            'gh', 'issue', 'view', str(number),
+            '--json', 'title,url,labels,repository'
+        ], capture_output=True, text=True)
+
+        if result.returncode != 0:
+            # Prova a cercarlo nei repo principali
+            found = None
+            for repo_short in ['StageConnect', 'BeachRef-app', 'maestro', 'finn',
+                                'GridConnect', 'workflow', 'progetto-casa']:
+                r = subprocess.run([
+                    'gh', 'issue', 'view', str(number),
+                    '--repo', f'ecologicaleaving/{repo_short}',
+                    '--json', 'title,url,labels,repository'
+                ], capture_output=True, text=True)
+                if r.returncode == 0:
+                    found = r
+                    break
+            if not found:
+                return f"❌ Issue #{number} non trovata. Specifica il repo: `/reject ecologicaleaving/repo#{number} \"feedback\"`"
+            result = found
+
+        issue_info = json.loads(result.stdout)
+        title    = issue_info.get('title', '?')
+        url      = issue_info.get('url', '')
+        repo     = issue_info.get('repository', {}).get('nameWithOwner', '')
+        labels   = [l['name'] for l in issue_info.get('labels', [])]
+
+    except Exception as e:
+        return f"❌ Errore recupero issue #{number}: {e}"
+
+    # Costruisci il commento di feedback
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+
+    comment_body = f"""## ❌ Review Fallita — Rework Richiesto
+
+**Data review:** {ts}
+**Reviewer:** @{author.split()[0].lower()}
+
+### 🐛 Problemi riscontrati
+
+{feedback}
+
+### 📋 Azioni richieste
+- [ ] Analizza i problemi segnalati
+- [ ] Riproduci il bug/problema localmente
+- [ ] Implementa il fix
+- [ ] Verifica con Playwright E2E (se web app)
+- [ ] Re-commit e re-push su `feature/issue-{number}`
+
+---
+*Generato automaticamente da /reject slash command*"""
+
+    # 1. Aggiungi commento sulla issue
+    try:
+        subprocess.run([
+            'gh', 'issue', 'comment', str(number),
+            '--repo', repo,
+            '--body', comment_body
+        ], capture_output=True, check=True)
+    except Exception as e:
+        return f"❌ Errore aggiunta commento su issue #{number}: {e}"
+
+    # 2. Aggiorna labels: rimuovi review-ready/deployed-test, aggiungi needs-fix
+    remove_labels = [l for l in labels if l in ('review-ready', 'deployed-test', 'in-progress')]
+    try:
+        cmd = ['gh', 'issue', 'edit', str(number), '--repo', repo, '--add-label', 'needs-fix']
+        for lbl in remove_labels:
+            cmd += ['--remove-label', lbl]
+        subprocess.run(cmd, capture_output=True, check=True)
+    except Exception as e:
+        return f"❌ Errore aggiornamento label issue #{number}: {e}"
+
+    removed_str = ', '.join(remove_labels) if remove_labels else 'nessuna'
+
+    return f"""🔧 **Issue #{number} rimandata in lavorazione**
+
+🔗 **URL:** {url}
+📋 **Titolo:** {title}
+📁 **Repository:** {repo}
+
+**Azioni eseguite:**
+• 💬 Commento feedback aggiunto alla issue
+• 🏷️ Rimossa: `{removed_str}`
+• 🏷️ Aggiunta: `needs-fix`
+
+⏱️ **Il monitor VPS rileverà la issue entro 10 minuti** e spawnerà un subagente con il tuo feedback come contesto.
+
+**Feedback registrato:**
+_{feedback}_"""
+
+
 if __name__ == "__main__":
     # Test cases
     test_commands = [
@@ -470,6 +609,20 @@ if __name__ == "__main__":
     for cmd in test_commands:
         print(f"\n📝 COMMAND: {cmd}")
         result = handle_issue_command(cmd)
+        if result:
+            print(f"✅ RESULT:\n{result}")
+        print("-" * 70)
+
+    # Test /reject
+    print("\n\n=== TEST /reject ===")
+    reject_commands = [
+        '/reject #42 "schermata bianca su mobile, bottone salva non funziona"',
+        '/reject 7 - "errore 401 in console quando apro la dashboard"',
+        '/reject',  # formato sbagliato
+    ]
+    for cmd in reject_commands:
+        print(f"\n📝 COMMAND: {cmd}")
+        result = handle_reject_command(cmd)
         if result:
             print(f"✅ RESULT:\n{result}")
         print("-" * 70)
