@@ -182,7 +182,11 @@ HARD CONSTRAINTS:
 - Stop after 5 failed fix iterations and document why
 "@
             Write-Log "Launching Claude agent for issue #$Number..."
+            # Unset CLAUDECODE so claude can launch as a fresh independent session
+            $savedClaudeCode = $env:CLAUDECODE
+            Remove-Item Env:CLAUDECODE -ErrorAction SilentlyContinue
             $output = $prompt | & $Config.ClaudeCmd --dangerously-skip-permissions 2>&1
+            if ($savedClaudeCode) { $env:CLAUDECODE = $savedClaudeCode }
 
         }
 
