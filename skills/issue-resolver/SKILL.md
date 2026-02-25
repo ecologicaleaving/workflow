@@ -110,6 +110,36 @@ Before finishing:
 3. Confirm that each requirement from the issue is addressed.
 4. If anything is still wrong, go back to Phase 3 for one more iteration.
 
+### 4b — Playwright E2E verification (web apps only)
+
+If the project is a **web app** (React, Next.js, Node.js with frontend), and
+Playwright is available or can be added:
+
+```bash
+# Check if Playwright is already configured
+ls playwright.config.* 2>/dev/null || cat package.json | grep playwright
+
+# If configured — run E2E suite
+npx playwright test --reporter=list
+
+# If NOT configured but the issue affects UI — set up minimal smoke test:
+npx playwright install --with-deps chromium
+```
+
+Create or update `tests/e2e/smoke.spec.ts` with at minimum:
+- Page loads without JS errors
+- Key UI elements visible (nav, main content, no blank screen)
+- The specific flow affected by the issue works end-to-end
+
+**Playwright verification rules:**
+- Run headless (`--headed` only if debugging)
+- If tests fail: fix the code, not the test
+- Max 3 fix iterations before documenting and stopping
+- Include Playwright results in the commit message:
+  `Tests: lint ✓ | typecheck ✓ | unit ✓ | e2e (playwright) ✓`
+- If Playwright was not present before: commit `playwright.config.ts` +
+  `tests/e2e/` as part of the fix (counts as infrastructure improvement)
+
 ---
 
 ## Project-type quick reference
@@ -283,7 +313,8 @@ Commit type rules (from 8020-commit-workflow):
 | Type | Detect | Lint | Type-check | Unit test | E2E test |
 |------|--------|------|------------|-----------|----------|
 | Flutter | `pubspec.yaml` | `flutter analyze` | — | `flutter test` | — |
-| React | `package.json` + "react" | `npm run lint` | `npm run typecheck` | `npm test -- --watchAll=false` | `npm run test:e2e` |
+| React | `package.json` + "react" | `npm run lint` | `npm run typecheck` | `npm test -- --watchAll=false` | `npx playwright test` |
+| Next.js | `package.json` + "next" | `npm run lint` | `npm run typecheck` | `npm test -- --watchAll=false` | `npx playwright test` |
 | Node.js | `package.json` | `npm run lint` | `npm run typecheck` | `npm test` | — |
 | Python | `*.py` | `flake8` / `ruff` | `mypy` | `pytest` | — |
 | Static | `index.html` | `htmlhint` | — | — | — |
