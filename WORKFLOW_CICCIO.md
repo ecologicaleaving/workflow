@@ -103,9 +103,43 @@ graph LR
 5. Document root cause e fix applicato
 6. Update monitoring se necessario
 
+## 🏷️ Label System — Issue Processing
+
+| Label | Responsabile | Azione |
+|-------|-------------|--------|
+| `claude-code` | Claude Code (PC Windows) | claude-monitor.ps1 → sviluppo automatico |
+| `ciccio` | Ciccio (VPS) | ciccio-issue-monitor.sh → spawna subagente sonnet |
+| `in-progress` | — | Issue presa in carico, non riprocessare |
+| `review-ready` | — | Codice pronto, Ciccio può deployare su test |
+| `deployed-test` | — | Live su test-*.8020solutions.org |
+
+### **Flusso Ciccio Label**
+
+```
+GitHub issue con label "ciccio"
+        ↓
+ciccio-issue-monitor.sh (cron ogni 10min)
+        ↓
+Lock file creato + label "in-progress"
+        ↓
+sessions_spawn (sonnet 4.6) → subagente lavora autonomamente
+        ↓                         ↓
+Ciccio rimane libero       Subagente: issue-resolver skill
+per Davide                 + Playwright E2E (web apps)
+                           + commit + push branch
+                                     ↓
+                           Label: ciccio → review-ready
+                                     ↓
+                           Notifica Davide su Telegram
+```
+
+**Script**: `scripts/ciccio-issue-monitor.sh`
+**Cron**: `*/10 * * * * /root/.openclaw/workspace-ciccio/scripts/ciccio-issue-monitor.sh`
+
 ## 🤖 Automazioni Attive
 
 ### **Cron Jobs**
+- **Issue Monitor**: `ciccio`-labeled issues → spawn subagente ogni 10min
 - **Project Sync**: Auto-update status dashboard da PROJECT.md
 - **Health Monitoring**: Disk, CPU, memory, services
 - **CI Monitoring**: GitHub Actions status per tutti i repo
@@ -113,7 +147,7 @@ graph LR
 - **Backup Verification**: Database e file importanti
 
 ### **GitHub Integration**
-- **Webhook receiver** per deploy automatici (futuro)
+- **Issue monitoring**: `ciccio` label → auto-processing via subagente
 - **Release monitoring** per nuove versioni
 - **Issue tracking** integration con team-tasks repo
 
