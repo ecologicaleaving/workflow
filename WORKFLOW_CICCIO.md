@@ -112,6 +112,29 @@ graph LR
 | `in-progress` | — | Issue presa in carico, non riprocessare |
 | `review-ready` | — | Codice pronto, Ciccio può deployare su test |
 | `deployed-test` | — | Live su test-*.8020solutions.org |
+| `needs-fix` | Ciccio (VPS) | monitor detecta, legge commenti feedback, rework con contesto |
+
+### **Flusso Feedback / Rework**
+
+```
+Davide testa su test-*.8020solutions.org
+        ↓ (trova problemi)
+/reject #123 "schermata bianca, errore 401 in console"
+        ↓
+Ciccio:
+  • aggiunge commento con feedback sulla issue GitHub
+  • rimuove label review-ready / deployed-test
+  • aggiunge label needs-fix
+        ↓ (max 10min — cron monitor)
+ciccio-issue-monitor.sh detecta needs-fix
+  • legge TUTTI i commenti della issue (storico feedback)
+  • spawna subagente sonnet con contesto completo
+  • riprende dal branch feature/issue-N esistente
+        ↓
+Subagente analizza feedback → fix → re-commit → re-push
+Label: needs-fix → review-ready
+Notifica Davide: "🔧 Rework #123 completato"
+```
 
 ### **Flusso Ciccio Label**
 
