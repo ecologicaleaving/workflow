@@ -1,10 +1,13 @@
 # ===================================================
-# Claude Code Issue Monitor v3.0
+# Claude Code Issue Monitor v3.1
 # Single-agent iterative issue resolver
 # 80/20 Solutions -- ecologicaleaving
 #
 # Architecture:
-#   One claude invocation per issue (token-efficient).
+#   One agent invocation per issue (token-efficient).
+#   Supports two agents:
+#     - claude  → issues labeled "claude-code"
+#     - codex   → issues labeled "codex"
 #   The issue-resolver skill defines the workflow.
 #   Monitor handles: polling, branching, commit, push, PR.
 # ===================================================
@@ -24,6 +27,7 @@ $Config = @{
     MaxIssuesPerCycle = 3
     MaxLockAgeMinutes = 120
     ClaudeCmd         = "claude"
+    CodexCmd          = "codex"
 }
 
 if (Test-Path $ConfigFile) {
@@ -32,6 +36,7 @@ if (Test-Path $ConfigFile) {
         if ($s.githubOrg)         { $Config.GithubOrg         = $s.githubOrg }
         if ($s.maxIssuesPerCycle) { $Config.MaxIssuesPerCycle = [int]$s.maxIssuesPerCycle }
         if ($s.claudeCmd)         { $Config.ClaudeCmd         = $s.claudeCmd }
+        if ($s.codexCmd)          { $Config.CodexCmd          = $s.codexCmd }
     } catch { }
 }
 
@@ -100,13 +105,19 @@ function Invoke-IssueResolver {
         [string]$BranchName,
         [int]   $Number,
         [string]$Title,
-        [string]$Body
+        [string]$Body,
+        [string]$AgentType = "claude"   # "claude" | "codex"
     )
 
-    # The prompt is intentionally concise.
-    # The issue-resolver skill (loaded from ~/.claude/skills/) defines
-    # the full Research -> Clarify -> Plan -> Iterate workflow.
-    $prompt = @"
+    $prevLoc = Get-Location
+    try {
+        Set-Location $RepoPath
+
+        if ($AgentType -eq "codex") {
+
+            # ---- CODEX ----
+            # Codex CLI: self-contained prompt, no external skill file.
+            $prompt = @"
 Resolve GitHub issue #$Number in this repository.
 
 TITLE: $Title
@@ -117,26 +128,66 @@ $Body
 CONTEXT:
 - Repository path: $RepoPath
 - Working branch: $BranchName  (already checked out -- do not switch branches)
-- Follow the issue-resolver skill workflow:
-    Phase 1 -- Research the codebase
-    Phase 2 -- Clarify and plan
-    Phase 3 -- Implement iteratively (implement -> test -> fix, max 5 loops)
-    Phase 4 -- Final verification
+
+WORKFLOW (follow in order):
+1. RESEARCH  -- Read README, package.json/pubspec.yaml, explore structure, find relevant files and tests.
+2. PLAN      -- Identify files to change. Choose the simplest correct implementation.
+3. IMPLEMENT -- Make changes one logical unit at a time.
+4. TEST      -- Run available tests (lint -> typecheck -> unit -> e2e).
+               If failing: read error, fix root cause, re-run. Max 5 iterations per suite.
+5. VERIFY    -- Re-read every file you changed. Confirm all requirements met.
+6. PROJECT.md -- Update version (PATCH/MINOR/MAJOR), move issue to DONE, update timestamp.
+7. COMMIT    -- Stage specific files. Commit with format:
+               "fix/feat(scope): short description
+               Tests: lint ✓ | unit ✓ | e2e ✓
+               Closes #$Number"
 
 HARD CONSTRAINTS:
-- Do NOT run: git add / git commit / git push / git merge / git checkout
+- Do NOT run: git push / git merge / git checkout / git reset
 - Do NOT switch branches or modify .git/ internals
-- Stop if tests are still failing after 5 iterations and document why
+- Never skip or comment out a failing test
+- Stop after 5 failed fix iterations and document why
 "@
+            Write-Log "Launching Codex agent for issue #$Number..."
+            $output = $prompt | & $Config.CodexCmd 2>&1
 
-    Write-Log "Launching agent for issue #$Number..."
+        } else {
 
-    $prevLoc = Get-Location
-    try {
-        Set-Location $RepoPath
-        $output = $prompt | & $Config.ClaudeCmd --dangerously-skip-permissions 2>&1
-        $exit   = $LASTEXITCODE
-        $short  = if ("$output".Length -gt 500) { "$output".Substring(0,500)+"..." } else { "$output" }
+            # ---- CLAUDE ----
+            # The issue-resolver skill (loaded from ~/.claude/skills/) defines
+            # the full Research -> Plan -> Implement -> Test -> PROJECT.md -> Commit workflow.
+            $prompt = @"
+Resolve GitHub issue #$Number in this repository.
+
+TITLE: $Title
+
+REQUIREMENTS:
+$Body
+
+CONTEXT:
+- Repository path: $RepoPath
+- Working branch: $BranchName  (already checked out -- do not switch branches)
+- Follow the issue-resolver skill workflow exactly:
+    Phase 1 -- Research the codebase
+    Phase 2 -- Clarify and plan
+    Phase 3 -- Implement iteratively (implement -> test -> fix, max 5 loops per suite)
+    Phase 4 -- Final verification
+    Phase 5 -- Update PROJECT.md (version bump, backlog, timestamp)
+    Phase 6 -- Production-ready commit (safety checks, conventional format, test summary)
+
+HARD CONSTRAINTS:
+- Do NOT run: git push / git merge / git checkout / git reset
+- Do NOT switch branches or modify .git/ internals
+- Never skip or comment out a failing test
+- Stop after 5 failed fix iterations and document why
+"@
+            Write-Log "Launching Claude agent for issue #$Number..."
+            $output = $prompt | & $Config.ClaudeCmd --dangerously-skip-permissions 2>&1
+
+        }
+
+        $exit  = $LASTEXITCODE
+        $short = if ("$output".Length -gt 500) { "$output".Substring(0,500)+"..." } else { "$output" }
         Write-Log "Agent finished (exit=$exit): $short"
         return $exit -eq 0
     }
@@ -156,7 +207,8 @@ function Invoke-IssueProcessor {
         [string]$Repo,
         [int]   $Number,
         [string]$Title,
-        [string]$Body
+        [string]$Body,
+        [string]$AgentType = "claude"   # "claude" | "codex"
     )
 
     $org        = $Config.GithubOrg
@@ -164,6 +216,8 @@ function Invoke-IssueProcessor {
     $repoPath   = "$ReposPath\$Repo"
     $slug       = ConvertTo-BranchSlug -Text $Title
     $branchName = "feature/issue-$Number-$slug"
+    $agentLabel = if ($AgentType -eq "codex") { "codex" } else { "claude-code" }
+    $agentEmoji = if ($AgentType -eq "codex") { "⚡" } else { "🤖" }
 
     # Lock check
     if (Test-Path $lockFile) {
@@ -182,13 +236,15 @@ function Invoke-IssueProcessor {
 
         # 1. Mark in-progress
         gh issue edit $Number --repo "$org/$Repo" `
-            --remove-label "claude-code" --add-label "in-progress" 2>$null | Out-Null
+            --remove-label $agentLabel --add-label "in-progress" 2>$null | Out-Null
 
+        $agentName = if ($AgentType -eq "codex") { "Codex CLI Agent" } else { "Claude Code Agent" }
         gh issue comment $Number --repo "$org/$Repo" --body (
-            "🤖 **Claude Code Agent Started**`n`n" +
+            "$agentEmoji **$agentName Started**`n`n" +
             "**Issue #${Number}:** $Title`n" +
+            "**Agent:** $AgentType`n" +
             "**Branch:** ``$branchName```n" +
-            "**Workflow:** Research -> Clarify -> Plan -> Implement (iterative)`n`n" +
+            "**Workflow:** Research -> Plan -> Implement (iterative) -> Test -> Commit`n`n" +
             "Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
         ) 2>$null | Out-Null
 
@@ -218,30 +274,37 @@ function Invoke-IssueProcessor {
             -BranchName $branchName `
             -Number     $Number `
             -Title      $Title `
-            -Body       $Body
+            -Body       $Body `
+            -AgentType  $AgentType
 
         # 5. Check for changes
         $status = git -C $repoPath status --porcelain 2>&1
         if ([string]::IsNullOrWhiteSpace($status)) {
             Write-Log "No changes produced for ${Repo}#${Number}"
             gh issue edit $Number --repo "$org/$Repo" `
-                --remove-label "in-progress" --add-label "claude-code" 2>$null | Out-Null
+                --remove-label "in-progress" --add-label $agentLabel 2>$null | Out-Null
             gh issue comment $Number --repo "$org/$Repo" --body (
                 "⚠️ **No Changes Detected**`n`n" +
-                "The agent analyzed issue #$Number but produced no code changes.`n" +
+                "The $AgentType agent analyzed issue #$Number but produced no code changes.`n" +
                 "Possible reasons: already implemented, unclear requirements, or error.`n`n" +
-                "Reset to ``claude-code`` for retry or manual intervention."
+                "Reset to ``$agentLabel`` for retry or manual intervention."
             ) 2>$null | Out-Null
             return
         }
 
-        # 6. Commit
-        Write-Log "Committing..."
-        git -C $repoPath add --all 2>&1 | Out-Null
-        $commitMsg = @"
+        # 6. Commit (only if agent didn't already commit in Phase 6)
+        $pendingChanges = git -C $repoPath status --porcelain 2>&1
+        if (-not [string]::IsNullOrWhiteSpace($pendingChanges)) {
+            Write-Log "Committing remaining changes..."
+            git -C $repoPath add --all 2>&1 | Out-Null
+            $coAuthor = if ($AgentType -eq "codex") `
+                { "Co-Authored-By: Codex CLI <noreply@openai.com>" } `
+                else `
+                { "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>" }
+            $commitMsg = @"
 feat: resolve issue #$Number - $Title
 
-Resolved by Claude Code autonomous agent:
+Resolved by $AgentType autonomous agent:
 - Phase 1: researched codebase and identified relevant files
 - Phase 2: clarified requirements and planned implementation
 - Phase 3: implemented iteratively with test-fix loops
@@ -249,10 +312,13 @@ Resolved by Claude Code autonomous agent:
 
 Closes #$Number
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+$coAuthor
 "@
-        git -C $repoPath commit -m $commitMsg 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+            git -C $repoPath commit -m $commitMsg 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+        } else {
+            Write-Log "Agent already committed changes (Phase 6). Skipping monitor commit."
+        }
 
         # 7. Push
         Write-Log "Pushing $branchName..."
@@ -261,10 +327,11 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
         # 8. Create PR
         Write-Log "Creating PR..."
+        $agentFullName = if ($AgentType -eq "codex") { "Codex CLI" } else { "Claude Code" }
         $prBody = @"
 ## Resolves Issue #${Number}: $Title
 
-> Auto-resolved by Claude Code autonomous agent (single-agent iterative mode)
+> Auto-resolved by **$agentFullName** autonomous agent (single-agent iterative mode)
 
 ## What was done
 
@@ -274,21 +341,25 @@ The agent followed the **issue-resolver** workflow:
 |-------|-------------|
 | 1. Research | Explored codebase, read relevant files and tests |
 | 2. Clarify & Plan | Identified files to change, planned implementation |
-| 3. Implement (iterative) | Implemented -> tested -> fixed, up to 5 iterations |
-| 4. Verify | Final test run, reviewed all changes |
+| 3. Implement (iterative) | Implemented -> tested -> fixed, up to 5 iterations per suite |
+| 4. Verify | Final test run (lint + typecheck + unit + e2e), reviewed all changes |
+| 5. PROJECT.md | Version bumped, issue moved to DONE, timestamp updated |
+| 6. Commit | Production-ready commit with conventional format |
 
 ## Checklist
 
 - [x] Codebase researched
 - [x] Requirements analyzed
 - [x] Implemented iteratively
-- [x] Tests run and verified
+- [x] Tests run and verified (lint / typecheck / unit / e2e)
+- [x] PROJECT.md updated
+- [x] Agent: **$agentFullName**
 - [x] Feature branch: ``$branchName``
 
 Closes #$Number
 
 ---
-*Auto-generated by [Claude Code Issue Monitor](https://github.com/$org/workflow)*
+*Auto-generated by [Issue Monitor v3.1](https://github.com/$org/workflow)*
 "@
 
         $prOut = gh pr create `
@@ -309,9 +380,10 @@ Closes #$Number
             --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
 
         gh issue comment $Number --repo "$org/$Repo" --body (
-            "✅ **Agent Completed**`n`n" +
+            "✅ **$agentFullName Completed**`n`n" +
             "**PR:** $prUrl`n" +
-            "**Branch:** ``$branchName```n`n" +
+            "**Branch:** ``$branchName```n" +
+            "**Agent:** $agentFullName`n`n" +
             "**Next steps:**`n" +
             "1. Review the PR: $prUrl`n" +
             "2. Approve and merge`n" +
@@ -326,10 +398,10 @@ Closes #$Number
         $err = $_.ToString()
         Write-ErrorLog "Failed ${Repo}#${Number}: $err"
         gh issue edit $Number --repo "$org/$Repo" `
-            --remove-label "in-progress" --add-label "claude-code" 2>$null | Out-Null
+            --remove-label "in-progress" --add-label $agentLabel 2>$null | Out-Null
         gh issue comment $Number --repo "$org/$Repo" --body (
-            "❌ **Processing Failed**`n`nError: ``$err```n`n" +
-            "Reset to ``claude-code`` for retry.`n" +
+            "❌ **Processing Failed ($agentFullName)**`n`nError: ``$err```n`n" +
+            "Reset to ``$agentLabel`` for retry.`n" +
             "Failed at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
         ) 2>$null | Out-Null
     }
@@ -356,35 +428,65 @@ $currentUser = gh api user --jq ".login" 2>&1
 if ($LASTEXITCODE -ne 0) { Write-ErrorLog "Cannot get GitHub user"; exit 1 }
 Write-Log "GitHub user: $currentUser"
 
-# Search for open issues assigned to @me with label 'claude-code'
-Write-Log "Searching: assignee:@me label:claude-code state:open"
+# Search for open issues assigned to @me with label 'claude-code' or 'codex'
+$allIssues = [System.Collections.Generic.List[object]]::new()
 
-$searchJson = gh search issues `
-    --assignee "@me" `
-    --label    "claude-code" `
-    --state    "open" `
-    --limit    $Config.MaxIssuesPerCycle `
-    --json     "number,title,repository,body" 2>&1
+foreach ($labelSearch in @("claude-code", "codex")) {
+    Write-Log "Searching: assignee:@me label:$labelSearch state:open"
 
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($searchJson) `
-        -or $searchJson -eq "[]" -or $searchJson -eq "null") {
-    Write-Log "No issues found assigned to $currentUser with label 'claude-code'."
+    $searchJson = gh search issues `
+        --assignee "@me" `
+        --label    $labelSearch `
+        --state    "open" `
+        --limit    $Config.MaxIssuesPerCycle `
+        --json     "number,title,repository,body,labels" 2>&1
+
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($searchJson) `
+            -and $searchJson -ne "[]" -and $searchJson -ne "null") {
+        try {
+            $found = $searchJson | ConvertFrom-Json
+            foreach ($issue in $found) {
+                # tag each issue with which agent to use
+                $issue | Add-Member -NotePropertyName "agentType" -NotePropertyValue $labelSearch -Force
+                $allIssues.Add($issue)
+            }
+        } catch {
+            Write-ErrorLog "JSON parse failed for label '$labelSearch': $_"
+        }
+    }
+}
+
+if ($allIssues.Count -eq 0) {
+    Write-Log "No issues found assigned to $currentUser with labels 'claude-code' or 'codex'."
     Write-Log "=== Cycle complete ==="
     exit 0
 }
 
-try   { $issues = $searchJson | ConvertFrom-Json }
-catch { Write-ErrorLog "JSON parse failed: $_"; exit 1 }
-
-Write-Log "Found $($issues.Count) issue(s)."
-
-foreach ($issue in $issues) {
-    $body = if ($issue.body) { $issue.body } else { "No description provided." }
-    Invoke-IssueProcessor `
-        -Repo   $issue.repository.name `
-        -Number ([int]$issue.number) `
-        -Title  $issue.title `
-        -Body   $body
+# Deduplicate (same issue might match both labels)
+$seen    = @{}
+$deduped = [System.Collections.Generic.List[object]]::new()
+foreach ($issue in $allIssues) {
+    $key = "$($issue.repository.name)#$($issue.number)"
+    if (-not $seen.ContainsKey($key)) {
+        $seen[$key] = $true
+        $deduped.Add($issue)
+    }
 }
 
-Write-Log "=== Cycle complete. Processed $($issues.Count) issue(s) ==="
+# Respect MaxIssuesPerCycle
+$toProcess = $deduped | Select-Object -First $Config.MaxIssuesPerCycle
+Write-Log "Found $($deduped.Count) issue(s), processing $($toProcess.Count)."
+
+foreach ($issue in $toProcess) {
+    $body      = if ($issue.body) { $issue.body } else { "No description provided." }
+    $agentType = if ($issue.agentType -eq "codex") { "codex" } else { "claude" }
+    Write-Log "Issue $($issue.repository.name)#$($issue.number) → agent: $agentType"
+    Invoke-IssueProcessor `
+        -Repo      $issue.repository.name `
+        -Number    ([int]$issue.number) `
+        -Title     $issue.title `
+        -Body      $body `
+        -AgentType $agentType
+}
+
+Write-Log "=== Cycle complete. Processed $($toProcess.Count) issue(s) ==="
