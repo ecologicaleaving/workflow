@@ -134,7 +134,11 @@ HARD CONSTRAINTS:
     $prevLoc = Get-Location
     try {
         Set-Location $RepoPath
+        # Unset CLAUDECODE so claude can launch as a fresh independent session
+        $savedClaudeCode = $env:CLAUDECODE
+        Remove-Item Env:CLAUDECODE -ErrorAction SilentlyContinue
         $output = $prompt | & $Config.ClaudeCmd --dangerously-skip-permissions 2>&1
+        if ($savedClaudeCode) { $env:CLAUDECODE = $savedClaudeCode }
         $exit   = $LASTEXITCODE
         $short  = if ("$output".Length -gt 500) { "$output".Substring(0,500)+"..." } else { "$output" }
         Write-Log "Agent finished (exit=$exit): $short"
