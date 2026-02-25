@@ -86,8 +86,17 @@ function Test-Dependencies {
         }
     } else {
         Write-Status "GitHub CLI found: $(gh --version)" "Success"
+
+        # Check GitHub project scopes (needed to move cards in GitHub Projects)
+        $authStatus = gh auth status 2>&1
+        if ($authStatus -notmatch "read:project") {
+            Write-Status "GitHub CLI missing 'read:project' scope — required for GitHub Projects" "Warning"
+            Write-Status "Run after install: gh auth refresh -s project" "Warning"
+        } else {
+            Write-Status "GitHub CLI project scopes OK" "Success"
+        }
     }
-    
+
     # Check Git
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         Write-Status "Git not found - please install Git for Windows" "Error"
@@ -500,7 +509,9 @@ function Show-PostInstallInstructions {
     Write-Host "`n${Blue}📋 Next Steps:$Reset"
     Write-Host "1. ${Yellow}Authenticate GitHub CLI:$Reset"
     Write-Host "   gh auth login --web"
-    Write-Host "`n2. ${Yellow}Test the installation:$Reset"
+    Write-Host "`n2. ${Yellow}Add GitHub Projects scopes (required for project board):$Reset"
+    Write-Host "   gh auth refresh -s project"
+    Write-Host "`n3. ${Yellow}Test the installation:$Reset"
     Write-Host "   $InstallPath\scripts\status.ps1"
     Write-Host "`n3. ${Yellow}Create a test issue:$Reset"
     Write-Host "   - Go to any repository (e.g., StageConnect)"
