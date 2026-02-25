@@ -145,263 +145,28 @@ function New-DirectoryStructure {
 }
 
 function New-MonitoringScript {
-    Write-Status "Creating monitoring script..." "Info"
-    
-    $scriptContent = @'
-# Claude Code Issue Monitor - PowerShell
-# Monitors GitHub issues with 'claude-code' label every 5 minutes
+    Write-Status "Downloading monitoring script v2.0 (multi-agent)..." "Info"
 
-$ErrorActionPreference = "Continue"
-$LogFile = "C:\claude-workspace\logs\monitor.log"
-$ErrorLogFile = "C:\claude-workspace\logs\error.log"
-
-function Write-Log {
-    param($Message, $Type = "INFO")
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logMessage = "[$timestamp] [$Type] $Message"
-    Add-Content -Path $LogFile -Value $logMessage
-    Write-Output $logMessage
-}
-
-function Write-Error-Log {
-    param($Message)
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $errorMessage = "[$timestamp] [ERROR] $Message"
-    Add-Content -Path $ErrorLogFile -Value $errorMessage
-    Write-Output $errorMessage
-}
-
-Write-Log "=== Claude Code Monitor Started ==="
-
-try {
-    # Check GitHub authentication
-    $authResult = gh auth status 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error-Log "GitHub CLI not authenticated. Please run: gh auth login"
-        exit 1
-    }
-    
-    # Get issues with 'claude-code' label
-    Write-Log "Checking for issues with 'claude-code' label..."
-    $issuesJson = gh issue list --search "org:ecologicaleaving label:claude-code state:open" --json number,title,repository,body --limit 10 2>$null
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error-Log "Failed to fetch issues from GitHub"
-        exit 1
-    }
-    
-    if ([string]::IsNullOrWhiteSpace($issuesJson) -or $issuesJson -eq "[]") {
-        Write-Log "No issues found with 'claude-code' label"
-        exit 0
-    }
-    
-    $issues = $issuesJson | ConvertFrom-Json
-    Write-Log "Found $($issues.Count) issue(s) to process"
-    
-    foreach ($issue in $issues) {
-        $repo = $issue.repository.name
-        $number = $issue.number
-        $title = $issue.title
-        $body = $issue.body -replace '"', '""'  # Escape quotes for JSON
-        
-        Write-Log "Processing: $repo#$number - $title"
-        
-        # Update issue to in-progress
-        Write-Log "Updating issue $repo#$number to in-progress..."
-        gh issue edit $number --repo "ecologicaleaving/$repo" --remove-label "claude-code" --add-label "in-progress" 2>$null
-        
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error-Log "Failed to update issue labels for $repo#$number"
-            continue
-        }
-        
-        # Add start comment
-        $startComment = @"
-🤖 **Claude Code Auto-Processing Started**
-
-**Issue:** #$number - $title
-**Repository:** $repo
-
-**Workflow Steps:**
-1. ✅ Context cleared - starting fresh
-2. 🎯 Analysis and planning initiated
-3. 🔄 Development with iterative context resets
-4. 🧪 Local testing and validation  
-5. 📝 Code commit and push
-6. 🏗️ GitHub Actions build trigger
-7. ✅ Ready for review and deployment
-
-Processing started at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')...
-"@
-        
-        Write-Log "Adding start comment to issue $repo#$number..."
-        gh issue comment $number --repo "ecologicaleaving/$repo" --body $startComment 2>$null
-        
-        # Ensure repos directory exists and navigate to it
-        $reposPath = "C:\claude-workspace\repos"
-        if (-not (Test-Path $reposPath)) {
-            New-Item -Path $reposPath -ItemType Directory -Force | Out-Null
-        }
-        
-        Set-Location $reposPath
-        
-        # Clone or update repository
-        $repoPath = "$reposPath\$repo"
-        if (-not (Test-Path $repoPath)) {
-            Write-Log "Cloning repository: ecologicaleaving/$repo"
-            git clone "https://github.com/ecologicaleaving/$repo.git" 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error-Log "Failed to clone repository $repo"
-                continue
-            }
-        } else {
-            Write-Log "Updating existing repository: $repo"
-            Set-Location $repoPath
-            git pull origin main 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                git pull origin master 2>$null  # Fallback to master
-            }
-        }
-        
-        Set-Location $repoPath
-        
-        # Process with Claude CLI if available
-        if (Get-Command claude -ErrorAction SilentlyContinue) {
-            Write-Log "Processing issue with Claude CLI..."
-            
-            $claudePrompt = @"
-GITHUB ISSUE AUTO-PROCESSING
-
-Repository: $repo
-Issue: #$number
-Title: $title
-
-Requirements:
-$body
-
-INSTRUCTIONS:
-1. Analyze the issue requirements carefully
-2. Plan the implementation approach
-3. Make necessary code changes to address the issue
-4. Test the implementation locally
-5. Ensure all requirements are satisfied
-6. Do NOT build - GitHub Actions will handle builds
-7. When ready, I will commit and push the changes
-
-Please implement the solution for this issue. Focus on clean, working code that addresses all the requirements mentioned.
-"@
-            
-            # Execute Claude CLI (capture output for logging)
-            $claudeOutput = claude $claudePrompt 2>&1
-            Write-Log "Claude CLI processing completed"
-            
-            # Add Claude output to issue comments (truncated if too long)
-            $outputSummary = if ($claudeOutput.Length -gt 1000) {
-                $claudeOutput.Substring(0, 1000) + "... [truncated]"
-            } else {
-                $claudeOutput
-            }
-            
-            $progressComment = @"
-🔄 **Development Progress Update**
-
-**Claude CLI Processing:** Completed
-**Implementation Status:** In progress
-**Next Steps:** Testing and commit preparation
-
-**Summary:**
-``````
-$outputSummary
-``````
-
-Status: Moving to commit and push phase...
-"@
-            
-            gh issue comment $number --repo "ecologicaleaving/$repo" --body $progressComment 2>$null
-            
-        } else {
-            Write-Log "Claude CLI not available - skipping AI processing"
-        }
-        
-        # Commit changes (if any)
-        Write-Log "Checking for changes to commit..."
-        $gitStatus = git status --porcelain 2>$null
-        
-        if ([string]::IsNullOrWhiteSpace($gitStatus)) {
-            Write-Log "No changes detected in repository"
-        } else {
-            Write-Log "Changes detected, committing..."
-            git add . 2>$null
-            git commit -m "Fix #$number`: $title`n`nAuto-generated by Claude Code issue processor" 2>$null
-            
-            if ($LASTEXITCODE -eq 0) {
-                Write-Log "Changes committed successfully"
-                
-                # Push changes
-                Write-Log "Pushing changes to GitHub..."
-                git push 2>$null
-                
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Log "Changes pushed successfully - GitHub Actions will be triggered"
-                } else {
-                    Write-Error-Log "Failed to push changes for $repo#$number"
-                    continue
-                }
-            } else {
-                Write-Error-Log "Failed to commit changes for $repo#$number"
-                continue
-            }
-        }
-        
-        # Update issue to building (GitHub Actions will change to review-ready)
-        Write-Log "Updating issue $repo#$number to building..."
-        gh issue edit $number --repo "ecologicaleaving/$repo" --remove-label "in-progress" --add-label "building" 2>$null
-        
-        # Add completion comment
-        $completionComment = @"
-✅ **Claude Code Processing Completed**
-
-**Development Phase:** ✅ Complete
-**Changes Status:** Committed and pushed
-**GitHub Actions:** 🏗️ Build triggered automatically
-**Next Phase:** Automated build and release
-
-**Summary:**
-- Context reset and planning: ✅
-- Implementation: ✅  
-- Local testing: ✅
-- Code committed: ✅
-- GitHub push: ✅
-- Build trigger: ✅
-
-**Workflow Status:**
-Label changed to `building`. GitHub Actions will:
-1. Build all platforms (APK, Web, etc.)
-2. Run automated tests
-3. Create release with artifacts
-4. Change label to `review-ready`
-5. Notify deployment team
-
-Processing completed at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-"@
-        
-        gh issue comment $number --repo "ecologicaleaving/$repo" --body $completionComment 2>$null
-        
-        Write-Log "✅ Issue $repo#$number processed successfully"
-    }
-    
-} catch {
-    Write-Error-Log "Unhandled error: $_"
-    exit 1
-}
-
-Write-Log "=== Monitor cycle completed successfully ==="
-'@
-    
+    $scriptUrl  = "https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/claude-monitor.ps1"
     $scriptPath = "$InstallPath\scripts\claude-monitor.ps1"
-    $scriptContent | Out-File -FilePath $scriptPath -Encoding UTF8
-    
-    Write-Status "Monitoring script created: $scriptPath" "Success"
+
+    try {
+        Invoke-WebRequest -Uri $scriptUrl -OutFile $scriptPath -UseBasicParsing
+        Write-Status "Monitoring script downloaded: $scriptPath" "Success"
+    }
+    catch {
+        Write-Status "Download failed ($_). Falling back to local copy..." "Warning"
+
+        # If the repo is cloned locally, use local copy
+        $localCopy = Join-Path $PSScriptRoot "claude-monitor.ps1"
+        if (Test-Path $localCopy) {
+            Copy-Item $localCopy $scriptPath -Force
+            Write-Status "Local copy installed: $scriptPath" "Success"
+        }
+        else {
+            Write-Status "Could not obtain claude-monitor.ps1. Install manually." "Error"
+        }
+    }
 }
 
 function New-BatchWrapper {
@@ -472,7 +237,7 @@ function New-TaskSchedulerConfig {
     <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>
     <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
     <WakeToRun>false</WakeToRun>
-    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <ExecutionTimeLimit>PT2H</ExecutionTimeLimit>
     <Priority>7</Priority>
   </Settings>
   <Actions Context="Author">
@@ -688,6 +453,48 @@ function New-ConfigFile {
     Write-Status "Configuration file created: $configPath" "Success"
 }
 
+function Install-ClaudeSkills {
+    Write-Status "Installing Claude Code skills..." "Info"
+
+    $repoBase  = "https://raw.githubusercontent.com/ecologicaleaving/workflow/master"
+    $skillsDir = "$env:USERPROFILE\.claude\skills"
+
+    # Skills to install: name -> files to download
+    $skills = @{
+        "8020-commit-workflow" = @(
+            "SKILL.md",
+            "references/workflow-rules.md"
+        )
+        "issue-resolver" = @(
+            "SKILL.md"
+        )
+    }
+
+    if (-not (Test-Path "$env:USERPROFILE\.claude")) {
+        Write-Status "~\.claude not found — is Claude Code installed?" "Warning"
+        return
+    }
+
+    foreach ($skillName in $skills.Keys) {
+        $skillDir = "$skillsDir\$skillName"
+        New-Item -Path "$skillDir\references" -ItemType Directory -Force | Out-Null
+
+        foreach ($file in $skills[$skillName]) {
+            $url     = "$repoBase/skills/$skillName/$file"
+            $outPath = "$skillDir\$file"
+            try {
+                Invoke-WebRequest -Uri $url -OutFile $outPath -UseBasicParsing -ErrorAction Stop
+                Write-Status "  $skillName/$file installed" "Success"
+            }
+            catch {
+                Write-Status "  Could not download $skillName/$file: $_" "Warning"
+            }
+        }
+
+        Write-Status "Skill '$skillName' ready in $skillDir" "Success"
+    }
+}
+
 function Show-PostInstallInstructions {
     Write-Host "`n$Green=== Installation Complete! ===$Reset" -ForegroundColor Green
     Write-Host "`n${Blue}📋 Next Steps:$Reset"
@@ -752,14 +559,17 @@ function Main {
     New-TaskSchedulerConfig
     New-UtilityScripts
     New-ConfigFile
-    
-    # 4. Install scheduled task
+
+    # 4. Install Claude Code skills (pure PowerShell, no bash needed)
+    Install-ClaudeSkills
+
+    # 5. Install scheduled task
     if (-not (Install-ScheduledTask)) {
         Write-Status "Failed to install scheduled task. You may need to run as administrator." "Error"
         Write-Status "Manual task installation: Register-ScheduledTask -TaskName 'Claude Code Issue Monitor' -Xml (Get-Content '$InstallPath\scripts\startup-task.xml' -Raw)" "Info"
     }
-    
-    # 5. Post-install instructions
+
+    # 6. Post-install instructions
     Show-PostInstallInstructions
 }
 
