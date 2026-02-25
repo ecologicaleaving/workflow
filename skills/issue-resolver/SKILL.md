@@ -114,9 +114,49 @@ Before finishing:
 
 ---
 
+## PHASE 5 — UPDATE PROJECT.md
+
+PROJECT.md is the **Single Source of Truth** for the entire team pipeline
+(status dashboard, Telegram bot, Ciccio deploy system). Always update it.
+
+### 5a. If PROJECT.md exists
+
+1. **Version bump** — read current version, apply:
+   - Issue type `fix` / `bug` → PATCH bump (1.2.3 → 1.2.4)
+   - Issue type `feat` / `feature` / new functionality → MINOR bump (1.2.3 → 1.3.0)
+   - Determine type from the issue title/labels or the nature of your changes
+
+2. **Backlog** — find the issue in the backlog section and move it:
+   - If listed as `TODO` or `IN PROGRESS` → move to `DONE`
+   - If not listed → add it under `DONE`:
+     `- **DONE**: [issue title — brief description of what was implemented]`
+
+3. **Timestamp** — update the last line:
+   `*Last Updated: YYYY-MM-DDTHH:MM:SSZ*` with current UTC time
+
+4. **CI Status** — set to `passing` if tests passed, `failing` if they did not
+
+### 5b. If PROJECT.md does NOT exist
+
+Create it from the standard template. Fill in only what you can infer from
+the codebase (project name, platform, tech stack, GitHub URL, main branch).
+Leave unknown fields as `[TBD]`. Add the resolved issue under `DONE`.
+
+Minimum required sections: `Project Info`, `Repository`, `Backlog`.
+
+### 5c. Version consistency
+
+If the project has a version declared elsewhere, align them:
+- Flutter → `pubspec.yaml` (version field)
+- Node.js → `package.json` (version field)
+- Both must match the version in PROJECT.md after your update
+
+---
+
 ## What success looks like
 
 - All pre-existing tests still pass.
 - New tests (if required by the issue) pass.
 - The implementation matches every requirement stated in the issue.
 - No broken imports, no syntax errors, no TODO left behind.
+- PROJECT.md updated: version bumped, issue moved to DONE, timestamp current.
