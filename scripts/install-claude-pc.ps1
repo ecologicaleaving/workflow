@@ -487,7 +487,7 @@ function Install-ClaudeSkills {
                 Write-Status "  $skillName/$file installed" "Success"
             }
             catch {
-                Write-Status "  Could not download $skillName/$file: $_" "Warning"
+                Write-Status "  Could not download $skillName/${file} - $_" "Warning"
             }
         }
 
