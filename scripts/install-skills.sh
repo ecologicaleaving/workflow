@@ -6,7 +6,7 @@ set -e
 
 REPO_URL="https://raw.githubusercontent.com/ecologicaleaving/workflow/master"
 SKILLS_DIR="$HOME/.claude/skills"
-SKILLS=("8020-commit-workflow")
+SKILLS=("8020-commit-workflow" "issue-resolver")
 
 echo "80/20 Solutions - Claude Code Skills Installer"
 echo "================================================"
