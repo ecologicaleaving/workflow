@@ -432,16 +432,20 @@ Consulta la issue per le domande specifiche e riformula con più dettagli.
 📋 **Titolo:** {issue_data['title']}
 📁 **Repository:** {issue_data['repo']}
 🏷️ **Tipo:** {issue_data['type']}
-📌 **Labels:** {', '.join(issue_data['labels'])}
+📌 **Labels:** {', '.join(issue_data['labels'] + ['claude-code'])}
+👤 **Assigned to:** ecologicaleaving
 
 📋 **ISSUE STRUTTURATA:**
 • Criteri di accettazione definiti
 • User story formulata
-• Note tecniche integrate
+• Note tecniche integrate  
 • Definition of done inclusa
 
-🚀 **Per attivare processing automatico:**
-Aggiungi label `claude-code` quando i criteri sono chiari e approvati.
+🤖 **PROCESSING AUTOMATICO ATTIVATO:**
+• Label `claude-code` + assignee già impostati automaticamente
+• Monitor PC rileverà l'issue entro 5 minuti
+• Claude Code inizierà development automaticamente
+• Progress updates saranno postati sulla issue GitHub
 
 **Aggiunta al Project "80/20 Solutions - Development Hub"** ✅"""
     else:
