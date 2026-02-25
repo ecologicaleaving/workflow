@@ -1,7 +1,7 @@
 # ===================================================
 # Claude Code Issue Monitor v3.0
 # Single-agent iterative issue resolver
-# 80/20 Solutions — ecologicaleaving
+# 80/20 Solutions -- ecologicaleaving
 #
 # Architecture:
 #   One claude invocation per issue (token-efficient).
@@ -105,7 +105,7 @@ function Invoke-IssueResolver {
 
     # The prompt is intentionally concise.
     # The issue-resolver skill (loaded from ~/.claude/skills/) defines
-    # the full Research → Clarify → Plan → Iterate workflow.
+    # the full Research -> Clarify -> Plan -> Iterate workflow.
     $prompt = @"
 Resolve GitHub issue #$Number in this repository.
 
@@ -116,12 +116,12 @@ $Body
 
 CONTEXT:
 - Repository path: $RepoPath
-- Working branch: $BranchName  (already checked out — do not switch branches)
+- Working branch: $BranchName  (already checked out -- do not switch branches)
 - Follow the issue-resolver skill workflow:
-    Phase 1 — Research the codebase
-    Phase 2 — Clarify and plan
-    Phase 3 — Implement iteratively (implement → test → fix, max 5 loops)
-    Phase 4 — Final verification
+    Phase 1 -- Research the codebase
+    Phase 2 -- Clarify and plan
+    Phase 3 -- Implement iteratively (implement -> test -> fix, max 5 loops)
+    Phase 4 -- Final verification
 
 HARD CONSTRAINTS:
 - Do NOT run: git add / git commit / git push / git merge / git checkout
@@ -169,16 +169,16 @@ function Invoke-IssueProcessor {
     if (Test-Path $lockFile) {
         $ageMin = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
         if ($ageMin -lt $Config.MaxLockAgeMinutes) {
-            Write-Log "Issue $Repo#$Number locked (${ageMin}min). Skipping."
+            Write-Log "Issue ${Repo}#${Number} locked (${ageMin}min). Skipping."
             return
         }
-        Write-Log "Stale lock for $Repo#$Number. Removing."
+        Write-Log "Stale lock for ${Repo}#${Number}. Removing."
         Remove-Item $lockFile -Force
     }
     "started=$(Get-Date -Format 'o')" | Out-File $lockFile -Encoding UTF8
 
     try {
-        Write-Log "=== BEGIN $Repo#$Number: $Title ==="
+        Write-Log "=== BEGIN ${Repo}#${Number}: $Title ==="
 
         # 1. Mark in-progress
         gh issue edit $Number --repo "$org/$Repo" `
@@ -188,7 +188,7 @@ function Invoke-IssueProcessor {
             "🤖 **Claude Code Agent Started**`n`n" +
             "**Issue #${Number}:** $Title`n" +
             "**Branch:** ``$branchName```n" +
-            "**Workflow:** Research → Clarify → Plan → Implement (iterative)`n`n" +
+            "**Workflow:** Research -> Clarify -> Plan -> Implement (iterative)`n`n" +
             "Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
         ) 2>$null | Out-Null
 
@@ -223,7 +223,7 @@ function Invoke-IssueProcessor {
         # 5. Check for changes
         $status = git -C $repoPath status --porcelain 2>&1
         if ([string]::IsNullOrWhiteSpace($status)) {
-            Write-Log "No changes produced for $Repo#$Number"
+            Write-Log "No changes produced for ${Repo}#${Number}"
             gh issue edit $Number --repo "$org/$Repo" `
                 --remove-label "in-progress" --add-label "claude-code" 2>$null | Out-Null
             gh issue comment $Number --repo "$org/$Repo" --body (
@@ -274,7 +274,7 @@ The agent followed the **issue-resolver** workflow:
 |-------|-------------|
 | 1. Research | Explored codebase, read relevant files and tests |
 | 2. Clarify & Plan | Identified files to change, planned implementation |
-| 3. Implement (iterative) | Implemented → tested → fixed, up to 5 iterations |
+| 3. Implement (iterative) | Implemented -> tested -> fixed, up to 5 iterations |
 | 4. Verify | Final test run, reviewed all changes |
 
 ## Checklist
@@ -301,7 +301,7 @@ Closes #$Number
         $prUrl = if ($LASTEXITCODE -eq 0) {
             ($prOut | Select-String "https://github.com").ToString().Trim()
         } else {
-            "Branch pushed: $branchName (PR creation failed — open manually)"
+            "Branch pushed: $branchName (PR creation failed -- open manually)"
         }
 
         # 9. Update issue: review-ready
@@ -319,12 +319,12 @@ Closes #$Number
             "Completed: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
         ) 2>$null | Out-Null
 
-        Write-Log "=== DONE $Repo#$Number | PR: $prUrl ==="
+        Write-Log "=== DONE ${Repo}#${Number} | PR: $prUrl ==="
 
     }
     catch {
         $err = $_.ToString()
-        Write-ErrorLog "Failed $Repo#$Number: $err"
+        Write-ErrorLog "Failed ${Repo}#${Number}: $err"
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label "in-progress" --add-label "claude-code" 2>$null | Out-Null
         gh issue comment $Number --repo "$org/$Repo" --body (
