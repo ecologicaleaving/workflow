@@ -329,9 +329,8 @@ Come **utente di {repo_context['name']}**, voglio {issue_data['description'].low
 
 ### 📝 **Prossimi passi**
 1. **👀 Review issue**: Valida criteri e affina se necessario
-2. **🏷️ Add label**: Aggiungi `claude-code` per attivare processing automatico
-3. **🤖 Auto-development**: Claude Code analizzerà codebase e implementerà
-4. **🚀 Deploy**: Ciccio gestisce deployment dopo review-ready
+2. **🤖 Auto-processing**: Label `claude-code` + assignee già impostati — il monitor PC la prenderà entro 5 minuti
+3. **🚀 Deploy**: Ciccio gestisce deployment dopo review-ready
 
 ---
 **Auto-creata:** Issues Tracker Bot via slash command  
@@ -346,15 +345,16 @@ Come **utente di {repo_context['name']}**, voglio {issue_data['description'].low
             
             body = self.create_structured_issue_body(issue_data)
             
-            # Use only the detected labels (no auto-processing)
-            all_labels = issue_data['labels']
-            
+            # Always include claude-code label + assign to Claude Code agent
+            all_labels = list(set(issue_data['labels'] + ['claude-code']))
+
             cmd = [
                 'gh', 'issue', 'create',
                 '--repo', issue_data['repo'],
                 '--title', issue_data['title'],
                 '--body', body,
-                '--label', ','.join(all_labels)
+                '--label', ','.join(all_labels),
+                '--assignee', 'ecologicaleaving'
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
