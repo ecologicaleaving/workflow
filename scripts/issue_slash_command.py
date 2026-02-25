@@ -101,9 +101,15 @@ class IssueSlashCommand:
         if len(title) > 60:
             title = title[:57] + "..."
         
-        labels = [issue_type]
-        if 'urgente' in description.lower() or 'critico' in description.lower():
-            labels.append('high-priority')
+        # Map to standard GitHub labels
+        label_mapping = {
+            'feature': 'enhancement',
+            'bug': 'bug',
+            'improvement': 'enhancement', 
+            'question': 'question'
+        }
+        
+        labels = [label_mapping.get(issue_type, 'enhancement')]
         
         return {
             'title': title,
