@@ -379,11 +379,12 @@ catch { Write-ErrorLog "JSON parse failed: $_"; exit 1 }
 Write-Log "Found $($issues.Count) issue(s)."
 
 foreach ($issue in $issues) {
+    $body = if ($issue.body) { $issue.body } else { "No description provided." }
     Invoke-IssueProcessor `
         -Repo   $issue.repository.name `
         -Number ([int]$issue.number) `
         -Title  $issue.title `
-        -Body   (if ($issue.body) { $issue.body } else { "No description provided." })
+        -Body   $body
 }
 
 Write-Log "=== Cycle complete. Processed $($issues.Count) issue(s) ==="
