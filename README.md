@@ -1,242 +1,202 @@
-# 80/20 Solutions Workflow Hub
+# 🚀 Workflow Repository - 80/20 Solutions
 
-Sistema di workflow standardizzato per lo sviluppo collaborativo AI-assisted con automazione completa.
+Repository centralizzato per configurazioni, script e documentazione del workflow ibrido **Ciccio (VPS) + Claude Code (PC) + GitHub Actions**.
 
-## 🎯 Overview
+## 🏗️ Architettura Sistema
 
-Il **Workflow Hub** centralizza tutti i processi di sviluppo 80/20 Solutions, fornendo:
-
-- **GitHub Issues Automation** - Processing automatico con AI
-- **Multi-Platform Builds** - GitHub Actions per Flutter, React, Node.js
-- **Unified Deployment** - Pipeline automatizzata VPS
-- **Team Coordination** - Workflow specializzati per ruolo
-
-## 🚀 Quick Start
-
-### **Per Claude Code (PC Windows):**
-```powershell
-# One-click installation
-irm https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-pc.ps1 | iex
-```
-
-### **Per Repository (GitHub Actions):**
-```bash
-# Copy workflow to your repository
-cp .github/workflows/build-and-release.yml your-repo/.github/workflows/
-```
-
-## 📋 Team Workflow
-
-### **Hybrid System Architecture:**
 ```mermaid
-graph LR
-A[Davide] --> B{Issue Creation}
-B --> C[claude-code label]
-B --> D[ciccio label]
-C --> E[PC Auto-Processing]
-D --> F[VPS Processing]
-E --> G[GitHub Actions Build]
-F --> H[Direct Deploy]
-G --> I[Release Creation]
-I --> J[VPS Auto-Deploy]
-H --> K[Production]
-J --> K
+graph TB
+    subgraph "GitHub"
+        Issues[GitHub Issues]
+        Actions[GitHub Actions]
+        Releases[GitHub Releases]
+    end
+    
+    subgraph "VPS Hetzner"
+        Ciccio[🧠 Ciccio<br/>Orchestrator]
+        Deploy[Deploy Service]
+    end
+    
+    subgraph "PC Windows"
+        Claude[💻 Claude Code<br/>Developer]
+        Monitor[Issue Monitor]
+    end
+    
+    Issues --> Claude
+    Claude --> Actions
+    Actions --> Releases
+    Releases --> Deploy
+    Deploy --> Ciccio
 ```
 
-### **Issue Labels System:**
-- `claude-code` → Automatic PC development processing
-- `ciccio` → VPS infrastructure/deployment tasks  
-- `in-progress` → Currently being processed
-- `building` → GitHub Actions building
-- `review-ready` → Built and ready for deployment
-- `deployed-test` → Live on test environment
+## ⚡ Quick Start
 
-## 🔧 Components
+### 1. Setup Automatico Completo
 
-### **1. Claude Code PC Automation**
-- **Auto-start:** Windows Task Scheduler every 5 minutes
-- **Issue Monitoring:** GitHub CLI polling for `claude-code` labels
-- **Development:** AI-assisted code implementation
-- **Integration:** Git commit + push triggers GitHub Actions
-
-### **2. GitHub Actions Universal Build**
-- **Auto-Detection:** Flutter, React, Node.js, Static sites
-- **Multi-Platform:** APK, Web builds, Desktop apps
-- **Release Management:** Automatic versioning + artifact storage
-- **Issue Integration:** Label updates `building` → `review-ready`
-
-### **3. VPS Deployment System**
-- **Release Monitoring:** GitHub Releases polling
-- **Auto-Deploy:** Test environment deployment
-- **Production Pipeline:** Approval-based production deployment
-- **Service Management:** nginx, SSL, subdomain configuration
-
-## 📊 Monitoring & Status
-
-### **PC Monitoring:**
-```powershell
-# Check Claude Code status
-C:\claude-workspace\scripts\status.ps1
-
-# View real-time logs  
-Get-Content C:\claude-workspace\logs\monitor.log -Wait -Tail 20
-
-# Diagnostic check
-C:\claude-workspace\scripts\diagnose.ps1
-```
-
-### **GitHub Actions:**
-- **Workflow Status:** https://github.com/ecologicaleaving/[repo]/actions
-- **Releases:** https://github.com/ecologicaleaving/[repo]/releases
-- **Issue Tracking:** Labels automatically updated
-
-### **VPS Deployment:**
-- **Apps:** https://apps.8020solutions.org
-- **Test Sites:** https://test-[app].8020solutions.org
-- **Production:** https://[app].8020solutions.org
-
-## 🛠️ Installation & Setup
-
-### **Requirements:**
-- **PC Windows:** PowerShell, Git, GitHub CLI, Claude CLI
-- **GitHub Repository:** Private/Public with Actions enabled
-- **VPS Access:** nginx, SSL, deploy permissions
-
-### **Step-by-Step Setup:**
-
-**1. PC Setup (Claude Code):**
-```powershell
-# Run installer script
-irm https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-pc.ps1 | iex
-
-# Authenticate GitHub
-gh auth login --web
-
-# Test installation
-C:\claude-workspace\scripts\status.ps1
-```
-
-**2. Repository Setup (GitHub Actions):**
 ```bash
-# Copy workflow file to repository
-mkdir -p .github/workflows
-cp workflow/.github/workflows/build-and-release.yml .github/workflows/
+# Clone repository
+git clone https://github.com/ecologicaleaving/workflow.git
+cd workflow
 
-# Commit and push
-git add .github/workflows/build-and-release.yml
-git commit -m "Add GitHub Actions build workflow"
-git push
+# Esegui setup automatico
+./setup-hybrid-workflow.sh
 ```
 
-**3. VPS Configuration (Ciccio):**
+### 2. Setup Componenti Singoli
+
 ```bash
-# Handled automatically by Ciccio monitoring system
-# No manual setup required
+# Solo GitHub Actions per tutti i repository
+./setup-hybrid-workflow.sh --github-only
+
+# Solo configurazione label
+./setup-hybrid-workflow.sh --labels-only
+
+# Solo verifica configurazione esistente
+./setup-hybrid-workflow.sh --verify-only
 ```
 
-## 📚 Documentation
+### 3. Setup PC Windows (dopo setup VPS)
 
-### **Core Documents:**
-- **[CLAUDE_CODE_PC_SETUP.md](CLAUDE_CODE_PC_SETUP.md)** - PC installation guide
-- **[Workflow Commands](scripts/)** - Utility scripts and tools
-- **[GitHub Actions](../../github/workflows/)** - Build automation
-
-### **Team Guides:**
-- **Davide:** Create issues → automatic processing → approval → production  
-- **Claude Code:** Automated - monitors issues every 5 minutes
-- **Ciccio:** Automated - monitors releases → deploys → manages infrastructure
-
-## 🔄 Issue Processing Workflow
-
-### **Complete Flow:**
-```
-1. 📝 Issue Creation (Davide)
-   └── Add `claude-code` label for development tasks
-   └── Add `ciccio` label for infrastructure tasks
-
-2. 🤖 Auto-Processing (Claude Code PC)
-   └── Every 5 minutes: check for `claude-code` labels
-   └── AI development: implement solution
-   └── Git: commit + push → triggers GitHub Actions
-   └── Label: `claude-code` → `building`
-
-3. 🏗️ Build Automation (GitHub Actions)  
-   └── Auto-detect: Flutter, React, Node.js
-   └── Multi-platform: APK, Web, Static builds
-   └── Release: Create GitHub release with artifacts
-   └── Label: `building` → `review-ready`
-
-4. 🚀 Deploy Automation (Ciccio VPS)
-   └── Monitor: GitHub releases for new artifacts
-   └── Deploy: Test environment automatically  
-   └── Label: `review-ready` → `deployed-test`
-   └── Notify: "Test ready: [link]"
-
-5. ✅ Production (Davide Approval)
-   └── Test: Validate functionality  
-   └── Approve: "Test OK, go to production"
-   └── Deploy: Production environment
-   └── Complete: "Live: [link]"
+```powershell
+# Su PC Windows, come Administrator
+.\scripts\install-claude-pc.ps1
 ```
 
-## 💡 Key Benefits
+## 📋 Workflow Coordinamento
 
-### **Automation:**
-- ✅ **Zero Manual Intervention** - From issue to test deployment
-- ✅ **24/7 Processing** - PC monitors issues continuously
-- ✅ **Professional Builds** - GitHub Actions for consistent quality
-- ✅ **Instant Deployment** - VPS automatically deploys to test
+### Label System
+- `claude-code` → Assegnazione automatica a Claude Code (PC)
+- `ciccio` → Assegnazione a Ciccio (VPS) 
+- `building` → GitHub Actions in corso
+- `review-ready` → Build completato, pronto per deploy
+- `deployed-test` → Deployato in test environment
+- `in-progress` → In lavorazione manuale
 
-### **Quality:**
-- ✅ **AI-Assisted Development** - Claude Code for implementation
-- ✅ **Multi-Platform Support** - APK + Web + Desktop builds
-- ✅ **Automated Testing** - Built-in test execution
-- ✅ **Version Management** - Semantic versioning + releases
+### Flusso Automatico
 
-### **Efficiency:**
-- ✅ **Parallel Processing** - PC development + VPS infrastructure
-- ✅ **Cost Optimization** - GitHub Actions free tier + VPS efficiency
-- ✅ **Team Specialization** - Each component handles its expertise
-- ✅ **Scalable Architecture** - Easy to add new repositories
+```
+1. 📝 Issue creato con label 'claude-code'
+   └── Claude Code (PC) rileva issue ogni 5min
 
-## 🔗 Integration
+2. 🧠 Analisi + Planning + Context Clearing
+   └── Goal extraction, planning iterativo
 
-### **Supported Repositories:**
-- **StageConnect** - Browser ↔ Device debug tool
-- **BeachRef** / **BeachRef-app** - Beach volleyball referee management
-- **x32-Assist** - Professional audio mixer control
-- **GridConnect** - Electrical grid connection automation
-- **finn** - Family expense tracking with AI
-- **progetto-casa** - Home renovation management
-- **Maestro** - Security automation system
-- **AutoDrum** - Reaper automation tools
+3. 💻 Development + Commit
+   └── Implementazione, test, push
 
-### **External Services:**
-- **GitHub** - Repository hosting + Actions  
-- **VPS** - Hetzner CiccioHouse deployment
-- **Domains** - 8020solutions.org + subdomains
-- **SSL** - Let's Encrypt automatic renewal
-- **Monitoring** - OpenClaw system health
+4. 🏗️ GitHub Actions Build
+   └── Auto-trigger su push, build multi-platform
 
----
+5. 📦 GitHub Release 
+   └── APK, web builds, artifacts automatici
+
+6. 🚀 Deploy VPS (Ciccio)
+   └── Pull da releases/, deploy test environment
+
+7. ✅ Notification + Review
+   └── Link test environment, pronto per produzione
+```
+
+## 📂 Struttura Repository
+
+```
+workflow/
+├── setup-hybrid-workflow.sh      # 🔧 Setup automatico principale
+├── scripts/
+│   ├── install-claude-pc.ps1     # 🪟 Installer PowerShell PC
+│   ├── claude-monitor.ps1        # 📊 Monitor GitHub issues
+│   ├── github-actions-build-workflow.yml  # ⚙️ CI/CD template
+│   └── deploy-from-github-releases.md     # 📖 Deploy guide
+├── CLAUDE_CODE_PC_SETUP.md       # 📋 Guida setup PC completa
+├── WORKFLOW_*.md                 # 📚 Documentazione ruoli
+└── commit-automation/            # 🤖 Convenzioni commit
+```
+
+## 🎯 Repository Coperti
+
+Il sistema supporta automaticamente questi repository:
+
+- **StageConnect** - Browser↔device debug tool
+- **BeachRef-app** - Beach reference Flutter app  
+- **x32-Assist** - Behringer X32 assistant
+- **GridConnect** - Sistema automazione pratiche elettriche
+- **finn** - Financial tools
+- **progetto-casa** - Casa management system
+- **Maestro** - Core business platform
+- **AutoDrum** - Automatic drumming system
+
+## 🔧 Configurazione Manuale
+
+### Prerequisiti VPS (Ciccio)
+- OpenClaw Gateway in esecuzione
+- Cron job CI Monitor attivo (ogni 5min)
+- Deploy directory: `/var/www/app-hub/downloads/`
+
+### Prerequisiti PC (Claude Code)  
+- Windows 10/11
+- PowerShell 5.1+
+- Accesso GitHub (token o SSH)
+
+### Prerequisiti GitHub
+- Repository con accesso push
+- GitHub Actions abilitato
+- Token con permessi appropriati
+
+## 🚨 Troubleshooting
+
+### Setup non riesce
+```bash
+# Verifica prerequisiti
+gh auth status
+git --version
+
+# Debug step-by-step
+./setup-hybrid-workflow.sh --verify-only
+```
+
+### GitHub Actions non partono
+1. Verifica file `.github/workflows/build-and-release.yml` presente
+2. Controlla push su branch `main` o `master`
+3. Verifica GitHub Actions abilitato nel repository
+
+### PC Monitor non funziona
+1. Verifica Task Scheduler configurato
+2. Controlla log: `C:\claude-workspace\logs\monitor.log`
+3. Testa manualmente: `.\claude-monitor.ps1 -Test`
+
+### Deploy VPS non avviene
+1. Verifica Ciccio cron job attivo: `/status`
+2. Controlla releases GitHub presenti
+3. Verifica permessi directory deploy
+
+## 🤝 Team & Responsabilità
+
+### 🧠 Ciccio (VPS) - Orchestrator
+- Coordinamento workflow generale
+- Deploy da GitHub releases
+- Monitoring infrastruttura
+- DevOps tasks
+
+### 💻 Claude Code (PC) - Developer  
+- Processing automatico issue `claude-code`
+- Development iterativo con context clearing
+- Commit + push automatico
+- Build trigger
+
+### 👨‍💼 Davide - Business
+- Creazione issue e specifiche
+- Review testing environment  
+- Approvazione produzione
+- Decisioni strategiche
 
 ## 📞 Support
 
-### **Troubleshooting:**
-- **PC Issues:** `C:\claude-workspace\scripts\diagnose.ps1`
-- **GitHub Actions:** Check workflow logs in repository Actions tab
-- **VPS Deploy:** Check Ciccio logs and system status
-- **General:** Create issue in this repository with `ciccio` label
-
-### **Contact:**
-- **Team:** 80/20 Solutions development team
-- **Email:** [Support contact if available]
-- **Issues:** Use GitHub Issues with appropriate labels
+Per problemi o miglioramenti:
+1. Crea issue in questo repository
+2. Tag appropriato: `ciccio` o `claude-code`
+3. Descrizione dettagliata del problema
 
 ---
 
-**Version:** 2.0.0  
-**Last Updated:** 2026-02-25  
-**Status:** Production Ready ✅
-
-*Created by 80/20 Solutions - Empowering SMEs with AI automation*
+**80/20 Solutions** - Empowering Italian SMEs with AI  
+🌐 https://8020solutions.org
