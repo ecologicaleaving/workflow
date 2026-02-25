@@ -1,93 +1,242 @@
-# Workflow - 80/20 Solutions Workflow Hub
+# 80/20 Solutions Workflow Hub
 
-**Sistema di workflow standardizzato per lo sviluppo collaborativo AI-assisted**
+Sistema di workflow standardizzato per lo sviluppo collaborativo AI-assisted con automazione completa.
 
-## 🎯 Obiettivo
+## 🎯 Overview
 
-SugitUp centralizza e standardizza tutti i workflow di sviluppo per il team 80/20 Solutions, garantendo:
-- **Consistency** nei processi di development e deploy  
-- **Documentazione** sempre aggiornata via PROJECT.md
-- **Automazione** delle operazioni ripetitive
-- **Socializzazione** dei metodi di lavoro tra team membri
+Il **Workflow Hub** centralizza tutti i processi di sviluppo 80/20 Solutions, fornendo:
 
-## 📋 Workflow Documentati
-
-### Core Workflows
-- [`WORKFLOW_CICCIO.md`](./WORKFLOW_CICCIO.md) - Orchestratore, infra, deploy
-- [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md) - Development, build, push
-- [`WORKFLOW_DAVID.md`](./WORKFLOW_DAVID.md) - Product Owner, direzione strategica
-
-### Standard e Template
-- [`PROJECT_MD_TEMPLATE.md`](./PROJECT_MD_TEMPLATE.md) - Template per PROJECT.md 
-- [`COMMIT_CONVENTIONS.md`](./COMMIT_CONVENTIONS.md) - Standard commit messages
-- [`BRANCH_STRATEGY.md`](./BRANCH_STRATEGY.md) - Git workflow strategy
-
-### Tools e Automazioni
-- [`commit-automation/`](./commit-automation/) - Script automazione commit per Claude Code
-- [`scripts/`](./scripts/) - Utility condivise
-- [`templates/`](./templates/) - Template progetti
-
-### Skills Claude Code
-- [`skills/`](./skills/) - AI skills per Claude Code (caricamento automatico)
-  - [`skills/SKILLS.md`](./skills/SKILLS.md) - Guida installazione e utilizzo skills
-  - [`skills/8020-commit-workflow/`](./skills/8020-commit-workflow/) - Skill commit/push workflow
+- **GitHub Issues Automation** - Processing automatico con AI
+- **Multi-Platform Builds** - GitHub Actions per Flutter, React, Node.js
+- **Unified Deployment** - Pipeline automatizzata VPS
+- **Team Coordination** - Workflow specializzati per ruolo
 
 ## 🚀 Quick Start
 
-### Per Claude Code (Development)
-1. **Installa skills**: `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-skills.sh | bash`
-2. **Installa commit automation**: `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash`
-3. **Usa workflow standardizzato**: Segui [`WORKFLOW_CLAUDE_CODE.md`](./WORKFLOW_CLAUDE_CODE.md)
-4. **Commit automatico**: La skill `8020-commit-workflow` guida ogni commit/push
+### **Per Claude Code (PC Windows):**
+```powershell
+# One-click installation
+irm https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-pc.ps1 | iex
+```
 
-### Per Ciccio (Orchestrator) 
-1. **Monitora progetti**: Dashboard status automatica
-2. **Deploy su richiesta**: Workflow definito in [`WORKFLOW_CICCIO.md`](./WORKFLOW_CICCIO.md)
-3. **Coordina team**: Assegna task e supervisiona
+### **Per Repository (GitHub Actions):**
+```bash
+# Copy workflow to your repository
+cp .github/workflows/build-and-release.yml your-repo/.github/workflows/
+```
 
-## 🔄 Processo Standard
+## 📋 Team Workflow
 
+### **Hybrid System Architecture:**
 ```mermaid
 graph LR
-    A[Develop Local] --> B[Update PROJECT.md]
-    B --> C[Build App/Web]
-    C --> D[Test & Verify]
-    D --> E[Git Commit + Push]
-    E --> F[Ciccio Deploy]
-    F --> G[Status Dashboard Update]
+A[Davide] --> B{Issue Creation}
+B --> C[claude-code label]
+B --> D[ciccio label]
+C --> E[PC Auto-Processing]
+D --> F[VPS Processing]
+E --> G[GitHub Actions Build]
+F --> H[Direct Deploy]
+G --> I[Release Creation]
+I --> J[VPS Auto-Deploy]
+H --> K[Production]
+J --> K
 ```
 
-## 📁 Struttura Repository
+### **Issue Labels System:**
+- `claude-code` → Automatic PC development processing
+- `ciccio` → VPS infrastructure/deployment tasks  
+- `in-progress` → Currently being processed
+- `building` → GitHub Actions building
+- `review-ready` → Built and ready for deployment
+- `deployed-test` → Live on test environment
 
+## 🔧 Components
+
+### **1. Claude Code PC Automation**
+- **Auto-start:** Windows Task Scheduler every 5 minutes
+- **Issue Monitoring:** GitHub CLI polling for `claude-code` labels
+- **Development:** AI-assisted code implementation
+- **Integration:** Git commit + push triggers GitHub Actions
+
+### **2. GitHub Actions Universal Build**
+- **Auto-Detection:** Flutter, React, Node.js, Static sites
+- **Multi-Platform:** APK, Web builds, Desktop apps
+- **Release Management:** Automatic versioning + artifact storage
+- **Issue Integration:** Label updates `building` → `review-ready`
+
+### **3. VPS Deployment System**
+- **Release Monitoring:** GitHub Releases polling
+- **Auto-Deploy:** Test environment deployment
+- **Production Pipeline:** Approval-based production deployment
+- **Service Management:** nginx, SSL, subdomain configuration
+
+## 📊 Monitoring & Status
+
+### **PC Monitoring:**
+```powershell
+# Check Claude Code status
+C:\claude-workspace\scripts\status.ps1
+
+# View real-time logs  
+Get-Content C:\claude-workspace\logs\monitor.log -Wait -Tail 20
+
+# Diagnostic check
+C:\claude-workspace\scripts\diagnose.ps1
 ```
-workflow/
-├── README.md                  # Overview e quick start
-├── WORKFLOW_*.md             # Workflow specifici per ruolo
-├── PROJECT_MD_TEMPLATE.md    # Template standard PROJECT.md
-├── commit-automation/        # Sistema automazione commit
-│   ├── install.sh
-│   ├── commit-flow.sh
-│   └── config/
-├── scripts/                  # Utility condivise
-└── templates/               # Template progetti nuovi
+
+### **GitHub Actions:**
+- **Workflow Status:** https://github.com/ecologicaleaving/[repo]/actions
+- **Releases:** https://github.com/ecologicaleaving/[repo]/releases
+- **Issue Tracking:** Labels automatically updated
+
+### **VPS Deployment:**
+- **Apps:** https://apps.8020solutions.org
+- **Test Sites:** https://test-[app].8020solutions.org
+- **Production:** https://[app].8020solutions.org
+
+## 🛠️ Installation & Setup
+
+### **Requirements:**
+- **PC Windows:** PowerShell, Git, GitHub CLI, Claude CLI
+- **GitHub Repository:** Private/Public with Actions enabled
+- **VPS Access:** nginx, SSL, deploy permissions
+
+### **Step-by-Step Setup:**
+
+**1. PC Setup (Claude Code):**
+```powershell
+# Run installer script
+irm https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-pc.ps1 | iex
+
+# Authenticate GitHub
+gh auth login --web
+
+# Test installation
+C:\claude-workspace\scripts\status.ps1
 ```
 
-## 🎭 Ruoli Team
+**2. Repository Setup (GitHub Actions):**
+```bash
+# Copy workflow file to repository
+mkdir -p .github/workflows
+cp workflow/.github/workflows/build-and-release.yml .github/workflows/
 
-- **🎯 David**: Product Owner, decisioni strategiche, requirements
-- **🧠 Ciccio**: Orchestratore, infra, deploy, coordinamento  
-- **👨‍💻 Claude Code**: Senior Developer, build apps, implementazione
+# Commit and push
+git add .github/workflows/build-and-release.yml
+git commit -m "Add GitHub Actions build workflow"
+git push
+```
 
-## ⚡ Principi Base
+**3. VPS Configuration (Ciccio):**
+```bash
+# Handled automatically by Ciccio monitoring system
+# No manual setup required
+```
 
-1. **Single Source of Truth**: PROJECT.md per ogni repo
-2. **Automation First**: Script per operazioni ripetitive
-3. **Documentation Driven**: Workflow sempre documentati
-4. **Quality Gates**: Test before deploy
-5. **Continuous Sync**: Status dashboard aggiornata automaticamente
+## 📚 Documentation
+
+### **Core Documents:**
+- **[CLAUDE_CODE_PC_SETUP.md](CLAUDE_CODE_PC_SETUP.md)** - PC installation guide
+- **[Workflow Commands](scripts/)** - Utility scripts and tools
+- **[GitHub Actions](../../github/workflows/)** - Build automation
+
+### **Team Guides:**
+- **Davide:** Create issues → automatic processing → approval → production  
+- **Claude Code:** Automated - monitors issues every 5 minutes
+- **Ciccio:** Automated - monitors releases → deploys → manages infrastructure
+
+## 🔄 Issue Processing Workflow
+
+### **Complete Flow:**
+```
+1. 📝 Issue Creation (Davide)
+   └── Add `claude-code` label for development tasks
+   └── Add `ciccio` label for infrastructure tasks
+
+2. 🤖 Auto-Processing (Claude Code PC)
+   └── Every 5 minutes: check for `claude-code` labels
+   └── AI development: implement solution
+   └── Git: commit + push → triggers GitHub Actions
+   └── Label: `claude-code` → `building`
+
+3. 🏗️ Build Automation (GitHub Actions)  
+   └── Auto-detect: Flutter, React, Node.js
+   └── Multi-platform: APK, Web, Static builds
+   └── Release: Create GitHub release with artifacts
+   └── Label: `building` → `review-ready`
+
+4. 🚀 Deploy Automation (Ciccio VPS)
+   └── Monitor: GitHub releases for new artifacts
+   └── Deploy: Test environment automatically  
+   └── Label: `review-ready` → `deployed-test`
+   └── Notify: "Test ready: [link]"
+
+5. ✅ Production (Davide Approval)
+   └── Test: Validate functionality  
+   └── Approve: "Test OK, go to production"
+   └── Deploy: Production environment
+   └── Complete: "Live: [link]"
+```
+
+## 💡 Key Benefits
+
+### **Automation:**
+- ✅ **Zero Manual Intervention** - From issue to test deployment
+- ✅ **24/7 Processing** - PC monitors issues continuously
+- ✅ **Professional Builds** - GitHub Actions for consistent quality
+- ✅ **Instant Deployment** - VPS automatically deploys to test
+
+### **Quality:**
+- ✅ **AI-Assisted Development** - Claude Code for implementation
+- ✅ **Multi-Platform Support** - APK + Web + Desktop builds
+- ✅ **Automated Testing** - Built-in test execution
+- ✅ **Version Management** - Semantic versioning + releases
+
+### **Efficiency:**
+- ✅ **Parallel Processing** - PC development + VPS infrastructure
+- ✅ **Cost Optimization** - GitHub Actions free tier + VPS efficiency
+- ✅ **Team Specialization** - Each component handles its expertise
+- ✅ **Scalable Architecture** - Easy to add new repositories
+
+## 🔗 Integration
+
+### **Supported Repositories:**
+- **StageConnect** - Browser ↔ Device debug tool
+- **BeachRef** / **BeachRef-app** - Beach volleyball referee management
+- **x32-Assist** - Professional audio mixer control
+- **GridConnect** - Electrical grid connection automation
+- **finn** - Family expense tracking with AI
+- **progetto-casa** - Home renovation management
+- **Maestro** - Security automation system
+- **AutoDrum** - Reaper automation tools
+
+### **External Services:**
+- **GitHub** - Repository hosting + Actions  
+- **VPS** - Hetzner CiccioHouse deployment
+- **Domains** - 8020solutions.org + subdomains
+- **SSL** - Let's Encrypt automatic renewal
+- **Monitoring** - OpenClaw system health
 
 ---
 
-**Created by**: Team 80/20 Solutions  
-**Last Updated**: 2026-02-22  
-**Version**: v1.1.0
+## 📞 Support
+
+### **Troubleshooting:**
+- **PC Issues:** `C:\claude-workspace\scripts\diagnose.ps1`
+- **GitHub Actions:** Check workflow logs in repository Actions tab
+- **VPS Deploy:** Check Ciccio logs and system status
+- **General:** Create issue in this repository with `ciccio` label
+
+### **Contact:**
+- **Team:** 80/20 Solutions development team
+- **Email:** [Support contact if available]
+- **Issues:** Use GitHub Issues with appropriate labels
+
+---
+
+**Version:** 2.0.0  
+**Last Updated:** 2026-02-25  
+**Status:** Production Ready ✅
+
+*Created by 80/20 Solutions - Empowering SMEs with AI automation*

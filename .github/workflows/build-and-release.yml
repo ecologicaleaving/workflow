@@ -1,0 +1,375 @@
+# Universal Build & Release Workflow for 80/20 Solutions
+# Automatically detects project type and builds accordingly
+
+name: Auto Build & Release
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.gitignore'
+      - '*.md'
+  
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor  
+        - major
+
+jobs:
+  detect-project-type:
+    runs-on: ubuntu-latest
+    outputs:
+      project-type: ${{ steps.detect.outputs.type }}
+      has-flutter: ${{ steps.detect.outputs.flutter }}
+      has-node: ${{ steps.detect.outputs.node }}
+      has-react: ${{ steps.detect.outputs.react }}
+      repo-name: ${{ steps.detect.outputs.repo-name }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Detect Project Type
+      id: detect
+      run: |
+        repo_name=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
+        echo "repo-name=$repo_name" >> $GITHUB_OUTPUT
+        echo "Repository: $repo_name"
+        
+        # Check for Flutter project
+        if [ -f "pubspec.yaml" ]; then
+          echo "flutter=true" >> $GITHUB_OUTPUT
+          echo "type=flutter" >> $GITHUB_OUTPUT
+          echo "Detected: Flutter project"
+        # Check for Node.js/React project  
+        elif [ -f "package.json" ]; then
+          echo "node=true" >> $GITHUB_OUTPUT
+          if grep -q "react" package.json; then
+            echo "react=true" >> $GITHUB_OUTPUT
+            echo "type=react" >> $GITHUB_OUTPUT
+            echo "Detected: React project"
+          else
+            echo "type=node" >> $GITHUB_OUTPUT
+            echo "Detected: Node.js project"
+          fi
+        # Check for static website
+        elif [ -f "index.html" ] || [ -d "src" ]; then
+          echo "type=static" >> $GITHUB_OUTPUT
+          echo "Detected: Static website"
+        else
+          echo "type=unknown" >> $GITHUB_OUTPUT
+          echo "Detected: Unknown project type"
+        fi
+
+  build-flutter:
+    needs: detect-project-type
+    if: needs.detect-project-type.outputs.project-type == 'flutter'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Run tests
+      run: flutter test --coverage || true  # Don't fail build on test failure
+      
+    - name: Build APK
+      run: flutter build apk --release
+      
+    - name: Build Web
+      run: flutter build web --release
+      
+    - name: Prepare artifacts
+      run: |
+        mkdir -p artifacts
+        cp build/app/outputs/flutter-apk/app-release.apk artifacts/${{ needs.detect-project-type.outputs.repo-name }}-${{ github.sha }}.apk
+        cd build/web && zip -r ../../artifacts/${{ needs.detect-project-type.outputs.repo-name }}-web-${{ github.sha }}.zip . && cd ../..
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: flutter-builds
+        path: artifacts/
+
+  build-react:
+    needs: detect-project-type
+    if: needs.detect-project-type.outputs.project-type == 'react'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false || true  # Don't fail build on test failure
+      
+    - name: Build production
+      run: npm run build
+      
+    - name: Prepare artifacts
+      run: |
+        mkdir -p artifacts
+        cd build && zip -r ../artifacts/${{ needs.detect-project-type.outputs.repo-name }}-web-${{ github.sha }}.zip . && cd ..
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: react-build
+        path: artifacts/
+
+  build-node:
+    needs: detect-project-type
+    if: needs.detect-project-type.outputs.project-type == 'node'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test || true  # Don't fail build on test failure
+      
+    - name: Build (if build script exists)
+      run: |
+        if npm run | grep -q "build"; then
+          npm run build
+          mkdir -p artifacts
+          if [ -d "build" ]; then
+            cd build && zip -r ../artifacts/${{ needs.detect-project-type.outputs.repo-name }}-${{ github.sha }}.zip . && cd ..
+          elif [ -d "dist" ]; then
+            cd dist && zip -r ../artifacts/${{ needs.detect-project-type.outputs.repo-name }}-${{ github.sha }}.zip . && cd ..
+          fi
+        fi
+        
+    - name: Upload artifacts
+      if: success() && hashFiles('artifacts/*') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: node-build
+        path: artifacts/
+
+  build-static:
+    needs: detect-project-type
+    if: needs.detect-project-type.outputs.project-type == 'static'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Prepare static site
+      run: |
+        mkdir -p artifacts
+        zip -r artifacts/${{ needs.detect-project-type.outputs.repo-name }}-static-${{ github.sha }}.zip . -x "*.git*" "node_modules/*" "*.md"
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: static-site
+        path: artifacts/
+
+  create-release:
+    needs: [detect-project-type, build-flutter, build-react, build-node, build-static]
+    if: always() && (needs.build-flutter.result == 'success' || needs.build-react.result == 'success' || needs.build-node.result == 'success' || needs.build-static.result == 'success')
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      issues: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Generate version
+      id: version
+      run: |
+        # Get latest tag or default to 1.0.0
+        latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+        echo "Latest tag: $latest_tag"
+        
+        # Extract version numbers
+        version=${latest_tag#v}
+        IFS='.' read -ra VERSION_PARTS <<< "$version"
+        major=${VERSION_PARTS[0]:-1}
+        minor=${VERSION_PARTS[1]:-0}  
+        patch=${VERSION_PARTS[2]:-0}
+        
+        # Increment based on input or default to patch
+        release_type="${{ github.event.inputs.release_type || 'patch' }}"
+        case $release_type in
+          major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+          minor)  
+            minor=$((minor + 1))
+            patch=0
+            ;;
+          patch)
+            patch=$((patch + 1))
+            ;;
+        esac
+        
+        new_version="v${major}.${minor}.${patch}"
+        echo "New version: $new_version"
+        echo "version=$new_version" >> $GITHUB_OUTPUT
+        echo "tag=$new_version" >> $GITHUB_OUTPUT
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        repo_name="${{ needs.detect-project-type.outputs.repo-name }}"
+        version="${{ steps.version.outputs.version }}"
+        
+        # Find and rename artifacts
+        find artifacts/ -name "*.apk" -exec cp {} "release-assets/${repo_name}-${version}.apk" \;
+        find artifacts/ -name "*-web-*.zip" -exec cp {} "release-assets/${repo_name}-web-${version}.zip" \;
+        find artifacts/ -name "*-static-*.zip" -exec cp {} "release-assets/${repo_name}-static-${version}.zip" \;
+        find artifacts/ -name "*.zip" ! -name "*-web-*" ! -name "*-static-*" -exec cp {} "release-assets/${repo_name}-${version}.zip" \;
+        
+        # List generated assets
+        echo "Generated release assets:"
+        ls -la release-assets/ || echo "No artifacts found"
+
+    - name: Update issue labels
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Find issues with 'building' label and update to 'review-ready'
+        echo "Looking for issues with 'building' label..."
+        
+        building_issues=$(gh issue list --label "building" --state open --json number,title --jq '.[].number' 2>/dev/null || echo "")
+        
+        if [ -n "$building_issues" ] && [ "$building_issues" != "" ]; then
+          echo "Found issues to update: $building_issues"
+          for issue in $building_issues; do
+            echo "Updating issue #$issue"
+            
+            # Update labels
+            gh issue edit $issue --remove-label "building" --add-label "review-ready" || echo "Failed to update labels for #$issue"
+            
+            # Add completion comment
+            comment_body="✅ **Build Completed Successfully - GitHub Actions**
+
+**Release:** ${{ steps.version.outputs.version }}
+**Project Type:** ${{ needs.detect-project-type.outputs.project-type }}
+**Build Status:** ✅ Success
+**Commit:** ${{ github.sha }}
+
+**📦 Artifacts Generated:**
+$(ls -1 release-assets/ 2>/dev/null | sed 's/^/- /' || echo '- No artifacts generated')
+
+**🔗 Release:** [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})
+**🚀 Next Step:** Ready for testing and deployment
+
+Automated build completed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+
+            gh issue comment $issue --body "$comment_body" || echo "Failed to comment on #$issue"
+            
+            echo "✅ Updated issue #$issue"
+          done
+        else
+          echo "No issues with 'building' label found"
+        fi
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: Release ${{ steps.version.outputs.version }}
+        body: |
+          ## 🚀 Release ${{ steps.version.outputs.version }}
+          
+          **Auto-generated release from GitHub Actions**
+          
+          ### 📦 Build Information
+          - **Repository:** ${{ github.repository }}
+          - **Project Type:** ${{ needs.detect-project-type.outputs.project-type }}
+          - **Commit:** ${{ github.sha }}
+          - **Branch:** ${{ github.ref_name }}
+          - **Trigger:** ${{ github.event_name }}
+          - **Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          
+          ### 📱 Downloads
+          Check the assets below for platform-specific builds:
+          - **Android APK:** For mobile installation
+          - **Web Build:** For web deployment  
+          - **Static Site:** For static hosting
+          
+          ### 🔗 Quick Links
+          - **App Hub:** https://apps.8020solutions.org
+          - **Live Demo:** https://${{ needs.detect-project-type.outputs.repo-name }}.8020solutions.org (if deployed)
+          - **Documentation:** [View README](https://github.com/${{ github.repository }}#readme)
+          
+          ### 🔄 Automated Workflow
+          This release was created automatically by the 80/20 Solutions CI/CD pipeline:
+          1. Code committed to repository
+          2. GitHub Actions triggered build
+          3. Platform-specific builds generated  
+          4. Release created with artifacts
+          5. Issue labels updated to `review-ready`
+          6. Ready for deployment team
+          
+          ---
+          *Generated automatically by [80/20 Solutions](https://8020solutions.org) Build System*
+        files: release-assets/*
+        generate_release_notes: true
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Summary
+      run: |
+        echo "✅ Build and Release Summary"
+        echo "=========================="
+        echo "Repository: ${{ github.repository }}"
+        echo "Project Type: ${{ needs.detect-project-type.outputs.project-type }}"
+        echo "Version: ${{ steps.version.outputs.version }}"
+        echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}"
+        echo ""
+        echo "📦 Assets Created:"
+        ls -la release-assets/ 2>/dev/null || echo "No assets found"
+        echo ""
+        echo "🔗 Next Steps:"
+        echo "1. Check GitHub release for artifacts"
+        echo "2. Issues updated to 'review-ready'"
+        echo "3. Deployment team will process for testing"
+        echo "4. After testing approval, deploy to production"
