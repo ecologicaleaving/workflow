@@ -124,42 +124,118 @@ Before finishing:
 
 ---
 
-## PHASE 5 — UPDATE PROJECT.md
+## PHASE 5 — CREATE / UPDATE PROJECT.md
 
 PROJECT.md is the **Single Source of Truth** for the entire team pipeline
 (status dashboard, Telegram bot, Ciccio deploy system). Always update it.
+Reference template: `workflow/PROJECT_MD_TEMPLATE.md`
 
-### 5a. If PROJECT.md exists
+---
 
-1. **Version bump** — read current version, apply:
-   - Issue type `fix` / `bug` → PATCH bump (1.2.3 → 1.2.4)
-   - Issue type `feat` / `feature` / new functionality → MINOR bump (1.2.3 → 1.3.0)
-   - Determine type from the issue title/labels or the nature of your changes
+### 5a. If PROJECT.md does NOT exist — CREATE it
 
-2. **Backlog** — find the issue in the backlog section and move it:
-   - If listed as `TODO` or `IN PROGRESS` → move to `DONE`
-   - If not listed → add it under `DONE`:
-     `- **DONE**: [issue title — brief description of what was implemented]`
+Infer everything you can from the codebase. Never invent — leave `[TBD]` for
+anything you cannot determine with confidence.
 
-3. **Timestamp** — update the last line:
-   `*Last Updated: YYYY-MM-DDTHH:MM:SSZ*` with current UTC time
+**MUST HAVE sections** (required, block commit if missing):
 
-4. **CI Status** — set to `passing` if tests passed, `failing` if they did not
+```markdown
+## Project Info
+- **Name**: [from package.json/pubspec.yaml "name" field]
+- **Version**: v0.1.0  ← start here if no version found
+- **Status**: development
+- **Platforms**: [web|apk|ios|desktop — detect from project type]
+- **Description**: [generic, privacy-friendly, no client names]
 
-### 5b. If PROJECT.md does NOT exist
+## Deployment
+- **Live URL**: [if found in README/config, else N/A]
+- **Deploy Method**: [netlify|vps-nginx|github-actions|manual|TBD]
+- **Deploy Host**: [TBD]
+- **CI Status**: passing  ← set based on Phase 4 result
+- **Last Deploy**: [current UTC timestamp ISO 8601]
 
-Create it from the standard template. Fill in only what you can infer from
-the codebase (project name, platform, tech stack, GitHub URL, main branch).
-Leave unknown fields as `[TBD]`. Add the resolved issue under `DONE`.
+## Repository
+- **Main Branch**: [master|main — detect from git]
+- **Development Branch**: [current feature branch]
+- **GitHub**: [from git remote url]
 
-Minimum required sections: `Project Info`, `Repository`, `Backlog`.
+## Backlog
+- **DONE**: [issue title — brief description of what was implemented]
+```
 
-### 5c. Version consistency
+**RECOMMENDED sections** (add if info is available):
 
-If the project has a version declared elsewhere, align them:
-- Flutter → `pubspec.yaml` (version field)
-- Node.js → `package.json` (version field)
-- Both must match the version in PROJECT.md after your update
+```markdown
+## Database
+- **Provider**: [detect from dependencies: prisma→postgresql, sqflite→sqlite, etc.]
+- **Schema**: [prisma|sql-migrations|sqflite|mongoose|none]
+- **Migration Status**: current
+
+## Tech Stack
+- **Frontend**: [from package.json dependencies]
+- **Backend**: [from package.json / requirements.txt]
+- **Database**: [from schema/deps]
+- **Auth**: [from deps — jwt, bcrypt, firebase-auth, etc.]
+- **Deployment**: [TBD]
+```
+
+**Privacy rules** (always enforce):
+- No client names, no real location names
+- No credentials, tokens, connection strings
+- Descriptions generic but professional
+
+---
+
+### 5b. If PROJECT.md EXISTS — UPDATE it
+
+#### 1. Version bump
+Read current version, then apply:
+
+| Issue/change type | Bump | Example |
+|-------------------|------|---------|
+| `fix`, `bug` | PATCH | 1.2.3 → 1.2.4 |
+| `feat`, new functionality | MINOR | 1.2.3 → 1.3.0 |
+| Breaking change (`feat!`) | MAJOR | 1.2.3 → 2.0.0 |
+
+Determine type from issue labels, title, or nature of your changes.
+
+#### 2. Backlog
+- Find the issue in the `Backlog` section
+- If `TODO` or `IN PROGRESS` → move to `DONE`
+- If not present → add under `DONE`:
+  `- **DONE**: [issue title — brief description of what was implemented]`
+- If you introduced new known limitations or follow-up work → add as `TODO`
+
+#### 3. CI Status
+- Tests green (Phase 4 passed) → `CI Status: passing`
+- Tests failed → `CI Status: failing`
+
+#### 4. Timestamp
+Update the last line:
+```
+*Last Updated: YYYY-MM-DDTHH:MM:SSZ*
+```
+Use current UTC time in ISO 8601 format.
+
+#### 5. Other fields — update only if changed by this issue
+- `Status`: only change if the issue moves the project to a new lifecycle stage
+- `Live URL`: update if a new endpoint was added/changed
+- `Tech Stack`: update if a new library/framework was introduced
+- `Database → Migration Status`: set to `pending` if you added migrations not yet applied to prod
+
+---
+
+### 5c. Version consistency — MANDATORY
+
+After updating PROJECT.md, align the version in all other version files:
+
+| Project type | File | Field |
+|-------------|------|-------|
+| Flutter | `pubspec.yaml` | `version:` |
+| Node.js | `package.json` | `"version":` |
+| Both present | Both files | Must match PROJECT.md |
+
+If the files disagree, PROJECT.md wins — update the others to match.
 
 ---
 
@@ -221,5 +297,6 @@ Commit type rules (from 8020-commit-workflow):
 - lint, typecheck, unit, and e2e suites all green.
 - The implementation matches every requirement stated in the issue.
 - No broken imports, no syntax errors, no TODO left behind.
-- PROJECT.md updated: version bumped, issue moved to DONE, timestamp current.
+- PROJECT.md exists, version bumped, CI Status = passing, issue moved to DONE, timestamp current.
+- Version consistent across PROJECT.md + pubspec.yaml / package.json.
 - Commit created with correct conventional format and test summary in body.
