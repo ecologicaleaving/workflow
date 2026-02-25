@@ -31,10 +31,11 @@ Goal: understand the project and the problem before writing a single line.
 4. Read the most relevant source files completely.
 5. Find and read existing tests — they tell you what "correct" looks like.
 6. Identify the project type and available test commands:
-   - Flutter → `flutter test`
-   - Node.js/React → `npm test`
+   - Flutter → `flutter test`, `flutter analyze`
+   - Node.js/React → `npm test` (unit) + check `package.json scripts` for `test:e2e`, `playwright`, `cypress`
    - Python → `pytest`
    - Other → check `Makefile`, `package.json scripts`, `justfile`
+   - **For web apps**: also detect lint (`lint`, `eslint`) and type-check (`typecheck`, `tsc`) scripts
 
 Do **not** modify anything in this phase.
 
@@ -57,19 +58,27 @@ Define your implementation steps in order. Prefer small, testable increments.
 
 ## PHASE 3 — ITERATIVE IMPLEMENTATION
 
-Goal: implement → test → fix, looping until tests are green (max 5 iterations).
+Goal: implement → test → fix, looping until ALL test suites are green (max 5 iterations per suite).
 
 ```
 iteration = 0
 while iteration < 5:
     implement next logical unit of change
-    run all available tests
-    if tests pass:
+
+    # Run tests in order — stop at first failing suite and fix before continuing
+    1. lint (if available)         → e.g. npm run lint / flutter analyze
+    2. type-check (if available)   → e.g. npm run typecheck / tsc --noEmit
+    3. unit tests                  → e.g. npm test / flutter test / pytest
+    4. e2e / UI tests (if available) → e.g. npm run test:e2e (Playwright/Cypress)
+
+    if all suites pass:
         move to next unit / proceed to Phase 4
     else:
-        read error output carefully
+        read the full error output carefully
         identify root cause (do not guess)
         fix the specific issue
+        re-run only the failing suite to confirm the fix
+        then re-run the full pipeline to check for regressions
         iteration++
 
 if iteration == 5 and tests still failing:
@@ -84,8 +93,9 @@ if iteration == 5 and tests still failing:
 - If a test was already failing before your changes, note it and continue.
 - If the project has no test framework, do a careful code review of your own
   changes as a substitute (read every file you touched).
+- Never skip or comment out a failing test — fix the code instead.
 - Never run: `git add`, `git commit`, `git push`, `git merge`, `git checkout`,
-  `git reset`. Branch management is handled externally by the monitor.
+  `git reset`. Git operations are handled in Phase 6.
 - Never modify: `.git/` internals, lock files, auto-generated files.
 
 ---
@@ -153,10 +163,63 @@ If the project has a version declared elsewhere, align them:
 
 ---
 
+---
+
+## PHASE 6 — PRODUCTION-READY COMMIT
+
+Only execute this phase after ALL of the following are true:
+- Phase 4 full test suite passed (lint + typecheck + unit + e2e)
+- Phase 5 PROJECT.md is updated
+
+### 6a. Pre-commit safety checks
+```bash
+git status          # confirm only expected files are modified
+git diff --name-only  # review list of changed files
+```
+- Verify no `.env`, secrets, or credentials are staged
+- Verify `.gitignore` is correct
+
+### 6b. Stage and commit
+```bash
+git add <specific files>   # never git add -A blindly
+git commit -m "<type>(<scope>): <short description>
+
+- <bullet: what changed>
+- <bullet: why>
+
+Tests: lint ✓ | typecheck ✓ | unit ✓ | e2e ✓
+Closes #<issue-number>"
+```
+
+Commit type rules (from 8020-commit-workflow):
+- `feat:` → new functionality (MINOR bump)
+- `fix:` → bug fix (PATCH bump)
+- `feat!:` → breaking change (MAJOR bump)
+- `docs:`, `style:`, `refactor:`, `test:`, `chore:` → PATCH
+
+**Do NOT push.** Push is Davide's responsibility. After committing, report:
+> "Implementazione completata e committata. Tutti i test passano. Puoi pushare e dire a Ciccio di deployare su test."
+
+---
+
+## Project-type quick reference
+
+| Type | Detect | Lint | Type-check | Unit test | E2E test |
+|------|--------|------|------------|-----------|----------|
+| Flutter | `pubspec.yaml` | `flutter analyze` | — | `flutter test` | — |
+| React | `package.json` + "react" | `npm run lint` | `npm run typecheck` | `npm test -- --watchAll=false` | `npm run test:e2e` |
+| Node.js | `package.json` | `npm run lint` | `npm run typecheck` | `npm test` | — |
+| Python | `*.py` | `flake8` / `ruff` | `mypy` | `pytest` | — |
+| Static | `index.html` | `htmlhint` | — | — | — |
+
+---
+
 ## What success looks like
 
 - All pre-existing tests still pass.
 - New tests (if required by the issue) pass.
+- lint, typecheck, unit, and e2e suites all green.
 - The implementation matches every requirement stated in the issue.
 - No broken imports, no syntax errors, no TODO left behind.
 - PROJECT.md updated: version bumped, issue moved to DONE, timestamp current.
+- Commit created with correct conventional format and test summary in body.
