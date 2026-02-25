@@ -135,7 +135,7 @@ gh auth login --web
 gh auth status
 
 # Required for GitHub Projects board (move cards Todo -> In Progress -> Done)
-gh auth refresh -s read:project,write:project
+gh auth refresh -s project
 
 # Test repository access  
 gh issue list --repo ecologicaleaving/StageConnect --limit 1
