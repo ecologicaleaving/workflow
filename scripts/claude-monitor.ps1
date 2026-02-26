@@ -149,9 +149,9 @@ HARD CONSTRAINTS:
 - Stop after 5 failed fix iterations and document why
 "@
             Write-Log "Launching Codex agent for issue #$Number..."
-            # --approval-policy full-auto: nessuna conferma interattiva richiesta
+            # --full-auto: nessuna conferma interattiva richiesta
             # Senza questo flag Codex rimane in attesa di input → si inchioda
-            $output = $prompt | & $Config.CodexCmd --approval-policy full-auto 2>&1
+            $output = $prompt | & $Config.CodexCmd --full-auto 2>&1
 
         } else {
 
