@@ -97,6 +97,49 @@ function Get-DefaultBranch {
     return "master"
 }
 
+# ---- PROJECT V2 STATUS ----
+# Project: "80/20 Solutions - Development Hub" (PVT_kwHODSTPQM4BP1Xp)
+# Status field: PVTSSF_lAHODSTPQM4BP1Xpzg-INlw
+# Options: Todo=f75ad846 | InProgress=47fc9ee4 | Test=1d6a37f9 | PUSH=03f548ab | Done=98236657
+
+$ProjectV2 = @{
+    ProjectId   = "PVT_kwHODSTPQM4BP1Xp"
+    FieldId     = "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
+    Todo        = "f75ad846"
+    InProgress  = "47fc9ee4"
+    Test        = "1d6a37f9"
+    Done        = "98236657"
+}
+
+function Set-ProjectStatus {
+    param([string]$Repo, [int]$Number, [string]$StatusOptionId)
+    try {
+        # Find the project item ID for this issue
+        $itemsJson = gh project item-list 2 --owner $Config.GithubOrg --format json 2>$null
+        if (-not $itemsJson) { return }
+        $items = $itemsJson | ConvertFrom-Json
+        $item  = $items.items | Where-Object {
+            $_.content.repository -like "*/$Repo" -and $_.content.number -eq $Number
+        } | Select-Object -First 1
+        if (-not $item) { Write-Log "Project item not found for ${Repo}#${Number}"; return }
+
+        $mutation = @"
+mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "$($ProjectV2.ProjectId)"
+    itemId: "$($item.id)"
+    fieldId: "$($ProjectV2.FieldId)"
+    value: { singleSelectOptionId: "$StatusOptionId" }
+  }) { projectV2Item { id } }
+}
+"@
+        gh api graphql -f query=$mutation 2>$null | Out-Null
+        Write-Log "Project status updated for ${Repo}#${Number} → $StatusOptionId"
+    } catch {
+        Write-Log "Project status update failed for ${Repo}#${Number}: $_"
+    }
+}
+
 # ---- CORE: single-agent issue resolver ----
 
 function Invoke-IssueResolver {
@@ -243,6 +286,7 @@ function Invoke-IssueProcessor {
         # 1. Mark in-progress
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label $agentLabel --add-label "in-progress" 2>$null | Out-Null
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.InProgress
 
         $agentName = if ($AgentType -eq "codex") { "Codex CLI Agent" } else { "Claude Code Agent" }
         gh issue comment $Number --repo "$org/$Repo" --body (
@@ -381,9 +425,10 @@ Closes #$Number
             "Branch pushed: $branchName (PR creation failed -- open manually)"
         }
 
-        # 9. Update issue: review-ready
+        # 9. Update issue: review-ready → move to Test column
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Test
 
         gh issue comment $Number --repo "$org/$Repo" --body (
             "✅ **$agentFullName Completed**`n`n" +
@@ -405,6 +450,7 @@ Closes #$Number
         Write-ErrorLog "Failed ${Repo}#${Number}: $err"
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label "in-progress" --add-label $agentLabel 2>$null | Out-Null
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Todo
         gh issue comment $Number --repo "$org/$Repo" --body (
             "❌ **Processing Failed ($agentFullName)**`n`nError: ``$err```n`n" +
             "Reset to ``$agentLabel`` for retry.`n" +
