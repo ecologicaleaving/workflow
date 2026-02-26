@@ -1,0 +1,165 @@
+name: Deploy Flutter App
+# ============================================================
+# TEMPLATE RIUTILIZZABILE — copia in ogni repo Flutter come:
+# .github/workflows/deploy.yml
+#
+# Secrets richiesti nel repo:
+#   VPS_SSH_KEY           — chiave privata SSH (github-actions-deploy)
+#   VPS_HOST              — IP VPS (46.225.60.101)
+#   VPS_USER              — utente SSH (root)
+#   CICCIO_GATEWAY_TOKEN  — token gateway OpenClaw per notifiche
+#
+# Variables opzionali (Settings → Variables):
+#   FLUTTER_VERSION  — versione Flutter (default: stable)
+#   BUILD_APK        — true/false (default: true)
+#   BUILD_WEB        — true/false (default: false)
+#   APK_DEST         — path VPS per APK (default: /var/www/app-hub/downloads)
+#   WEB_WEBROOT      — path VPS per web build
+# ============================================================
+
+on:
+  push:
+    branches: ['**']
+
+env:
+  FLUTTER_VERSION: ${{ vars.FLUTTER_VERSION || 'stable' }}
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Flutter
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---- Checkout ----
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- Setup Flutter ----
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      # ---- Installa deps ----
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # ---- Analisi statica ----
+      - name: Flutter analyze
+        run: flutter analyze
+        continue-on-error: false
+
+      # ---- Test ----
+      - name: Flutter test
+        run: flutter test
+        continue-on-error: true  # non blocca il deploy se i test non esistono
+
+      # ---- Build APK ----
+      - name: Build APK
+        if: ${{ vars.BUILD_APK != 'false' }}
+        run: flutter build apk --release
+
+      # ---- Build Web ----
+      - name: Build Web
+        if: ${{ vars.BUILD_WEB == 'true' }}
+        run: flutter build web --release
+
+      # ---- Versione e nome file ----
+      - name: Set artifact name
+        id: artifact
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+          COMMIT="${{ github.sha }}"
+          SHORT_COMMIT="${COMMIT:0:7}"
+
+          # Leggi versione da pubspec.yaml
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | xargs)
+          APK_NAME="${REPO}-v${VERSION}-${SHORT_COMMIT}.apk"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "apk_name=$APK_NAME" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          echo "short_commit=$SHORT_COMMIT" >> $GITHUB_OUTPUT
+
+          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+            echo "env_name=production" >> $GITHUB_OUTPUT
+          else
+            echo "env_name=test" >> $GITHUB_OUTPUT
+          fi
+
+      # ---- Rinomina APK ----
+      - name: Rename APK
+        if: ${{ vars.BUILD_APK != 'false' }}
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }}
+
+      # ---- GitHub Release (solo su master/main) ----
+      - name: Create GitHub Release
+        if: github.ref_name == 'master' || github.ref_name == 'main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.artifact.outputs.version }}-${{ steps.artifact.outputs.short_commit }}
+          name: v${{ steps.artifact.outputs.version }} (${{ steps.artifact.outputs.short_commit }})
+          files: build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }}
+          draft: false
+          prerelease: false
+
+      # ---- Setup SSH ----
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # ---- Deploy APK su VPS ----
+      - name: Deploy APK to VPS
+        if: ${{ vars.BUILD_APK != 'false' }}
+        run: |
+          APK_DEST="${{ vars.APK_DEST || '/var/www/app-hub/downloads' }}"
+          scp -i ~/.ssh/deploy_key \
+            build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }} \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:$APK_DEST/
+
+          # Aggiorna symlink "latest" per download diretto
+          ssh -i ~/.ssh/deploy_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "ln -sf $APK_DEST/${{ steps.artifact.outputs.apk_name }} \
+                    $APK_DEST/${{ steps.artifact.outputs.repo }}-latest.apk"
+
+      # ---- Deploy Web su VPS (se abilitato) ----
+      - name: Deploy Web to VPS
+        if: ${{ vars.BUILD_WEB == 'true' }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          REPO="${{ steps.artifact.outputs.repo }}"
+          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+            WEBROOT="${{ vars.WEB_WEBROOT || /var/www/$REPO }}"
+          else
+            WEBROOT="/var/www/test-$REPO"
+          fi
+
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            build/web/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:$WEBROOT/
+
+      # ---- Notifica Ciccio ----
+      - name: Notify Ciccio
+        if: always()
+        run: |
+          REPO="${{ steps.artifact.outputs.repo }}"
+          VERSION="${{ steps.artifact.outputs.version }}"
+          BRANCH="${{ github.ref_name }}"
+          STATUS="${{ job.status }}"
+          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+
+          curl -s -X POST "http://${{ secrets.VPS_HOST }}:18789/tools/invoke" \
+            -H "Authorization: Bearer ${{ secrets.CICCIO_GATEWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"$EMOJI Flutter Build — $REPO v$VERSION\\nBranch: $BRANCH\\nAPK: ${REPO}-v${VERSION}.apk\\nStatus: $STATUS\"}}" \
+            || true

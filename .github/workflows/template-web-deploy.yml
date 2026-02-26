@@ -1,0 +1,120 @@
+name: Deploy Web App (Next.js / React)
+# ============================================================
+# TEMPLATE RIUTILIZZABILE — copia in ogni repo web come:
+# .github/workflows/deploy.yml
+#
+# Secrets richiesti nel repo:
+#   VPS_SSH_KEY  — chiave privata SSH (github-actions-deploy)
+#   VPS_HOST     — IP VPS (46.225.60.101)
+#   VPS_USER     — utente SSH (root)
+#
+# Variables opzionali (Settings → Variables):
+#   TEST_WEBROOT  — path webroot test  (default: /var/www/test-REPO)
+#   PROD_WEBROOT  — path webroot prod  (default: /var/www/REPO)
+# ============================================================
+
+on:
+  push:
+    branches: ['**']   # Tutti i branch
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---- Checkout ----
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- Setup Node ----
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # ---- Install deps ----
+      - name: Install dependencies
+        run: npm ci
+
+      # ---- Build ----
+      - name: Build
+        run: npm run build
+        env:
+          # Passa tutte le variabili NEXT_PUBLIC_* definite nei repo secrets/vars
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_USE_ZCS_MOCK: ${{ vars.NEXT_PUBLIC_USE_ZCS_MOCK || 'false' }}
+          NEXT_PUBLIC_USE_AUTH_MOCK: ${{ vars.NEXT_PUBLIC_USE_AUTH_MOCK || 'false' }}
+
+      # ---- Setup SSH ----
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # ---- Determina webroot in base al branch ----
+      - name: Set deploy target
+        id: target
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+
+          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+            WEBROOT="${{ vars.PROD_WEBROOT || /var/www/$REPO }}"
+            ENV_NAME="production"
+          else
+            WEBROOT="${{ vars.TEST_WEBROOT || /var/www/test-$REPO }}"
+            ENV_NAME="test"
+          fi
+
+          echo "webroot=$WEBROOT" >> $GITHUB_OUTPUT
+          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
+          echo "Deploying to: $WEBROOT ($ENV_NAME)"
+
+      # ---- Deploy via rsync ----
+      - name: Deploy to VPS
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            out/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ steps.target.outputs.webroot }}/
+
+      # ---- Health check ----
+      - name: Health check
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          REPO="${{ github.event.repository.name }}"
+          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+            URL="https://$REPO.8020solutions.org"
+          else
+            URL="https://test-$REPO.8020solutions.org"
+          fi
+          sleep 3
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          echo "Health check $URL → HTTP $STATUS"
+          [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || exit 1
+
+      # ---- Notifica Ciccio ----
+      - name: Notify Ciccio
+        if: always()
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          REPO="${{ github.event.repository.name }}"
+          COMMIT="${{ github.sha }}"
+          STATUS="${{ job.status }}"
+          WEBROOT="${{ steps.target.outputs.webroot }}"
+          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+
+          curl -s -X POST "http://${{ secrets.VPS_HOST }}:18789/tools/invoke" \
+            -H "Authorization: Bearer ${{ secrets.CICCIO_GATEWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"$EMOJI GitHub Actions — $REPO\\nBranch: $BRANCH\\nCommit: ${COMMIT:0:7}\\nDeploy: $WEBROOT\\nStatus: $STATUS\"}}" \
+            || true  # non fallire se la notifica non arriva
