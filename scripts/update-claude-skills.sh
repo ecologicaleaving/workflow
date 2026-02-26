@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # update-claude-skills.sh
-# Syncs all skills from the workflow repo to ~/.claude/skills/
+# Syncs skills and CLAUDE.md from the workflow repo to ~/.claude/
 # Run this after every `git pull` on the workflow repo.
 #
 # Usage:
@@ -11,6 +11,8 @@ set -e
 WORKFLOW_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_SRC="$WORKFLOW_DIR/skills"
 SKILLS_DST="$HOME/.claude/skills"
+CLAUDE_MD_SRC="$WORKFLOW_DIR/CLAUDE.md"
+CLAUDE_MD_DST="$HOME/.claude/CLAUDE.md"
 
 echo "Workflow repo: $WORKFLOW_DIR"
 echo "Syncing skills → $SKILLS_DST"
@@ -31,5 +33,13 @@ for skill_dir in "$SKILLS_SRC"/*/; do
     echo "  ✓ $skill_name"
 done
 
+# Sync CLAUDE.md (global instructions for Claude Code)
+if [ -f "$CLAUDE_MD_SRC" ]; then
+    cp "$CLAUDE_MD_SRC" "$CLAUDE_MD_DST"
+    echo "  ✓ CLAUDE.md → $CLAUDE_MD_DST"
+else
+    echo "  ! CLAUDE.md not found in workflow repo, skipping"
+fi
+
 echo ""
-echo "Done. Restart Claude Code to load updated skills."
+echo "Done. Restart Claude Code to load updated skills and instructions."
