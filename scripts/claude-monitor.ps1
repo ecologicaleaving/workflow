@@ -268,10 +268,10 @@ function Invoke-IssueProcessor {
     $agentLabel = if ($AgentType -eq "codex") { "codex" } else { "claude-code" }
     $agentEmoji = if ($AgentType -eq "codex") { "⚡" } else { "🤖" }
 
-    # Skip if already processed (review-ready label = agent already completed this issue)
-    $currentLabels = gh issue view $Number --repo "$org/$Repo" --json labels --jq '.labels[].name' 2>$null
+    # Skip if already processed (review-ready = agent already completed this issue)
+    $currentLabels = gh issue view $Number --repo "$org/$Repo" --json labels --jq ".labels[].name" 2>$null
     if ($currentLabels -match "review-ready") {
-        Write-Log "Issue ${Repo}#${Number} already has 'review-ready' — skipping (already processed)."
+        Write-Log "Issue ${Repo}#${Number} has review-ready label - already processed, skipping."
         return
     }
 
@@ -532,9 +532,13 @@ foreach ($issue in $allIssues) {
     }
 }
 
-# Respect MaxIssuesPerCycle
-$toProcess = $deduped | Select-Object -First $Config.MaxIssuesPerCycle
-Write-Log "Found $($deduped.Count) issue(s), processing $($toProcess.Count)."
+# Pick max 1 issue per agent type (1 claude + 1 codex per cycle)
+$toProcess = [System.Collections.Generic.List[object]]::new()
+foreach ($agentLabel in @("claude-code", "codex")) {
+    $first = $deduped | Where-Object { $_.agentType -eq $agentLabel } | Select-Object -First 1
+    if ($first) { $toProcess.Add($first) }
+}
+Write-Log "Found $($deduped.Count) issue(s), processing $($toProcess.Count) (1 per agent)."
 
 foreach ($issue in $toProcess) {
     $body      = if ($issue.body) { $issue.body } else { "No description provided." }
