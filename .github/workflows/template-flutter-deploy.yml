@@ -157,9 +157,7 @@ jobs:
           BRANCH="${{ github.ref_name }}"
           STATUS="${{ job.status }}"
           EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
-
-          curl -s -X POST "http://${{ secrets.VPS_HOST }}:18789/tools/invoke" \
-            -H "Authorization: Bearer ${{ secrets.CICCIO_GATEWAY_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"$EMOJI Flutter Build — $REPO v$VERSION\\nBranch: $BRANCH\\nAPK: ${REPO}-v${VERSION}.apk\\nStatus: $STATUS\"}}" \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "ciccio-notify '${EMOJI} Flutter — ${REPO} v${VERSION} (${BRANCH})\nAPK: ${REPO}-v${VERSION}.apk\nStatus: ${STATUS}'" \
             || true
