@@ -268,6 +268,13 @@ function Invoke-IssueProcessor {
     $agentLabel = if ($AgentType -eq "codex") { "codex" } else { "claude-code" }
     $agentEmoji = if ($AgentType -eq "codex") { "⚡" } else { "🤖" }
 
+    # Skip if already processed (review-ready label = agent already completed this issue)
+    $currentLabels = gh issue view $Number --repo "$org/$Repo" --json labels --jq '.labels[].name' 2>$null
+    if ($currentLabels -match "review-ready") {
+        Write-Log "Issue ${Repo}#${Number} already has 'review-ready' — skipping (already processed)."
+        return
+    }
+
     # Lock check
     if (Test-Path $lockFile) {
         $ageMin = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
