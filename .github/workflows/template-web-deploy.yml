@@ -1,58 +1,34 @@
-name: Deploy Web App (Next.js / React)
+name: Build & Deploy (branch-per-env)
 # ============================================================
-# TEMPLATE RIUTILIZZABILE — copia in ogni repo web come:
-# .github/workflows/deploy.yml
+# TEMPLATE WEB — Next.js / React
+# 
+# Ogni branch ottiene il suo ambiente isolato:
+#   master/main  → https://REPO.8020solutions.org  (produzione)
+#   altri branch → https://test-REPO.8020solutions.org/b/BRANCH-SLUG/
 #
-# Secrets richiesti nel repo:
-#   VPS_SSH_KEY  — chiave privata SSH (github-actions-deploy)
-#   VPS_HOST     — IP VPS (46.225.60.101)
-#   VPS_USER     — utente SSH (root)
+# Con wildcard SSL attivo → BRANCH-SLUG-REPO.8020solutions.org
 #
-# Variables opzionali (Settings → Variables):
-#   TEST_WEBROOT  — path webroot test  (default: /var/www/test-REPO)
-#   PROD_WEBROOT  — path webroot prod  (default: /var/www/REPO)
+# Secrets richiesti:
+#   VPS_SSH_KEY, VPS_HOST, VPS_USER, CICCIO_GATEWAY_TOKEN
+#   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 # ============================================================
 
 on:
   push:
-    branches: ['**']   # Tutti i branch
+    branches: ['**']
+  delete:                     # Cleanup quando branch viene eliminato
+    branches: ['**']
 
 env:
   NODE_VERSION: '22'
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy
+  # ── CLEANUP quando il branch viene eliminato ─────────────────
+  cleanup:
+    if: github.event_name == 'delete'
+    name: Cleanup branch environment
     runs-on: ubuntu-latest
-
     steps:
-      # ---- Checkout ----
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # ---- Setup Node ----
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      # ---- Install deps ----
-      - name: Install dependencies
-        run: npm ci
-
-      # ---- Build ----
-      - name: Build
-        run: npm run build
-        env:
-          # Passa tutte le variabili NEXT_PUBLIC_* definite nei repo secrets/vars
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-          NEXT_PUBLIC_USE_ZCS_MOCK: ${{ vars.NEXT_PUBLIC_USE_ZCS_MOCK || 'false' }}
-          NEXT_PUBLIC_USE_AUTH_MOCK: ${{ vars.NEXT_PUBLIC_USE_AUTH_MOCK || 'false' }}
-
-      # ---- Setup SSH ----
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -60,61 +36,117 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # ---- Determina webroot in base al branch ----
+      - name: Remove branch webroot
+        run: |
+          BRANCH="${{ github.event.ref }}"
+          SLUG=$(echo "$BRANCH" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
+          REPO="${{ github.event.repository.name }}"
+
+          ssh -i ~/.ssh/deploy_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "rm -rf /var/www/test-${REPO}/b/${SLUG} && echo 'Removed /var/www/test-${REPO}/b/${SLUG}'"
+
+      - name: Notify cleanup
+        run: |
+          BRANCH="${{ github.event.ref }}"
+          REPO="${{ github.event.repository.name }}"
+          curl -s -X POST "http://${{ secrets.VPS_HOST }}:18789/tools/invoke" \
+            -H "Authorization: Bearer ${{ secrets.CICCIO_GATEWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"🗑️ Branch eliminato: ${REPO} / ${BRANCH}\\nAmbiente di test rimosso.\"}}" \
+            || true
+
+  # ── BUILD & DEPLOY ───────────────────────────────────────────
+  build-and-deploy:
+    if: github.event_name == 'push'
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Calcola branch slug e URL di destinazione
       - name: Set deploy target
         id: target
         run: |
-          REPO="${{ github.event.repository.name }}"
           BRANCH="${{ github.ref_name }}"
+          REPO="${{ github.event.repository.name }}"
+          SLUG=$(echo "$BRANCH" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
 
           if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
-            WEBROOT="${{ vars.PROD_WEBROOT || /var/www/$REPO }}"
-            ENV_NAME="production"
+            WEBROOT="/var/www/${REPO}"
+            BASE_PATH=""
+            URL="https://${REPO}.8020solutions.org"
           else
-            WEBROOT="${{ vars.TEST_WEBROOT || /var/www/test-$REPO }}"
-            ENV_NAME="test"
+            WEBROOT="/var/www/test-${REPO}/b/${SLUG}"
+            BASE_PATH="/b/${SLUG}"
+            URL="https://test-${REPO}.8020solutions.org/b/${SLUG}/"
           fi
 
-          echo "webroot=$WEBROOT" >> $GITHUB_OUTPUT
-          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
-          echo "Deploying to: $WEBROOT ($ENV_NAME)"
+          echo "webroot=${WEBROOT}"  >> $GITHUB_OUTPUT
+          echo "base_path=${BASE_PATH}" >> $GITHUB_OUTPUT
+          echo "url=${URL}"          >> $GITHUB_OUTPUT
+          echo "slug=${SLUG}"        >> $GITHUB_OUTPUT
+          echo "Deploy target: ${URL} → ${WEBROOT}"
 
-      # ---- Deploy via rsync ----
-      - name: Deploy to VPS
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_USE_ZCS_MOCK: ${{ vars.NEXT_PUBLIC_USE_ZCS_MOCK || 'false' }}
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.target.outputs.base_path }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create webroot on VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p ${{ steps.target.outputs.webroot }}"
+
+      - name: Deploy via rsync
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             out/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ steps.target.outputs.webroot }}/
 
-      # ---- Health check ----
       - name: Health check
         run: |
-          BRANCH="${{ github.ref_name }}"
-          REPO="${{ github.event.repository.name }}"
-          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
-            URL="https://$REPO.8020solutions.org"
-          else
-            URL="https://test-$REPO.8020solutions.org"
-          fi
           sleep 3
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-          echo "Health check $URL → HTTP $STATUS"
-          [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || exit 1
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.target.outputs.url }}" || echo "000")
+          echo "Health check ${{ steps.target.outputs.url }} → HTTP ${STATUS}"
+          [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "404" ] || exit 1
 
-      # ---- Notifica Ciccio ----
       - name: Notify Ciccio
         if: always()
         run: |
           BRANCH="${{ github.ref_name }}"
-          REPO="${{ github.event.repository.name }}"
           COMMIT="${{ github.sha }}"
           STATUS="${{ job.status }}"
-          WEBROOT="${{ steps.target.outputs.webroot }}"
+          URL="${{ steps.target.outputs.url }}"
           EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+          REPO="${{ github.event.repository.name }}"
 
           curl -s -X POST "http://${{ secrets.VPS_HOST }}:18789/tools/invoke" \
             -H "Authorization: Bearer ${{ secrets.CICCIO_GATEWAY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"$EMOJI GitHub Actions — $REPO\\nBranch: $BRANCH\\nCommit: ${COMMIT:0:7}\\nDeploy: $WEBROOT\\nStatus: $STATUS\"}}" \
-            || true  # non fallire se la notifica non arriva
+            -d "{\"tool\":\"message\",\"args\":{\"action\":\"send\",\"channel\":\"telegram\",\"target\":\"1634377998\",\"message\":\"${EMOJI} ${REPO} — ${BRANCH}\\nCommit: ${COMMIT:0:7}\\n🔗 ${URL}\\nStatus: ${STATUS}\"}}" \
+            || true

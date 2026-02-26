@@ -23,11 +23,118 @@
 ## Deployment
 - **Live URL**: https://github.com/ecologicaleaving/workflow
 - **Deploy Method**: github-hosting
-- **Deploy Host**: github-pages (future)
 - **CI Status**: passing
-- **Last Deploy**: 2026-02-22T13:00:00Z
-- **Environment Variables**: 
-  - No environment variables required
+- **Last Deploy**: 2026-02-26T05:00:00Z
+
+---
+
+## 🚀 CI/CD Workflow — Build & Deploy per Progetto
+
+### Architettura generale
+
+```
+Push su GitHub
+      ↓
+GitHub Actions (ubuntu-latest)
+      ↓
+   Build app
+      ↓ (via SSH)
+   VPS CiccioHouse (46.225.60.101)
+      ↓
+   Webroot / APK destination
+      ↓
+   Notifica Telegram a Davide
+```
+
+### Deploy per Branch
+
+Ogni branch ottiene il **proprio ambiente isolato**:
+
+| Branch | Web URL | APK |
+|--------|---------|-----|
+| `master` / `main` | `https://REPO.8020solutions.org` | `REPO-vX.Y.Z.apk` (GitHub Release) |
+| `fix/nome-fix` | `https://test-REPO.8020solutions.org/branches/fix-nome-fix/` | `REPO-fix-nome-fix-abc1234.apk` |
+| `feature/nome-feat` | `https://test-REPO.8020solutions.org/branches/feature-nome-feat/` | `REPO-feature-nome-feat-abc1234.apk` |
+
+> Con 4 branch attivi → 4 ambienti indipendenti, nessuna sovrascrittura.
+
+**Cleanup automatico:** alla chiusura del branch, la Action di cleanup elimina webroot e APK.
+
+### Secrets GitHub richiesti (per repo)
+
+| Secret | Valore | Descrizione |
+|--------|--------|-------------|
+| `VPS_SSH_KEY` | chiave privata ed25519 | Deploy key (generata 2026-02-26) |
+| `VPS_HOST` | `46.225.60.101` | IP VPS CiccioHouse |
+| `VPS_USER` | `root` | Utente SSH |
+| `CICCIO_GATEWAY_TOKEN` | `4bc2ca7...` | Token OpenClaw per notifiche |
+
+> La deploy key pubblica è in `/root/.ssh/github-actions-deploy.pub` sul VPS.
+
+### Secrets aggiuntivi per web apps (Next.js)
+
+| Secret | Descrizione |
+|--------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL Supabase Cloud del progetto |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key Supabase |
+| `NEXT_PUBLIC_SITE_URL` | URL base del sito |
+
+### Templates disponibili
+
+| File | Tipo app | Comportamento |
+|------|----------|---------------|
+| `.github/workflows/template-web-deploy.yml` | Next.js / React | Build → rsync → nginx branch path |
+| `.github/workflows/template-flutter-deploy.yml` | Flutter | build apk + web → scp APK → GitHub Release |
+
+### Aggiungere CI/CD a un nuovo repo
+
+**Web app (Next.js/React):**
+```bash
+# 1. Copia workflow
+cp workflow/.github/workflows/template-web-deploy.yml \
+   mio-repo/.github/workflows/deploy.yml
+
+# 2. Aggiungi secrets su GitHub
+gh secret set VPS_SSH_KEY    --repo ecologicaleaving/mio-repo --body "$(cat /root/.ssh/github-actions-deploy)"
+gh secret set VPS_HOST       --repo ecologicaleaving/mio-repo --body "46.225.60.101"
+gh secret set VPS_USER       --repo ecologicaleaving/mio-repo --body "root"
+gh secret set CICCIO_GATEWAY_TOKEN --repo ecologicaleaving/mio-repo --body "4bc2ca7..."
+
+# 3. Crea webroot base sul VPS
+mkdir -p /var/www/test-mio-repo/branches
+
+# 4. Push → Actions parte automaticamente
+```
+
+**Flutter app:**
+```bash
+# Stessi secret + scegli BUILD_APK/BUILD_WEB via Variables GitHub
+gh variable set BUILD_APK --repo ecologicaleaving/mio-repo --body "true"
+gh variable set BUILD_WEB --repo ecologicaleaving/mio-repo --body "false"
+```
+
+### Wildcard SSL (TODO — richiede token Cloudflare)
+
+Per URL clean tipo `fix-storico-maestro.8020solutions.org` invece di path-based:
+
+```bash
+# Installa plugin certbot-cloudflare
+pip3 install certbot-dns-cloudflare
+
+# Crea credenziali Cloudflare
+echo "dns_cloudflare_api_token = CF_TOKEN" > /root/.cloudflare-creds
+chmod 600 /root/.cloudflare-creds
+
+# Ottieni wildcard cert
+certbot certonly \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /root/.cloudflare-creds \
+  -d "*.8020solutions.org" \
+  -d "8020solutions.org"
+```
+
+> **TODO:** Chiedere a Davide il token Cloudflare API per attivare wildcard SSL.
+> Finché non è configurato, si usa il path-based deploy.
 
 ## Repository
 - **Main Branch**: master
