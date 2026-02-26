@@ -149,9 +149,9 @@ HARD CONSTRAINTS:
 - Stop after 5 failed fix iterations and document why
 "@
             Write-Log "Launching Codex agent for issue #$Number..."
-            # exec subcommand: non-interactive. --full-auto: no approval prompts.
-            # Prompt passed as argument (not stdin) — codex requires a TTY for stdin pipe.
-            $output = & $Config.CodexCmd exec --full-auto $prompt 2>&1
+            # exec subcommand: non-interactive, reads prompt from stdin.
+            # --full-auto: no approval prompts.
+            $output = $prompt | & $Config.CodexCmd exec --full-auto 2>&1
 
         } else {
 
