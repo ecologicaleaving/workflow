@@ -1,254 +1,166 @@
-# 80/20 Solutions Workflow Hub
+# 80/20 Solutions — Workflow Hub
 
-**Standardized development workflows and automation tools for distributed AI agent coordination.**
+Repository centralizzato per workflow, script e skills del team AI di 80/20 Solutions.
 
-## 🎯 Overview
+---
 
-This repository contains the complete automation pipeline for 80/20 Solutions:
-- **VPS (Ciccio)**: Orchestrator, infrastructure, Telegram bot
-- **PC (Claude Code)**: Development agent, auto-processing  
-- **Workflow**: Telegram → GitHub → Auto-Development → Deploy
-
-## 🚀 Quick Start
-
-### One-Command Setup
+## 🚀 Installazione rapida
 
 ```bash
-# VPS (Ciccio)
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/setup-complete-workflow.sh | bash
-
-# PC (Claude Code) - Windows PowerShell
-iwr https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/setup-complete-workflow.sh | iex
+# Auto-detect ambiente e installa il modulo giusto
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/install.sh | bash
 ```
 
-### Manual Setup
+Oppure installa direttamente il modulo che ti serve:
 
-```bash
-git clone https://github.com/ecologicaleaving/workflow.git
-cd workflow/scripts/
+| Componente | Comando |
+|------------|---------|
+| **Ciccio** (VPS OpenClaw) | `curl -sSL .../scripts/install-ciccio.sh \| bash` |
+| **Claude Code** (PC Linux/WSL) | `curl -sSL .../scripts/install-claude-code.sh \| bash` |
+| **Claude Code** (PC Windows) | `iwr .../scripts/install-claude-code.ps1 \| iex` |
+| **Telegram Bot** | `curl -sSL .../scripts/install-telegram-bot.sh \| bash` |
 
-# VPS Setup
-./setup-complete-workflow.sh
+---
 
-# PC Setup (Windows)
-powershell -ExecutionPolicy Bypass -File setup-complete-workflow.sh
-```
-
-## 🤖 Components
-
-### 1. Telegram Issues Tracker Bot
-
-**Location**: `scripts/issue_slash_command.py`
-**Purpose**: Convert Telegram messages to structured GitHub issues
-
-#### Features
-- **Smart repository detection** based on keywords
-- **PROJECT.md context analysis** for project-aware issues
-- **Vague description handling** with clarification questions  
-- **Structured issue creation** with acceptance criteria
-- **Manual processing control** via `claude-code` labeling
-
-#### Usage
-```
-/issue - "progetto-casa upload documenti CME con AI parsing"
-/issue - "maestro export PDF report energetici"
-/issue - "BeachRef notifiche push per tornei"
-```
-
-### 2. Claude Code PC Monitor
-
-**Location**: `scripts/claude-monitor.ps1`  
-**Purpose**: Automatic GitHub issue processing on PC
-
-#### Features
-- **5-minute monitoring** of `claude-code` labeled issues
-- **Autonomous development** following issue-resolver skill
-- **PROJECT.md integration** with automatic version bumping
-- **Full workflow**: Research → Plan → Implement → Test → PR
-- **Cross-instance communication** with VPS
-
-#### Phases
-1. **Research**: Analyze codebase and requirements
-2. **Clarify & Plan**: Break down implementation steps  
-3. **Implement**: Iterative development with testing
-4. **Verify**: Final validation and quality checks
-5. **Update PROJECT.md**: Version bump and backlog management
-
-### 3. Issue Resolver Skill
-
-**Location**: `skills/issue-resolver/SKILL.md`
-**Purpose**: Structured workflow for autonomous issue resolution
-
-#### Workflow
-- **Phase 1**: Research codebase and understand project
-- **Phase 2**: Clarify requirements and create implementation plan
-- **Phase 3**: Iterative implementation (max 5 cycles) 
-- **Phase 4**: Final verification and testing
-- **Phase 5**: PROJECT.md update with version and backlog
-
-## 🔄 Complete Workflow
-
-```mermaid
-graph TD
-    A[Davide: /issue in Telegram] --> B[Bot: Analyze PROJECT.md]
-    B --> C[Bot: Create structured GitHub issue]
-    C --> D[Manual Review: Add claude-code label]
-    D --> E[PC Monitor: Detect labeled issue]
-    E --> F[Claude Code: Auto-process issue]
-    F --> G[Implementation: Code + Test + Build]
-    G --> H[PROJECT.md: Version bump + backlog]
-    H --> I[GitHub: Create PR with review-ready]
-    I --> J[Ciccio: Deploy to test environment]
-    J --> K[Approval: Deploy to production]
-```
-
-## 📁 Repository Structure
+## 🏗️ Struttura
 
 ```
 workflow/
+├── install.sh                          # Master installer (auto-detect)
+│
 ├── scripts/
-│   ├── setup-complete-workflow.sh   # One-command setup
-│   ├── install-telegram-bot.sh      # Bot installation
-│   ├── install-claude-pc.ps1        # PC agent setup
-│   ├── claude-monitor.ps1           # Issue monitoring
-│   ├── issue_slash_command.py       # Telegram bot
-│   └── install-skills.sh            # Skills installation
-├── skills/
-│   └── issue-resolver/
-│       └── SKILL.md                 # Autonomous resolution workflow
-└── README.md                       # This file
+│   ├── install-ciccio.sh               # Installa modulo Ciccio (VPS)
+│   ├── install-claude-code.sh          # Installa modulo Claude Code (Linux/WSL)
+│   ├── install-claude-code.ps1         # Installa modulo Claude Code (Windows)
+│   ├── install-telegram-bot.sh         # Installa bot Telegram
+│   │
+│   ├── project_board.py                # Helper: muove card GitHub Project board
+│   ├── issue_slash_command.py          # Handler /issue e /reject (Telegram → GitHub)
+│   ├── triage_command.py               # Handler /triage (assegnazione issue)
+│   ├── auto_issue_parser.py            # Parser automatico issue
+│   ├── ciccio-issue-monitor.sh         # Cron VPS: monitora issue label ciccio/needs-fix
+│   ├── claude-code-issue-monitor.sh    # Cron PC: monitora issue label claude-code
+│   ├── claude-monitor.ps1              # Monitor Windows (PowerShell)
+│   └── ciccio-notify.sh                # Helper notifiche Telegram da CI/CD
+│
+└── skills/
+    ├── SKILLS.md                       # Indice di tutte le skills
+    ├── 8020-workflow/                  # Skill OpenClaw (Ciccio VPS)
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── WORKFLOW_CICCIO.md
+    │       ├── WORKFLOW_CLAUDE_CODE.md
+    │       ├── WORKFLOW_DAVID.md
+    │       ├── BRANCH_STRATEGY.md
+    │       └── COMMIT_CONVENTIONS.md
+    ├── 8020-commit-workflow/           # Skill Claude Code — commit corretto
+    │   └── SKILL.md
+    └── issue-resolver/                 # Skill Claude Code — risoluzione issue
+        └── SKILL.md
 ```
 
-## 🎯 Repository Keywords
+---
 
-Bot automatically detects target repository from issue description:
+## 📦 Moduli
 
-| Repository | Keywords |
-|------------|----------|
-| `progetto-casa` | casa, lavori, cantiere, cme, relazione, edificio |
-| `maestro` | maestro, automation, energia, control, commands |
-| `BeachRef-app` | beach, spiaggia, flutter, app mobile, arbitri |
-| `GridConnect` | grid, elettrico, enel, pratiche, energia |
-| `StageConnect` | stage, debug, browser, device, connect |
-| `workflow` | workflow, processo, automation, team |
+### 🖥️ Ciccio (VPS OpenClaw)
 
-## 📋 PROJECT.md Integration
+**Cosa installa `install-ciccio.sh`:**
+- Script Python e bash in `workspace-ciccio/scripts/`
+- Skill `8020-workflow` in `workspace-ciccio/skills/` (trigger automatico su task di workflow)
+- `/usr/local/bin/ciccio-notify` per notifiche Telegram da GitHub Actions
+- Cron ogni 10 min per `ciccio-issue-monitor.sh`
 
-Each repository should have a `PROJECT.md` file containing:
-
-```markdown
-# PROJECT.md - Single Source of Truth
-
-## Project Info
-- **Name**: Project Name  
-- **Version**: v1.0.0
-- **Status**: development
-- **Platforms**: web, mobile
-- **Description**: Brief project description
-
-## Tech Stack
-- **Frontend**: Technology details
-- **Backend**: Technology details
-- **Database**: Technology details
-
-## Backlog
-- **DONE**: Completed features
-- **IN PROGRESS**: Current work
-- **TODO**: Planned features
-
-## Services
-List of existing features and services
+**Responsabilità:**
+- Gestisce `/issue`, `/reject`, `/triage` da Telegram
+- Muove card sul GitHub Project board automaticamente
+- Spawna subagenti per issue con label `ciccio` o `needs-fix`
+- Deploy su ambienti test
 
 ---
-*Last Updated: YYYY-MM-DDTHH:MM:SSZ*
+
+### 💻 Claude Code (PC)
+
+**Cosa installa `install-claude-code.sh` / `.ps1`:**
+- Skills `8020-commit-workflow` e `issue-resolver` in `~/.claude/skills/`
+- Script monitor in `~/.claude/monitor/`
+- Cron/Task Scheduler ogni 5 min per issue monitoring
+
+**Responsabilità:**
+- Processa issue con label `claude-code` autonomamente
+- Commit convenzionali + push + PR
+- Aggiorna `PROJECT.md` a ogni issue completata
+
+---
+
+## 🔄 Workflow completo
+
+```
+Davide: /issue - "descrizione"
+        ↓
+Ciccio: crea GitHub issue → card su 📋 Todo
+
+Davide: assegna label (claude-code / ciccio)
+        ↓
+Monitor rileva → card su 🔄 In Progress
+        ↓
+Agente lavora → commit → push → review-ready
+        ↓
+Card su 🚀 PUSH → Ciccio deploya su test
+        ↓
+Card su 🧪 Test → Davide testa APK/URL
+
+Davide: /approve → card ✔️ Done → deploy produzione
+Davide: /reject "feedback" → card 🔄 In Progress → rework automatico
 ```
 
-## 🛡️ Security & Control
+---
 
-### Manual Processing Control
-- Issues are **NOT** auto-processed by default
-- Manual `claude-code` label required for automation
-- Full review and approval workflow maintained
+## 📋 GitHub Project Board
 
-### Cross-Instance Authentication
-- VPS ↔ PC communication via Tailscale network
-- Bearer token authentication for tool invocation
-- Isolated agent sessions prevent conflicts
+**Project**: [80/20 Solutions - Development Hub](https://github.com/users/ecologicaleaving/projects/2)
 
-### Quality Gates
-- All tests must pass before PR creation
-- PROJECT.md version consistency checks
-- No breaking changes to existing features
-- Code review required for production deployment
+| Colonna | Chi sposta | Quando |
+|---------|-----------|--------|
+| `📋 Todo` | Ciccio | Issue creata |
+| `🔄 In Progress` | Monitor | Inizio lavorazione / dopo /reject |
+| `🚀 PUSH` | Agente | Commit completato (review-ready) |
+| `🧪 Test` | Ciccio | Deploy test eseguito |
+| `✔️ Done` | Ciccio | /approve + deploy prod |
 
-## 🚀 Benefits
+**Helper**: `scripts/project_board.py` — importabile da qualsiasi script Python.
 
-### For Developers
-- **Zero setup time**: One command gets everything running
-- **Context-aware**: Bot understands each project's specifics  
-- **Quality focused**: Structured issues with clear acceptance criteria
-- **Fully automated**: From idea to implementation without manual steps
-
-### For Team
-- **Consistent workflow**: Same process across all projects
-- **Traceable changes**: Every change tracked in PROJECT.md  
-- **Quality assurance**: Automated testing and review gates
-- **Scalable**: Add new repositories with just PROJECT.md
-
-### For Business  
-- **Faster delivery**: Ideas to features in hours, not days
-- **Higher quality**: Consistent testing and review processes
-- **Better tracking**: Clear visibility into what's built when
-- **Risk reduction**: Automated quality gates prevent issues
-
-## 📊 Monitoring & Logs
-
-### VPS (Ciccio)
-- OpenClaw logs: `~/.openclaw/logs/`
-- Bot logs: Integrated in OpenClaw session logs
-- Cross-instance health: Automatic monitoring
-
-### PC (Claude Code)  
-- Monitor logs: `%TEMP%\claude_monitor_log.txt`
-- Task Scheduler: Windows Task Scheduler logs
-- GitHub API: Automatic issue and PR management
-
-## 🔧 Troubleshooting
-
-### Bot Not Creating Issues
-1. Check GitHub CLI authentication: `gh auth status`
-2. Verify repository permissions
-3. Test bot functionality: See `telegram-bot-examples.md`
-
-### PC Monitor Not Processing  
-1. Check Task Scheduler is running
-2. Verify Tailscale connectivity to VPS
-3. Check `claude_monitor_log.txt` for errors
-
-### Cross-Instance Communication Issues
-1. Verify Tailscale network connectivity  
-2. Check bearer tokens are correct
-3. Test manual communication with `curl`
-
-## 🎉 Success Stories
-
-This workflow has successfully automated:
-- ✅ **Issue #2**: CME document parsing for progetto-casa
-- ✅ **Multiple bug fixes**: Automated detection and resolution
-- ✅ **Feature implementations**: Full end-to-end automation
-- ✅ **PROJECT.md maintenance**: Automatic version management
+```bash
+# Uso diretto
+python3 project_board.py ecologicaleaving/finn 6 "In Progress"
+```
 
 ---
 
-## 🤝 Contributing
+## 🔧 Workflow files
 
-This workflow is designed to be self-improving:
-1. Issues with the workflow itself → Create issue in this repository
-2. Feature requests → Use the `/issue` command
-3. Bug reports → Automatic detection and resolution via the system
-
-**The workflow uses itself to improve itself!** 🔄
+| File | Ruolo |
+|------|-------|
+| `WORKFLOW_CICCIO.md` | Responsabilità e procedure Ciccio |
+| `WORKFLOW_CLAUDE_CODE.md` | Workflow agente developer PC |
+| `WORKFLOW_DAVID.md` | Flusso dal punto di vista di Davide |
+| `BRANCH_STRATEGY.md` | Strategia branch Git |
+| `COMMIT_CONVENTIONS.md` | Formato commit (Conventional Commits) |
 
 ---
 
-*80/20 Solutions - Making AI development workflows that actually work.*
+## 🔄 Aggiornamento
+
+Per aggiornare un modulo già installato, ri-esegui il suo installer:
+
+```bash
+# Ciccio
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash
+
+# Claude Code
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-code.sh | bash
+```
+
+---
+
+*80/20 Solutions — AI-powered development workflows*
