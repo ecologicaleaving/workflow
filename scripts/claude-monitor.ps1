@@ -105,6 +105,7 @@ function Get-DefaultBranch {
 $ProjectV2 = @{
     ProjectId   = "PVT_kwHODSTPQM4BP1Xp"
     FieldId     = "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
+    Backlog     = "2ab61313"
     Todo        = "f75ad846"
     InProgress  = "47fc9ee4"
     Push        = "03f548ab"
