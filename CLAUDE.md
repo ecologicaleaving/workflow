@@ -48,8 +48,13 @@
 
 All'inizio di ogni sessione, prima di fare qualsiasi cosa:
 
-1. **Aggiorna il workflow**: chiedi a Davide — *"Vuoi che scarichi e installi l'ultima versione del workflow?"*
-   - Se sì: `cd /c/Users/KreshOS/Documents/00-Progetti/workflow && git pull origin master && bash scripts/update-claude-skills.sh`
+1. **Sync workflow** (automatico, senza chiedere):
+   ```powershell
+   cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+   git pull origin master
+   powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
+   ```
+   Questo aggiorna skills e monitor all'ultima versione dal repo.
 
 2. **Segui sempre il workflow**: per tutto il lavoro di sviluppo, segui le istruzioni e le skill del workflow (in particolare `issue-resolver` e `8020-commit-workflow`). Non improvvisare procedure alternative.
 
