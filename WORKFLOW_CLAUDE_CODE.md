@@ -78,6 +78,58 @@ curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/main/scrip
 - **React/Vite**: `npm run build`
 - **Static Sites**: Copy/build process come necessario
 
+### **⚠️ GitHub Actions — Regole Obbligatorie**
+
+Quando crei o modifichi file `.github/workflows/*.yml`:
+
+**1. Usa SOLO il trigger `push`, mai `pull_request`:**
+
+```yaml
+# ✅ CORRETTO
+on:
+  push:
+    branches: ['**']
+
+# ❌ VIETATO — causa build/APK/notifiche duplicate
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+```
+
+Il push sul branch avviene sempre — aggiungere `pull_request` causa due run identici per lo stesso commit, due APK deployati, due notifiche a Davide.
+
+**2. Non pinnare la versione Flutter:**
+
+```yaml
+# ✅ CORRETTO
+- uses: subosito/flutter-action@v2
+  with:
+    channel: stable
+
+# ❌ VIETATO — rompe dipendenze
+- uses: subosito/flutter-action@v2
+  with:
+    flutter-version: '3.24.5'
+    channel: stable
+```
+
+**3. Per Flutter APK — usa `|| true` + `find` (Gradle può misreportare il path):**
+
+```yaml
+- name: Build APK
+  run: flutter build apk --debug --target-platform android-arm64 || true
+
+- name: Trova APK
+  id: find_apk
+  run: |
+    APK=$(find build -name "*.apk" | head -1)
+    echo "path=$APK" >> $GITHUB_OUTPUT
+```
+
+**4. Template canonico:** `workflow/templates/build-apk.yml`
+
 ## 📋 Standard Operating Procedures
 
 ### **SOP-001: New Feature Development**

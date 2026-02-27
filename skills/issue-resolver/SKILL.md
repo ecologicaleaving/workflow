@@ -356,6 +356,53 @@ If the files disagree, PROJECT.md wins — update the others to match.
 
 ---
 
+## REGOLE GITHUB ACTIONS (se crei o modifichi workflow CI)
+
+Se il task include la creazione o modifica di file `.github/workflows/*.yml`, rispetta queste regole:
+
+### ⚠️ Trigger: usa SOLO `push`, mai `pull_request`
+
+```yaml
+# ✅ CORRETTO — trigger solo su push
+on:
+  push:
+    branches: ['**']
+
+# ❌ SBAGLIATO — causa APK/build duplicati e doppie notifiche
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+```
+
+**Motivo**: il push sul branch avviene sempre prima (o contemporaneamente) all'apertura della PR.
+Usare entrambi i trigger causa:
+- Due run CI per lo stesso commit
+- Due APK deployati con nomi diversi
+- Due notifiche Telegram a Davide
+- Spreco di minuti GitHub Actions
+
+### Template canonico build-apk.yml
+
+Il template aggiornato è in `workflow/templates/build-apk.yml`.
+Copialo e sostituisci i placeholder `__REPO_NAME__` e `__PACKAGE_NAME__`.
+
+### Notifica Telegram via Ciccio
+
+Le notifiche Telegram vanno inviate via SSH al VPS, chiamando `ciccio-notify` localmente:
+
+```yaml
+- name: Notifica Davide
+  run: |
+    ssh -i ~/.ssh/deploy_key deploy@46.225.60.101 \
+      "/usr/local/bin/ciccio-notify '✅ APK pronto\n📲 https://apps.8020solutions.org/downloads/test/__nome__.apk'"
+```
+
+**Non usare** `curl` diretto al gateway Telegram da GitHub Actions — il gateway è loopback-only.
+
+---
+
 ## PHASE 6 — PRODUCTION-READY COMMIT
 
 Only execute this phase after ALL of the following are true:

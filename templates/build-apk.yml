@@ -1,0 +1,173 @@
+# Template canonico: GitHub Actions — Build & Deploy Flutter APK
+# Versione: 2026-02-27
+#
+# ISTRUZIONI:
+#   1. Copia questo file in .github/workflows/build-apk.yml del tuo repo
+#   2. Sostituisci ogni occorrenza di __REPO_NAME__ con il nome del repo (es: beachref, finn, x32-assist)
+#   3. Se l'app usa Supabase, mantieni i --dart-define; altrimenti rimuovili
+#   4. Aggiungi i secrets GitHub (vedi sezione "Secrets richiesti" sotto)
+#
+# SECRETS RICHIESTI (GitHub → Settings → Secrets and variables → Actions):
+#   VPS_SSH_KEY   — chiave privata SSH per deploy sul VPS (corrisponde a /root/.ssh/github-actions-deploy)
+#   VPS_HOST      — IP del VPS (46.225.60.101)
+#   VPS_USER      — utente SSH (root)
+#   SUPABASE_URL  — (opzionale) se l'app usa Supabase
+#   SUPABASE_ANON_KEY — (opzionale) se l'app usa Supabase
+#
+# REGOLE FONDAMENTALI (non modificare senza motivo):
+#   - Trigger: SOLO "push", MAI "pull_request" → evita build/APK/notifiche duplicate
+#   - Flutter: SOLO "channel: stable", MAI flutter-version: 'x.y.z' → evita breaking changes dipendenze
+#   - APK build: usa "|| true" + "find" per sicurezza → Gradle può misreportare il path
+
+name: Build & Deploy APK
+
+on:
+  push:
+    branches: ['**']
+  # ⚠️ NON aggiungere "pull_request" qui — causa APK e notifiche duplicate
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    name: Build APK & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      # ⚠️ NON usare flutter-version: 'x.y.z' — rompe dipendenze come flutter_timezone
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Extract version & branch info
+        id: info
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          BRANCH="${{ github.ref_name }}"
+          SLUG=$(echo "$BRANCH" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
+          SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+            APK_NAME="__REPO_NAME__-v${VERSION}-${SHORT}.apk"
+            DEST="downloads"
+            IS_PROD="true"
+          else
+            APK_NAME="__REPO_NAME__-${SLUG}-${SHORT}.apk"
+            DEST="downloads/test"
+            IS_PROD="false"
+          fi
+
+          echo "version=$VERSION"     >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH"       >> $GITHUB_OUTPUT
+          echo "slug=$SLUG"           >> $GITHUB_OUTPUT
+          echo "short=$SHORT"         >> $GITHUB_OUTPUT
+          echo "apk_name=$APK_NAME"   >> $GITHUB_OUTPUT
+          echo "dest=$DEST"           >> $GITHUB_OUTPUT
+          echo "is_prod=$IS_PROD"     >> $GITHUB_OUTPUT
+          echo "url=https://apps.8020solutions.org/${DEST}/${APK_NAME}" >> $GITHUB_OUTPUT
+
+      # ⚠️ Usa "|| true" + find perché Gradle può misreportare il path dell'APK
+      - name: Build APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2g"
+        run: |
+          # Rimuovi --dart-define se l'app non usa Supabase
+          flutter build apk --debug --target-platform android-arm64 \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            || true
+
+      - name: Trova e rinomina APK
+        id: apk
+        run: |
+          APK_PATH=$(find build -name "*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Nessun APK trovato"
+            exit 1
+          fi
+          cp "$APK_PATH" "${{ steps.info.outputs.apk_name }}"
+          echo "found=$APK_PATH" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy APK su app-hub
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /var/www/app-hub/${{ steps.info.outputs.dest }}"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ${{ steps.info.outputs.apk_name }} \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/${{ steps.info.outputs.dest }}/
+
+      - name: Aggiorna label GitHub + sposta card Kanban (test)
+        if: steps.info.outputs.is_prod == 'false'
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /root/.openclaw/workspace-ciccio && \
+             REPO=\$(echo '${{ github.repository }}' | sed 's|ecologicaleaving/||') && \
+             ISSUE=\$(gh search issues --repo '${{ github.repository }}' \
+               --label 'review-ready' --state open --json number --jq '.[0].number' 2>/dev/null) && \
+             if [ -n \"\$ISSUE\" ]; then \
+               gh issue edit \$ISSUE --repo '${{ github.repository }}' \
+                 --remove-label 'review-ready' --add-label 'deployed-test' && \
+               python3 scripts/project_board.py '${{ github.repository }}' \$ISSUE 'Test'; \
+             fi" || true
+
+      - name: Update symlink latest (master only)
+        if: steps.info.outputs.is_prod == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /var/www/app-hub/downloads && \
+             ln -sf ${{ steps.info.outputs.apk_name }} __REPO_NAME__-latest.apk"
+
+      - name: Crea GitHub Release (master only)
+        if: steps.info.outputs.is_prod == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.info.outputs.version }}
+          name: __REPO_NAME__ v${{ steps.info.outputs.version }}
+          files: ${{ steps.info.outputs.apk_name }}
+          make_latest: true
+          body: |
+            🚀 Build automatica da CI
+            Commit: ${{ github.sha }}
+            📲 Download: ${{ steps.info.outputs.url }}
+
+      - name: Notifica Ciccio (sempre, anche su fail)
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+          URL="${{ steps.info.outputs.url }}"
+          BRANCH="${{ steps.info.outputs.branch }}"
+          SHORT="${{ steps.info.outputs.short }}"
+
+          if [ "$STATUS" = "success" ]; then
+            MSG="${EMOJI} __REPO_NAME__ — ${BRANCH} (${SHORT})\n📲 APK pronto: ${URL}"
+          else
+            MSG="${EMOJI} __REPO_NAME__ — build fallita\nBranch: ${BRANCH} (${SHORT})"
+          fi
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "ciccio-notify '${MSG}'" || true
