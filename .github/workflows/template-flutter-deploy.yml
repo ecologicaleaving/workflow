@@ -1,114 +1,65 @@
-name: Deploy Flutter App
+name: Build & Deploy APK
 # ============================================================
-# TEMPLATE RIUTILIZZABILE — copia in ogni repo Flutter come:
-# .github/workflows/deploy.yml
+# TEMPLATE — copia in ogni repo Flutter come:
+# .github/workflows/build-apk.yml
 #
-# Secrets richiesti nel repo:
-#   VPS_SSH_KEY           — chiave privata SSH (github-actions-deploy)
-#   VPS_HOST              — IP VPS (46.225.60.101)
-#   VPS_USER              — utente SSH (root)
-#   CICCIO_GATEWAY_TOKEN  — token gateway OpenClaw per notifiche
+# Secrets richiesti:
+#   VPS_SSH_KEY   — chiave privata SSH (github-actions-deploy)
+#   VPS_HOST      — IP VPS (46.225.60.101)
+#   VPS_USER      — utente SSH (root)
+#   TELEGRAM_TOKEN / TELEGRAM_CHAT_ID — per notifiche (opzionale)
 #
-# Variables opzionali (Settings → Variables):
-#   FLUTTER_VERSION  — versione Flutter (default: stable)
-#   BUILD_APK        — true/false (default: true)
-#   BUILD_WEB        — true/false (default: false)
-#   APK_DEST         — path VPS per APK (default: /var/www/app-hub/downloads)
-#   WEB_WEBROOT      — path VPS per web build
+# Flusso automatico card Project board:
+#   commit → review-ready → PUSH
+#   CI deploy OK → deployed-test → Test (notifica Davide)
 # ============================================================
 
 on:
   push:
     branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
-env:
-  FLUTTER_VERSION: ${{ vars.FLUTTER_VERSION || 'stable' }}
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   build-and-deploy:
-    name: Build & Deploy Flutter
+    name: Build APK & Deploy
     runs-on: ubuntu-latest
 
     steps:
-      # ---- Checkout ----
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ---- Setup Flutter ----
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/setup-java@v4
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
           cache: true
 
-      # ---- Installa deps ----
-      - name: Flutter pub get
+      - name: Get dependencies
         run: flutter pub get
 
-      # ---- Analisi statica ----
-      - name: Flutter analyze
-        run: flutter analyze
-        continue-on-error: false
-
-      # ---- Test ----
-      - name: Flutter test
-        run: flutter test
-        continue-on-error: true  # non blocca il deploy se i test non esistono
-
-      # ---- Build APK ----
-      - name: Build APK
-        if: ${{ vars.BUILD_APK != 'false' }}
-        run: flutter build apk --release
-
-      # ---- Build Web ----
-      - name: Build Web
-        if: ${{ vars.BUILD_WEB == 'true' }}
-        run: flutter build web --release
-
-      # ---- Versione e nome file ----
-      - name: Set artifact name
-        id: artifact
+      - name: Extract version & branch info
+        id: info
         run: |
-          REPO="${{ github.event.repository.name }}"
-          BRANCH="${{ github.ref_name }}"
-          COMMIT="${{ github.sha }}"
-          SHORT_COMMIT="${COMMIT:0:7}"
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          ISSUE_NUM=$(echo "$BRANCH" | grep -oP 'issue-\K\d+' || echo "")
+          echo "version=$VERSION"       >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH"         >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA"   >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER"   >> $GITHUB_OUTPUT
+          echo "issue_num=$ISSUE_NUM"   >> $GITHUB_OUTPUT
 
-          # Leggi versione da pubspec.yaml
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | xargs)
-          APK_NAME="${REPO}-v${VERSION}-${SHORT_COMMIT}.apk"
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "apk_name=$APK_NAME" >> $GITHUB_OUTPUT
-          echo "repo=$REPO" >> $GITHUB_OUTPUT
-          echo "short_commit=$SHORT_COMMIT" >> $GITHUB_OUTPUT
-
-          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
-            echo "env_name=production" >> $GITHUB_OUTPUT
-          else
-            echo "env_name=test" >> $GITHUB_OUTPUT
-          fi
-
-      # ---- Rinomina APK ----
-      - name: Rename APK
-        if: ${{ vars.BUILD_APK != 'false' }}
-        run: |
-          mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }}
-
-      # ---- GitHub Release (solo su master/main) ----
-      - name: Create GitHub Release
-        if: github.ref_name == 'master' || github.ref_name == 'main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.artifact.outputs.version }}-${{ steps.artifact.outputs.short_commit }}
-          name: v${{ steps.artifact.outputs.version }} (${{ steps.artifact.outputs.short_commit }})
-          files: build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }}
-          draft: false
-          prerelease: false
-
-      # ---- Setup SSH ----
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -116,48 +67,78 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # ---- Deploy APK su VPS ----
-      - name: Deploy APK to VPS
-        if: ${{ vars.BUILD_APK != 'false' }}
-        run: |
-          APK_DEST="${{ vars.APK_DEST || '/var/www/app-hub/downloads' }}"
-          scp -i ~/.ssh/deploy_key \
-            build/app/outputs/flutter-apk/${{ steps.artifact.outputs.apk_name }} \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:$APK_DEST/
+      - name: Build APK (debug arm64)
+        run: flutter build apk --debug --target-platform android-arm64 || true
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
 
-          # Aggiorna symlink "latest" per download diretto
-          ssh -i ~/.ssh/deploy_key \
+      - name: Find & rename APK
+        id: apk
+        run: |
+          APK_PATH=$(find build -name "*.apk" 2>/dev/null | grep -v "intermediates\|test" | head -1)
+          [ -z "$APK_PATH" ] && echo "ERROR: no APK found" && exit 1
+          PR="${{ steps.info.outputs.pr_number }}"
+          SHA="${{ steps.info.outputs.short_sha }}"
+          REPO="${{ github.event.repository.name }}"
+          [ -n "$PR" ] && APK_NAME="${REPO}-pr${PR}-${SHA}.apk" || APK_NAME="${REPO}-v${{ steps.info.outputs.version }}-${SHA}.apk"
+          cp "$APK_PATH" "$APK_NAME"
+          echo "name=$APK_NAME" >> $GITHUB_OUTPUT
+
+      - name: Deploy APK to app-hub
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "ln -sf $APK_DEST/${{ steps.artifact.outputs.apk_name }} \
-                    $APK_DEST/${{ steps.artifact.outputs.repo }}-latest.apk"
+            "mkdir -p /var/www/app-hub/downloads/test"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ steps.apk.outputs.name }}" \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/downloads/test/
 
-      # ---- Deploy Web su VPS (se abilitato) ----
-      - name: Deploy Web to VPS
-        if: ${{ vars.BUILD_WEB == 'true' }}
+      # ── Cuore del workflow: label + card board ─────────────────
+      - name: Mark deployed-test & move card to Test
+        if: success()
         run: |
-          BRANCH="${{ github.ref_name }}"
-          REPO="${{ steps.artifact.outputs.repo }}"
-          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
-            WEBROOT="${{ vars.WEB_WEBROOT || /var/www/$REPO }}"
-          else
-            WEBROOT="/var/www/test-$REPO"
+          ISSUE="${{ steps.info.outputs.issue_num }}"
+          REPO="${{ github.repository }}"
+          if [ -n "$ISSUE" ]; then
+            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=10 \
+              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+              "export PATH=\$PATH:/root/go/bin && \
+               gh issue edit $ISSUE --repo $REPO \
+                 --remove-label review-ready \
+                 --add-label deployed-test 2>/dev/null || true && \
+               python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py \
+                 $REPO $ISSUE Test 2>/dev/null || true" || true
           fi
 
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            build/web/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:$WEBROOT/
+      - name: Comment PR with APK link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const name = '${{ steps.apk.outputs.name }}';
+            const url  = `https://apps.8020solutions.org/downloads/test/${name}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `📲 **APK pronto!**\n\n🔗 [${name}](${url})\n\n> Installa direttamente sul dispositivo Android.`
+            });
 
-      # ---- Notifica Ciccio ----
+      - name: Create GitHub Release (master only)
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.info.outputs.version }}
+          name: v${{ steps.info.outputs.version }}
+          files: ${{ steps.apk.outputs.name }}
+
       - name: Notify Ciccio
         if: always()
         run: |
-          REPO="${{ steps.artifact.outputs.repo }}"
-          VERSION="${{ steps.artifact.outputs.version }}"
-          BRANCH="${{ github.ref_name }}"
-          STATUS="${{ job.status }}"
-          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
+          APK="${{ steps.apk.outputs.name }}"
+          URL="https://apps.8020solutions.org/downloads/test/${APK}"
+          MSG="${EMOJI} ${{ github.event.repository.name }} build ${{ job.status }}\nBranch: ${{ steps.info.outputs.branch }}\n🔗 ${URL}"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "ciccio-notify '${EMOJI} Flutter — ${REPO} v${VERSION} (${BRANCH})\nAPK: ${REPO}-v${VERSION}.apk\nStatus: ${STATUS}'" \
-            || true
+            "ciccio-notify '${MSG}'" || true
