@@ -19,6 +19,45 @@ four-phase process. Never skip phases. Never ask for user confirmation.
 
 ---
 
+## PHASE 0 — SETUP CHECK (obbligatorio, prima di tutto)
+
+Prima di toccare qualsiasi codice, verifica che il repo sia attrezzato.
+
+### 0a. PROJECT.md
+- **Esiste** → leggilo subito, tienilo come contesto attivo per tutto il lavoro
+- **Manca** → lo creerai in Phase 5; annota intanto nome e versione da `pubspec.yaml`/`package.json`
+
+### 0b. GitHub Action
+```bash
+ls .github/workflows/*.yml 2>/dev/null || echo "MANCA"
+```
+- **Esiste** → verifica presenza step `deployed-test`:
+  ```bash
+  grep -l "deployed-test" .github/workflows/*.yml || echo "step mancante"
+  ```
+  Se manca → aggiungi lo step dal template prima di iniziare il lavoro vero.
+
+- **Manca** → crea la action dal template corretto (**commit separato**, prima di iniziare):
+
+| Tipo progetto | Template |
+|--------------|----------|
+| Flutter (`pubspec.yaml` presente) | `template-flutter-deploy.yml` |
+| Web / React / Next.js | `template-web-deploy.yml` |
+
+```bash
+mkdir -p .github/workflows
+# Flutter:
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/.github/workflows/template-flutter-deploy.yml \
+  -o .github/workflows/build-apk.yml
+# Web:
+# curl -sSL .../template-web-deploy.yml -o .github/workflows/deploy.yml
+
+git add .github/workflows/
+git commit -m "chore(ci): aggiungi GitHub Action build & deploy"
+```
+
+---
+
 ## PHASE 1 — RESEARCH (read-only, no code changes)
 
 Goal: understand the project and the problem before writing a single line.
@@ -91,10 +130,11 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 **Option ID per ogni colonna (Status field del progetto):**
 | Colonna | Option ID |
 |---------|-----------|
-| 📋 Todo / Backlog | `f75ad846` |
+| 📥 Backlog | `2ab61313` |
+| 📋 Todo | `f75ad846` |
 | 🔄 In Progress | `47fc9ee4` |
+| 🚀 PUSH | `03f548ab` |
 | 🧪 Test | `1d6a37f9` |
-| 🚀 PUSH / Review Ready | `03f548ab` |
 | ✔️ Done | `98236657` |
 
 Alla fine della Phase 6 (commit), ripeti il comando sopra con `optionId="03f548ab"` per spostare in `🚀 PUSH` (Review Ready).
