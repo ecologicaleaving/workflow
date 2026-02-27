@@ -56,6 +56,51 @@ Define your implementation steps in order. Prefer small, testable increments.
 
 ---
 
+## PHASE 2b — SPOSTA CARD SU BOARD
+
+Prima di scrivere codice, sposta la card sul board kanban in `🔄 In Progress`.
+
+**Project**: `PVT_kwHODSTPQM4BP1Xp` | **Field**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
+
+```bash
+# 1. Aggiungi issue al board se non presente
+gh project item-add 2 --owner 80-20Solutions --url <issue-url>
+
+# 2. Recupera item ID
+ITEM_ID=$(gh api graphql -f query='
+query($issueId: ID!) {
+  node(id: $issueId) {
+    ... on Issue { projectItems(first: 5) { nodes { id } } }
+  }
+}' -f issueId="$(gh issue view <N> --repo <owner/repo> --json id --jq '.id')" \
+--jq '.data.node.projectItems.nodes[0].id')
+
+# 3. Sposta in In Progress
+gh api graphql -f query='
+mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: $projectId, itemId: $itemId, fieldId: $fieldId
+    value: { singleSelectOptionId: $optionId }
+  }) { projectV2Item { id } }
+}' -f projectId="PVT_kwHODSTPQM4BP1Xp" \
+   -f itemId="$ITEM_ID" \
+   -f fieldId="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw" \
+   -f optionId="f32f156c"
+```
+
+**Option ID per ogni colonna (Status field del progetto):**
+| Colonna | Option ID |
+|---------|-----------|
+| 📋 Todo / Backlog | `f75ad846` |
+| 🔄 In Progress | `47fc9ee4` |
+| 🧪 Test | `1d6a37f9` |
+| 🚀 PUSH / Review Ready | `03f548ab` |
+| ✔️ Done | `98236657` |
+
+Alla fine della Phase 6 (commit), ripeti il comando sopra con `optionId="03f548ab"` per spostare in `🚀 PUSH` (Review Ready).
+
+---
+
 ## PHASE 3 — ITERATIVE IMPLEMENTATION
 
 Goal: implement → test → fix, looping until ALL test suites are green (max 5 iterations per suite).

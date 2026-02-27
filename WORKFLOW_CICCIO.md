@@ -103,57 +103,88 @@ graph LR
 5. Document root cause e fix applicato
 6. Update monitoring se necessario
 
-## 🏷️ Label System — Issue Processing
+## 🏷️ Label System — Assignee Agenti
 
-| Label | Responsabile | Azione |
-|-------|-------------|--------|
-| `claude-code` | Claude Code (PC Windows) | claude-monitor.ps1 → sviluppo automatico |
-| `ciccio` | Ciccio (VPS) | ciccio-issue-monitor.sh → spawna subagente sonnet |
-| `in-progress` | — | Issue presa in carico, non riprocessare |
-| `review-ready` | — | Codice pronto, Ciccio può deployare su test |
-| `deployed-test` | — | Live su test-*.8020solutions.org |
-| `needs-fix` | Ciccio (VPS) | monitor detecta, legge commenti feedback, rework con contesto |
+Le label indicano **chi deve lavorare** l'issue. Lo stato è gestito dalla colonna del board.
 
-### **Flusso Feedback / Rework**
+| Label | Agente | Trigger |
+|-------|--------|---------|
+| `agent:claude-code` | Claude Code (PC Windows) | Davide apre sessione Claude Code con la issue |
+| `agent:ciccio` | Ciccio (VPS) | ciccio-issue-monitor.sh → spawna subagente sonnet |
+| `agent:codex` | Codex (OpenAI agent) | codex-monitor → gestione autonoma |
+
+## 📋 Board Kanban — Colonne e Responsabilità
+
+**GitHub Project**: [80/20 Solutions - Development Hub](https://github.com/users/ecologicaleaving/projects/2)
+**Campo**: `Stato` (custom field con 7 opzioni)
+
+| Colonna | Chi sposta | Quando |
+|---------|-----------|--------|
+| `📋 Todo` | Davide | Issue creata e priorizzata |
+| `🔄 In Progress` | Agente assegnato | Inizio lavorazione (Phase 2b issue-resolver) |
+| `🚀 PUSH` | Agente assegnato | Commit completato (Phase 6 issue-resolver) = Review Ready |
+| `🧪 Test` | Ciccio | Deploy su test-*.8020solutions.org eseguito + notifica Davide |
+| `✔️ Done` | Ciccio | `/approve` di Davide + deploy prod completato |
+
+### **Flusso Lavorazione Completo**
 
 ```
-Davide testa su test-*.8020solutions.org
-        ↓ (trova problemi)
-/reject #123 "schermata bianca, errore 401 in console"
+📋 Todo  →  Davide assegna label agent:xxx
+        ↓
+🔄 In Progress  →  Agente inizia (sposta card)
+        ↓
+🚀 PUSH  →  Agente finisce commit (sposta card) = Review Ready
+        ↓
+🧪 Test  →  Ciccio deploya su test + notifica Davide
+        ↓
+   ┌────────────────┬───────────────────┐
+   ↓                                    ↓
+🔄 In Progress                     ✔️ Done
+/reject → torna a agente           /approve → prod
+```
+
+### **Flusso /reject — Routing per Agente**
+
+```
+Davide: /reject #123 "schermata bianca, errore 401"
         ↓
 Ciccio:
-  • aggiunge commento con feedback sulla issue GitHub
-  • rimuove label review-ready / deployed-test
-  • aggiunge label needs-fix
-        ↓ (max 10min — cron monitor)
-ciccio-issue-monitor.sh detecta needs-fix
-  • legge TUTTI i commenti della issue (storico feedback)
-  • spawna subagente sonnet con contesto completo
-  • riprende dal branch feature/issue-N esistente
+  • aggiunge commento GitHub con feedback completo
+  • sposta card: 🧪 Test → 🔄 In Progress
+  • NON tocca la label agent:xxx (routing automatico)
         ↓
-Subagente analizza feedback → fix → re-commit → re-push
-Label: needs-fix → review-ready
-Notifica Davide: "🔧 Rework #123 completato"
+Monitor legge label assignee sulla card:
+
+  agent:ciccio      → spawna subagente sonnet
+                       riprende branch feature/issue-N
+                       legge TUTTI i commenti (storico feedback)
+                       fix → re-commit → re-push
+                       sposta card: 🔄 In Progress → 🚀 PUSH
+                       notifica Davide: "🔧 Rework #123 completato"
+
+  agent:claude-code → notifica Davide su Telegram:
+                       "⚠️ Issue #123 richiede fix da Claude Code
+                        Feedback: [testo]
+                        Riapri sessione con branch feature/issue-123"
+
+  agent:codex       → trigger codex-monitor con contesto feedback
+                       fix → re-commit → re-push
+                       sposta card: 🔄 In Progress → 🚀 PUSH
+                       notifica Davide: "🔧 Rework #123 completato"
 ```
 
-### **Flusso Ciccio Label**
+### **Flusso /approve**
 
 ```
-GitHub issue con label "ciccio"
+Davide: /approve #123
         ↓
-ciccio-issue-monitor.sh (cron ogni 10min)
-        ↓
-Lock file creato + label "in-progress"
-        ↓
-sessions_spawn (sonnet 4.6) → subagente lavora autonomamente
-        ↓                         ↓
-Ciccio rimane libero       Subagente: issue-resolver skill
-per Davide                 + Playwright E2E (web apps)
-                           + commit + push branch
-                                     ↓
-                           Label: ciccio → review-ready
-                                     ↓
-                           Notifica Davide su Telegram
+Ciccio:
+  • merge branch feature/issue-N → master
+  • deploy in produzione
+  • sposta card: 🧪 Test → ✔️ Done
+  • chiude la GitHub issue
+  • aggiorna PROJECT.md: IN PROGRESS → DONE
+  • notifica Davide: "🚀 #123 live in produzione"
 ```
 
 **Script**: `scripts/ciccio-issue-monitor.sh`

@@ -81,24 +81,25 @@ curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/main/scrip
 ## 📋 Standard Operating Procedures
 
 ### **SOP-001: New Feature Development**
-1. **📥 Ricevi task** da Ciccio via sessions_send
-2. **🔍 Analizza requirements** e scope  
-3. **🌿 Crea feature branch** `feat/[feature-name]`
-4. **👨‍💻 Develop & test** locally
-5. **📋 Update PROJECT.md** con nuova info
-6. **✅ Pre-commit skin** aggiorna tutto automaticamente
-7. **🚀 Push** → skin fa build + release + commit
-8. **📢 Notify Ciccio** task completato
+1. **📥 Ricevi task** — issue con label `agent:claude-code` nel board
+2. **📋 Sposta card** → `🔄 In Progress` sul board kanban
+3. **🔍 Analizza requirements** e scope (issue-resolver Phase 1-2)
+4. **🌿 Crea feature branch** `feature/issue-N`
+5. **👨‍💻 Develop & test** locally (issue-resolver Phase 3-4)
+6. **📋 Update PROJECT.md** con nuova info (issue-resolver Phase 5)
+7. **✅ Commit** (issue-resolver Phase 6)
+8. **📋 Sposta card** → `✅ Review Ready` sul board kanban
+9. **📢 Davide pusha** e dice a Ciccio di deployare su test
 
-### **SOP-002: Bug Fix Process**
-1. **🐛 Issue identification** via GitHub Issues o Ciccio
-2. **🔍 Root cause analysis** e debugging
-3. **🌿 Branch**: `fix/[issue-name]` 
-4. **🔧 Implement fix** con tests
-5. **📋 Update PROJECT.md** (version bump, changelog)
-6. **✅ Commit skin** automatizza build + push
-7. **🔄 Merge** to main quando ready
-8. **📊 Update status** a Ciccio
+### **SOP-002: Bug Fix / Rework dopo /reject**
+1. **🐛 Ricevi notifica** da Ciccio — card in `🔧 Needs Fix` con feedback
+2. **🔍 Leggi feedback** nei commenti della issue GitHub
+3. **🌿 Riprendi branch** `feature/issue-N` esistente
+4. **🔧 Implement fix** basato su feedback specifico
+5. **📋 Update PROJECT.md** (version bump)
+6. **✅ Commit** con riferimento al feedback
+7. **📋 Sposta card** → `✅ Review Ready`
+8. **📢 Avvisa Davide** — "Rework #N completato, pusha e di' a Ciccio"
 
 ### **SOP-003: Release Management**
 1. **📦 Complete feature** development

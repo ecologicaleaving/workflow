@@ -38,13 +38,22 @@ graph LR
 ### **🎯 Task Delegation Process**
 1. **💭 Identifica business need** o opportunity
 2. **📋 Definisce requirements** e acceptance criteria
-3. **🎯 Assegna a Claude Code** direttamente per development
-4. **📊 Monitor progress** via GitHub + status dashboard
-5. **✅ Review deliverable** e richiedi deploy a Ciccio
-6. **🚀 Business validation** e rollout decision
+3. **🎯 Assegna issue** con label `agent:claude-code` / `agent:ciccio` / `agent:codex`
+4. **📋 Metti card in Backlog** sul [board kanban](https://github.com/users/ecologicaleaving/projects/2)
+5. **📊 Monitor progress** — board mostra colonna attuale di ogni issue
+6. **✅ Ricevi notifica** da Ciccio quando card è in `👀 Needs Review`
+7. **🔍 Testa su** test-*.8020solutions.org
+8. **🚀 Decidi**: `/approve #N` oppure `/reject #N "feedback dettagliato"`
+
+### **📋 Comandi Review**
+
+| Comando | Effetto |
+|---------|---------|
+| `/approve #123` | Ciccio mergia in master, deploya in prod, chiude issue, card → ✔️ Done |
+| `/reject #123 "feedback"` | Ciccio aggiunge commento, card → 🔧 Needs Fix, rework all'agente originale |
 
 ### **📈 Project Review Cycle**
-- **Daily**: Check status dashboard per quick overview
+- **Daily**: Check [board kanban](https://github.com/users/ecologicaleaving/projects/2) per stato issue
 - **Weekly**: Review progress con Ciccio se progetti attivi
 - **Monthly**: Strategic review e roadmap adjustments
 - **Quarterly**: Business metrics e team performance review

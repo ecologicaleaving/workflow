@@ -275,6 +275,16 @@ function Invoke-IssueProcessor {
         return
     }
 
+    # Skip if an open PR already exists for this issue (agent completed in a prior run)
+    $existingPr = gh pr list --repo "$org/$Repo" --state open --search "#$Number" --json number --jq ".[0].number" 2>$null
+    if (-not [string]::IsNullOrWhiteSpace($existingPr)) {
+        Write-Log "Issue ${Repo}#${Number} already has open PR #$existingPr - marking review-ready and skipping."
+        gh issue edit $Number --repo "$org/$Repo" `
+            --remove-label $agentLabel --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Test
+        return
+    }
+
     # Lock check
     if (Test-Path $lockFile) {
         $ageMin = ((Get-Date) - (Get-Item $lockFile).LastWriteTime).TotalMinutes
@@ -334,9 +344,10 @@ function Invoke-IssueProcessor {
             -Body       $Body `
             -AgentType  $AgentType
 
-        # 5. Check for changes
+        # 5. Check for changes (working tree OR unpushed agent commits)
         $status = git -C $repoPath status --porcelain 2>&1
-        if ([string]::IsNullOrWhiteSpace($status)) {
+        $unpushedCommits = git -C $repoPath log "origin/$defaultBranch..HEAD" --oneline 2>&1
+        if ([string]::IsNullOrWhiteSpace($status) -and [string]::IsNullOrWhiteSpace($unpushedCommits)) {
             Write-Log "No changes produced for ${Repo}#${Number}"
             gh issue edit $Number --repo "$org/$Repo" `
                 --remove-label "in-progress" --add-label $agentLabel 2>$null | Out-Null
@@ -347,6 +358,9 @@ function Invoke-IssueProcessor {
                 "Reset to ``$agentLabel`` for retry or manual intervention."
             ) 2>$null | Out-Null
             return
+        }
+        if (-not [string]::IsNullOrWhiteSpace($unpushedCommits)) {
+            Write-Log "Agent committed changes internally (unpushed): $($unpushedCommits -replace "`n", "; ")"
         }
 
         # 6. Commit (only if agent didn't already commit in Phase 6)
@@ -377,9 +391,9 @@ $coAuthor
             Write-Log "Agent already committed changes (Phase 6). Skipping monitor commit."
         }
 
-        # 7. Push
+        # 7. Push (--force-with-lease to handle repeated runs on same branch)
         Write-Log "Pushing $branchName..."
-        git -C $repoPath push -u origin $branchName 2>&1 | Out-Null
+        git -C $repoPath push -u origin $branchName --force-with-lease 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "git push failed" }
 
         # 8. Create PR
