@@ -71,3 +71,16 @@ All'inizio di ogni sessione di lavoro su un progetto, esegui questi controlli:
 
 4. **Se esiste ma incompleto**: confrontalo con le sezioni MUST HAVE del template (Project Info, Deployment, Repository, Backlog). Se mancano sezioni obbligatorie, chiedi — *"PROJECT.md è incompleto, mancano le sezioni: [X, Y]. Vuoi che le integri?"*
    - Se sì: aggiungi solo le sezioni mancanti, senza toccare quelle esistenti.
+
+## GitHub Action — Controllo all'avvio
+
+All'inizio di ogni sessione su un progetto, dopo aver letto PROJECT.md:
+
+1. **Controlla** se esiste `.github/workflows/build-apk.yml` (o equivalente)
+2. **Se NON esiste** → crea dal template nel workflow repo (vedi Phase 0 della skill `issue-resolver`)
+   - Flutter → `template-flutter-deploy.yml`
+   - Web → `template-web-deploy.yml`
+   - Committa separatamente PRIMA di iniziare il lavoro: `chore(ci): aggiungi GitHub Action`
+3. **Se esiste** → verifica presenza step `deployed-test`
+   - Se manca → aggiungilo (è lo step che muove la card su Test e aggiunge la label)
+
