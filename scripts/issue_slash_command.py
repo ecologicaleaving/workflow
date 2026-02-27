@@ -7,7 +7,18 @@ Auto-creates GitHub issues with guided workflow
 import re
 import subprocess
 import json
+import sys
+import os
 from typing import Dict, Optional
+
+# Project board helper
+sys.path.insert(0, os.path.dirname(__file__))
+try:
+    from project_board import move_card
+    _board_available = True
+except ImportError:
+    _board_available = False
+    def move_card(repo, number, column): return False
 
 class IssueSlashCommand:
     def __init__(self):
@@ -361,7 +372,7 @@ Come **utente di {repo_context['name']}**, voglio {issue_data['description'].low
             if result.returncode == 0:
                 issue_url = result.stdout.strip()
                 
-                # Try to add to project (optional, may fail)
+                # Aggiungi al project e sposta su Todo
                 try:
                     project_cmd = [
                         'gh', 'project', 'item-add', '2',
@@ -369,6 +380,10 @@ Come **utente di {repo_context['name']}**, voglio {issue_data['description'].low
                         '--url', issue_url
                     ]
                     subprocess.run(project_cmd, capture_output=True)
+                    # Estrai numero issue dall'URL e sposta su Todo
+                    issue_num = int(issue_url.rstrip('/').split('/')[-1])
+                    repo_name = issue_url.split('github.com/')[-1].rsplit('/', 2)[0]
+                    move_card(repo_name, issue_num, "Todo")
                 except:
                     pass  # Non-critical
                 
@@ -577,6 +592,9 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
         subprocess.run(cmd, capture_output=True, check=True)
     except Exception as e:
         return f"❌ Errore aggiornamento label issue #{number}: {e}"
+
+    # 3. Sposta card su "In Progress" nel Project board
+    move_card(repo, number, "In Progress")
 
     removed_str = ', '.join(remove_labels) if remove_labels else 'nessuna'
 

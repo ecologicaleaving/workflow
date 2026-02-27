@@ -117,3 +117,15 @@ Oppure rieseguire lo script di installazione, che sovrascrive le versioni preced
 - [COMMIT_CONVENTIONS.md](../COMMIT_CONVENTIONS.md) - Standard commit messages
 - [BRANCH_STRATEGY.md](../BRANCH_STRATEGY.md) - Git branching strategy
 - [Claude Code Skills Documentation](https://github.com/anthropics/claude-code) - Docs ufficiali skills
+
+---
+
+### `8020-workflow`
+Skill per Ciccio (OpenClaw/VPS) — caricata automaticamente quando Ciccio gestisce issue, deploy, PR, APK, o qualsiasi task di workflow.
+
+**Cosa fa:**
+- Fornisce le regole del Kanban board a 5 colonne
+- Definisce il flusso `/reject` → card In Progress + routing agente
+- Riferimenti a WORKFLOW_CICCIO.md, BRANCH_STRATEGY.md, COMMIT_CONVENTIONS.md
+
+**Si attiva quando:** Ciccio gestisce issue GitHub, deploy, PR, APK, CI/CD, o coordinate con Claude Code

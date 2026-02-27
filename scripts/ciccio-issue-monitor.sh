@@ -30,11 +30,12 @@ process_issues() {
   log "--- Checking label: $TRIGGER_LABEL ---"
 
   local ISSUES_JSON
-  ISSUES_JSON=$(gh issue list \
+  ISSUES_JSON=$(gh search issues \
     --label "$TRIGGER_LABEL" \
+    --owner ecologicaleaving \
     --state open \
     --json number,title,body,url,labels,repository \
-    --limit 10 2>/dev/null) || { log "ERROR: gh issue list failed for $TRIGGER_LABEL"; return 1; }
+    --limit 10 2>/dev/null) || { log "ERROR: gh search issues failed for $TRIGGER_LABEL"; return 1; }
 
   local COUNT
   COUNT=$(echo "$ISSUES_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
@@ -90,13 +91,16 @@ else:
 
     log "$([ "$IS_REWORK" = "true" ] && echo "REWORK" || echo "NEW") issue #$NUMBER: $TITLE ($REPO)"
 
-    # Lock + label in-progress
+    # Lock + label in-progress + sposta card su "In Progress"
     echo $$ > "$LOCK_FILE"
     gh issue edit "$NUMBER" --repo "$REPO" \
       --add-label "$LABEL_PROCESSING" \
       --remove-label "$TRIGGER_LABEL" 2>/dev/null \
       && log "Issue #$NUMBER: label aggiornata → in-progress" \
       || log "WARNING: impossibile aggiornare label issue #$NUMBER"
+    python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py "$REPO" "$NUMBER" "In Progress" 2>/dev/null \
+      && log "Issue #$NUMBER: card → In Progress" \
+      || log "WARNING: card move fallito per #$NUMBER"
 
     # ---- Prompt per subagente ----
     local REWORK_HEADER=""
@@ -141,11 +145,12 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
    - Fase 5: Aggiorna PROJECT.md (version bump, backlog, timestamp)
    - Fase 6: Commit convenzionale (NO git push manuale)
 
-3. Push e aggiorna label:
+3. Push, aggiorna label e sposta card su PUSH:
    git push origin feature/issue-$NUMBER
    gh issue edit $NUMBER --repo $REPO \
      --add-label $LABEL_DONE \
      --remove-label $LABEL_PROCESSING
+   python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py $REPO $NUMBER "PUSH"
 
 4. Notifica Davide (channel telegram, target $TELEGRAM_CHAT):
 $([ "$IS_REWORK" = "true" ] \
