@@ -1,10 +1,14 @@
 #!/bin/bash
 # =============================================================
 # ciccio-issue-monitor.sh
-# VPS-side cron — detecta issue con label "ciccio" o "needs-fix",
-# spawna un subagente OpenClaw con sonnet per risolverle.
-# Con "needs-fix" include i commenti di feedback come contesto.
-# Ciccio rimane libero per Davide durante l'elaborazione.
+# VPS-side cron — detecta issue con label "ciccio", le lavora.
+# Rework: issue con "needs-fix" + "ciccio" (include feedback).
+# Issues con "claude-code" vengono IGNORATE (le gestisce il PC).
+#
+# Routing simmetrico:
+#   ciccio     → VPS (questo monitor)
+#   claude-code → PC (claude-monitor.ps1)
+#   needs-fix  → stesso agente della label originale (ciccio o claude-code)
 #
 # Cron: */10 * * * * /root/.openclaw/workspace-ciccio/scripts/ciccio-issue-monitor.sh >> /var/log/ciccio-issue-monitor.log 2>&1
 # =============================================================
@@ -64,6 +68,19 @@ process_issues() {
       continue
     fi
 
+    # Routing check: se è un rework (needs-fix), VPS la prende solo se ha label "ciccio"
+    # Se ha "claude-code" → di competenza del PC, skip
+    if [ "$IS_REWORK" = "true" ]; then
+      if echo "$LABELS" | grep -q "claude-code"; then
+        log "Issue #$NUMBER: needs-fix + claude-code → skip (gestisce PC)"
+        continue
+      fi
+      if ! echo "$LABELS" | grep -q "ciccio"; then
+        log "Issue #$NUMBER: needs-fix senza label agente assegnata → skip"
+        continue
+      fi
+    fi
+
     # ---- Recupera commenti se è un rework (needs-fix) ----
     local FEEDBACK_SECTION=""
     if [ "$IS_REWORK" = "true" ]; then
@@ -92,12 +109,21 @@ else:
     log "$([ "$IS_REWORK" = "true" ] && echo "REWORK" || echo "NEW") issue #$NUMBER: $TITLE ($REPO)"
 
     # Lock + label in-progress + sposta card su "In Progress"
+    # NOTA: NON rimuoviamo la label agente (ciccio) — serve per routing nei rework.
+    # Rimuoviamo solo "needs-fix" se era il trigger (è una label di segnale, non identità).
     echo $$ > "$LOCK_FILE"
-    gh issue edit "$NUMBER" --repo "$REPO" \
-      --add-label "$LABEL_PROCESSING" \
-      --remove-label "$TRIGGER_LABEL" 2>/dev/null \
-      && log "Issue #$NUMBER: label aggiornata → in-progress" \
-      || log "WARNING: impossibile aggiornare label issue #$NUMBER"
+    if [ "$IS_REWORK" = "true" ]; then
+      gh issue edit "$NUMBER" --repo "$REPO" \
+        --add-label "$LABEL_PROCESSING" \
+        --remove-label "needs-fix" 2>/dev/null \
+        && log "Issue #$NUMBER: label → in-progress (needs-fix rimosso, ciccio mantenuto)" \
+        || log "WARNING: impossibile aggiornare label issue #$NUMBER"
+    else
+      gh issue edit "$NUMBER" --repo "$REPO" \
+        --add-label "$LABEL_PROCESSING" 2>/dev/null \
+        && log "Issue #$NUMBER: label → in-progress (ciccio mantenuto)" \
+        || log "WARNING: impossibile aggiornare label issue #$NUMBER"
+    fi
     python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py "$REPO" "$NUMBER" "In Progress" 2>/dev/null \
       && log "Issue #$NUMBER: card → In Progress" \
       || log "WARNING: card move fallito per #$NUMBER"
@@ -150,6 +176,7 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
    gh issue edit $NUMBER --repo $REPO \
      --add-label $LABEL_DONE \
      --remove-label $LABEL_PROCESSING
+   # NON rimuovere la label "ciccio" — serve per routing in caso di rework
    python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py $REPO $NUMBER "PUSH"
 
 4. Notifica Davide (channel telegram, target $TELEGRAM_CHAT):

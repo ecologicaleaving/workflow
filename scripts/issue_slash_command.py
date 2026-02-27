@@ -583,10 +583,42 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
     except Exception as e:
         return f"❌ Errore aggiunta commento su issue #{number}: {e}"
 
-    # 2. Aggiorna labels: rimuovi review-ready/deployed-test, aggiungi needs-fix
+    # 2. Aggiorna labels: rimuovi review-ready/deployed-test/in-progress, aggiungi needs-fix
+    # Preserva label agente (ciccio/claude-code) — serve per routing rework
+    AGENT_LABELS = ('ciccio', 'claude-code', 'codex')
     remove_labels = [l for l in labels if l in ('review-ready', 'deployed-test', 'in-progress')]
+    agent_label = next((l for l in labels if l in AGENT_LABELS), None)
+
+    # Se la label agente non è più sulla issue (rimossa dal monitor durante lavorazione),
+    # cerca nei commenti chi ha lavorato sulla issue per determinare il routing corretto
+    if not agent_label:
+        try:
+            comments_result = subprocess.run([
+                'gh', 'issue', 'view', str(number), '--repo', repo,
+                '--json', 'comments'
+            ], capture_output=True, text=True)
+            if comments_result.returncode == 0:
+                comments_data = json.loads(comments_result.stdout)
+                for comment in reversed(comments_data.get('comments', [])):
+                    body = comment.get('body', '')
+                    if 'Claude Code Agent' in body or 'claude-code' in body.lower():
+                        agent_label = 'claude-code'
+                        break
+                    elif 'Ciccio' in body and 'Agent' in body:
+                        agent_label = 'ciccio'
+                        break
+        except Exception:
+            pass
+
     try:
-        cmd = ['gh', 'issue', 'edit', str(number), '--repo', repo, '--add-label', 'needs-fix']
+        add_labels = ['needs-fix']
+        if agent_label and agent_label not in labels:
+            # Re-aggiungi label agente se era stata rimossa
+            add_labels.append(agent_label)
+
+        cmd = ['gh', 'issue', 'edit', str(number), '--repo', repo]
+        for lbl in add_labels:
+            cmd += ['--add-label', lbl]
         for lbl in remove_labels:
             cmd += ['--remove-label', lbl]
         subprocess.run(cmd, capture_output=True, check=True)
@@ -597,6 +629,7 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
     move_card(repo, number, "Todo")
 
     removed_str = ', '.join(remove_labels) if remove_labels else 'nessuna'
+    agent_str = agent_label if agent_label else 'non determinato'
 
     return f"""🔧 **Issue #{number} rimandata in lavorazione**
 
@@ -607,10 +640,11 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
 **Azioni eseguite:**
 • 💬 Commento feedback aggiunto alla issue
 • 🏷️ Rimossa: `{removed_str}`
-• 🏷️ Aggiunta: `needs-fix`
+• 🏷️ Aggiunta: `needs-fix` + label agente `{agent_str}` (per routing corretto)
 
-📋 **Card spostata su Todo** — il monitor la rileverà entro 10 minuti e spawnerà un agente con il tuo feedback come contesto.
+📋 **Card spostata su Todo** — il monitor la rileverà entro 10 minuti e spawnerà l'agente corretto.
 
+**Agente assegnato:** `{agent_str}`
 **Feedback registrato:**
 _{feedback}_"""
 

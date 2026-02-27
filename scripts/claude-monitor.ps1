@@ -271,9 +271,17 @@ function Invoke-IssueProcessor {
     $agentEmoji = if ($AgentType -eq "codex") { "⚡" } else { "🤖" }
 
     # Skip if already processed (review-ready = agent already completed this issue)
+    # NOTE: needs-fix overrides review-ready — se c'è needs-fix è un rework, NON skippare
     $currentLabels = gh issue view $Number --repo "$org/$Repo" --json labels --jq ".labels[].name" 2>$null
-    if ($currentLabels -match "review-ready") {
+    $isRework = $currentLabels -match "needs-fix"
+    if (($currentLabels -match "review-ready") -and (-not $isRework)) {
         Write-Log "Issue ${Repo}#${Number} has review-ready label - already processed, skipping."
+        return
+    }
+
+    # Skip if in-progress (another agent run is active)
+    if ($currentLabels -match "in-progress") {
+        Write-Log "Issue ${Repo}#${Number} is in-progress - already being handled, skipping."
         return
     }
 
@@ -281,8 +289,9 @@ function Invoke-IssueProcessor {
     $existingPr = gh pr list --repo "$org/$Repo" --state open --search "#$Number" --json number --jq ".[0].number" 2>$null
     if (-not [string]::IsNullOrWhiteSpace($existingPr)) {
         Write-Log "Issue ${Repo}#${Number} already has open PR #$existingPr - marking review-ready and skipping."
+        # NON rimuovere $agentLabel — serve per routing in caso di rework successivo
         gh issue edit $Number --repo "$org/$Repo" `
-            --remove-label $agentLabel --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
+            --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
         Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Push
         return
     }
@@ -303,8 +312,15 @@ function Invoke-IssueProcessor {
         Write-Log "=== BEGIN ${Repo}#${Number}: $Title ==="
 
         # 1. Mark in-progress
-        gh issue edit $Number --repo "$org/$Repo" `
-            --remove-label $agentLabel --add-label "in-progress" 2>$null | Out-Null
+        # NON rimuovere $agentLabel (claude-code/codex) — serve per routing rework dopo /reject
+        # Rimuoviamo solo needs-fix se è un rework
+        if ($isRework) {
+            gh issue edit $Number --repo "$org/$Repo" `
+                --add-label "in-progress" --remove-label "needs-fix" 2>$null | Out-Null
+        } else {
+            gh issue edit $Number --repo "$org/$Repo" `
+                --add-label "in-progress" 2>$null | Out-Null
+        }
         Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.InProgress
 
         $agentName = if ($AgentType -eq "codex") { "Codex CLI Agent" } else { "Claude Code Agent" }
