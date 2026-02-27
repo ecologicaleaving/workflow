@@ -383,7 +383,7 @@ Come **utente di {repo_context['name']}**, voglio {issue_data['description'].low
                     # Estrai numero issue dall'URL e sposta su Todo
                     issue_num = int(issue_url.rstrip('/').split('/')[-1])
                     repo_name = issue_url.split('github.com/')[-1].rsplit('/', 2)[0]
-                    move_card(repo_name, issue_num, "Todo")
+                    move_card(repo_name, issue_num, "Backlog")
                 except:
                     pass  # Non-critical
                 

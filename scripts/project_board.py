@@ -17,6 +17,7 @@ PROJECT_ID     = "PVT_kwHODSTPQM4BP1Xp"
 STATUS_FIELD_ID = "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
 
 STATUS_OPTIONS = {
+    "Backlog":     "2ab61313",
     "Todo":        "f75ad846",
     "In Progress": "47fc9ee4",
     "PUSH":        "03f548ab",
@@ -141,6 +142,7 @@ def move_card(repo: str, issue_number: int, column: str) -> bool:
 
 # ── Shortcut per casi comuni ───────────────────────────────────────────────────
 
+def card_backlog(repo, issue_number):    return move_card(repo, issue_number, "Backlog")
 def card_todo(repo, issue_number):        return move_card(repo, issue_number, "Todo")
 def card_in_progress(repo, issue_number): return move_card(repo, issue_number, "In Progress")
 def card_push(repo, issue_number):        return move_card(repo, issue_number, "PUSH")
