@@ -107,6 +107,7 @@ $ProjectV2 = @{
     FieldId     = "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
     Todo        = "f75ad846"
     InProgress  = "47fc9ee4"
+    Push        = "03f548ab"
     Test        = "1d6a37f9"
     Done        = "98236657"
 }
@@ -281,7 +282,7 @@ function Invoke-IssueProcessor {
         Write-Log "Issue ${Repo}#${Number} already has open PR #$existingPr - marking review-ready and skipping."
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label $agentLabel --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
-        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Test
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Push
         return
     }
 
@@ -449,7 +450,7 @@ Closes #$Number
         # 9. Update issue: review-ready → move to Test column
         gh issue edit $Number --repo "$org/$Repo" `
             --remove-label "in-progress" --add-label "review-ready" 2>$null | Out-Null
-        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Test
+        Set-ProjectStatus -Repo $Repo -Number $Number -StatusOptionId $ProjectV2.Push
 
         gh issue comment $Number --repo "$org/$Repo" --body (
             "✅ **$agentFullName Completed**`n`n" +
