@@ -15,11 +15,12 @@ description: "80/20 Solutions team workflow rules for Ciccio. Use when handling 
 
 | Colonna | Chi sposta | Quando |
 |---------|-----------|--------|
-| `📋 Todo` | Davide | Issue creata e priorizzata |
-| `🔄 In Progress` | Agente assegnato | Inizio lavorazione |
-| `🚀 PUSH` | Agente assegnato | Commit completato = review-ready |
-| `🧪 Test` | Ciccio | Deploy su test eseguito + notifica Davide |
-| `✔️ Done` | Ciccio | `/approve` Davide + deploy prod completato |
+| `📥 Backlog` | Ciccio | Issue creata, nessun agente assegnato |
+| `📋 Todo` | Ciccio/Davide | Label agente assegnata / dopo /reject |
+| `🔄 In Progress` | Monitor | Solo quando agente prende in carico |
+| `🚀 PUSH` | Monitor/Agente | Commit fatto (label review-ready) |
+| `🧪 Test` | CI GitHub Actions | APK deployato (label deployed-test) |
+| `✔️ Done` | Ciccio | /approve + deploy prod |
 
 ## Flusso standard
 
@@ -36,9 +37,10 @@ Davide testa:
 
 ## Quando Ciccio riceve /reject
 1. Aggiungi commento GitHub con feedback completo
-2. Sposta card: `🧪 Test` → `🔄 In Progress` (GitHub Project)
-3. **NON** toccare la label `agent:xxx` (il monitor la usa per routing)
-4. Monitor rileva e rilancia automaticamente
+2. Rimuovi `deployed-test`, aggiungi `needs-fix`
+3. Sposta card: `🧪 Test` → `📋 Todo` (il monitor la prende al prossimo ciclo)
+4. **NON** toccare la label `agent:xxx` (il monitor la usa per routing)
+5. `🔄 In Progress` scatta solo quando il monitor spawna l'agente
 
 Per dettagli routing agente, leggi `references/WORKFLOW_CICCIO.md`.
 
