@@ -6,9 +6,10 @@
 # Issues con "claude-code" vengono IGNORATE (le gestisce il PC).
 #
 # Routing simmetrico:
-#   ciccio     → VPS (questo monitor)
+#   ciccio      → VPS (questo monitor)
 #   claude-code → PC (claude-monitor.ps1)
-#   needs-fix  → stesso agente della label originale (ciccio o claude-code)
+#   codex       → PC (claude-monitor.ps1)
+#   needs-fix   → stesso agente della label originale (ciccio, claude-code o codex)
 #
 # Cron: */10 * * * * /root/.openclaw/workspace-ciccio/scripts/ciccio-issue-monitor.sh >> /var/log/ciccio-issue-monitor.log 2>&1
 # =============================================================
@@ -69,10 +70,10 @@ process_issues() {
     fi
 
     # Routing check: se è un rework (needs-fix), VPS la prende solo se ha label "ciccio"
-    # Se ha "claude-code" → di competenza del PC, skip
+    # Se ha "claude-code" o "codex" → di competenza del PC, skip
     if [ "$IS_REWORK" = "true" ]; then
-      if echo "$LABELS" | grep -q "claude-code"; then
-        log "Issue #$NUMBER: needs-fix + claude-code → skip (gestisce PC)"
+      if echo "$LABELS" | grep -qE "claude-code|codex"; then
+        log "Issue #$NUMBER: needs-fix + PC-agent (claude-code/codex) → skip (gestisce PC)"
         continue
       fi
       if ! echo "$LABELS" | grep -q "ciccio"; then

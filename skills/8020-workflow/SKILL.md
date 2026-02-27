@@ -7,8 +7,9 @@ description: "80/20 Solutions team workflow rules for Ciccio. Use when handling 
 
 ## Ruoli nel team
 - **Davide**: Product owner, testa APK, approva deploy in produzione
-- **Ciccio (VPS)**: Orchestrazione, deploy, infra, monitoring, issue management
-- **Claude Code (PC)**: Development, commit, push (label `claude-code`)
+- **Ciccio (VPS)**: Orchestrazione, deploy, infra, monitoring, issue management (label `ciccio`)
+- **Claude Code (PC)**: Development senior, commit, push (label `claude-code`)
+- **Codex (PC)**: Development alternativo, commit, push (label `codex`)
 
 ## 📋 Board Kanban — 5 colonne
 **GitHub Project**: https://github.com/users/ecologicaleaving/projects/2
@@ -60,12 +61,18 @@ Per dettagli routing agente, leggi `references/WORKFLOW_CICCIO.md`.
 ## Labels sistema
 | Label | Significato |
 |-------|-------------|
-| `claude-code` | Claude Code (PC) |
-| `ciccio` | Ciccio (VPS) |
-| `in-progress` | In lavorazione |
-| `review-ready` | Pronto per test Davide |
-| `deployed-test` | Live su test |
-| `needs-fix` | Rifiutato, da rilavorare |
+| `ciccio` | Ciccio (VPS) — routing obbligatorio |
+| `claude-code` | Claude Code (PC) — routing obbligatorio |
+| `codex` | Codex (PC) — routing obbligatorio |
+| `in-progress` | In lavorazione (agente attivo) |
+| `review-ready` | Pronto per deploy/test |
+| `deployed-test` | Live su ambiente test |
+| `needs-fix` | Rework richiesto — NON cambia routing, si abbina a ciccio/claude-code/codex |
+
+## Regola routing
+- Label agente (`ciccio`/`claude-code`/`codex`) NON viene mai rimossa durante la lavorazione
+- `needs-fix` è un segnale di rework: il monitor che gestisce la label agente la prende
+- VPS skippa sempre issue con `claude-code` o `codex` (anche se hanno `needs-fix`)
 
 ## Riferimenti completi
 - `references/WORKFLOW_CICCIO.md` — procedure complete Ciccio

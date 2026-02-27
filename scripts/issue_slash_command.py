@@ -601,7 +601,10 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
                 comments_data = json.loads(comments_result.stdout)
                 for comment in reversed(comments_data.get('comments', [])):
                     body = comment.get('body', '')
-                    if 'Claude Code Agent' in body or 'claude-code' in body.lower():
+                    if 'Codex CLI Agent' in body or 'codex' in body.lower():
+                        agent_label = 'codex'
+                        break
+                    elif 'Claude Code Agent' in body or 'claude-code' in body.lower():
                         agent_label = 'claude-code'
                         break
                     elif 'Ciccio' in body and 'Agent' in body:
