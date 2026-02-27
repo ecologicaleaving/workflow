@@ -593,8 +593,8 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
     except Exception as e:
         return f"❌ Errore aggiornamento label issue #{number}: {e}"
 
-    # 3. Sposta card su "In Progress" nel Project board
-    move_card(repo, number, "In Progress")
+    # 3. Sposta card su "Todo" — l'agente la prenderà al prossimo ciclo
+    move_card(repo, number, "Todo")
 
     removed_str = ', '.join(remove_labels) if remove_labels else 'nessuna'
 
@@ -609,7 +609,7 @@ def handle_reject_command(message: str, author: str = "davide crescentini") -> O
 • 🏷️ Rimossa: `{removed_str}`
 • 🏷️ Aggiunta: `needs-fix`
 
-⏱️ **Il monitor VPS rileverà la issue entro 10 minuti** e spawnerà un subagente con il tuo feedback come contesto.
+📋 **Card spostata su Todo** — il monitor la rileverà entro 10 minuti e spawnerà un agente con il tuo feedback come contesto.
 
 **Feedback registrato:**
 _{feedback}_"""
