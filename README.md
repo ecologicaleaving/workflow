@@ -15,10 +15,12 @@ Oppure installa direttamente il modulo che ti serve:
 
 | Componente | Comando |
 |------------|---------|
-| **Ciccio** (VPS OpenClaw) | `curl -sSL .../scripts/install-ciccio.sh \| bash` |
-| **Claude Code** (PC Linux/WSL) | `curl -sSL .../scripts/install-claude-code.sh \| bash` |
-| **Claude Code** (PC Windows) | `iwr .../scripts/install-claude-code.ps1 \| iex` |
-| **Telegram Bot** | `curl -sSL .../scripts/install-telegram-bot.sh \| bash` |
+| **Ciccio** (VPS OpenClaw) | `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh \| bash` |
+| **Claude Code** (PC Linux/WSL) | `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-code.sh \| bash` |
+| **Claude Code** (PC Windows) | `iwr https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-code.ps1 \| iex` |
+| **Telegram Bot** | `curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-telegram-bot.sh \| bash` |
+
+> L'installazione è **una tantum**. Per gli aggiornamenti quotidiani vedi la sezione [Sync](#-sync-aggiornamento-quotidiano).
 
 ---
 
@@ -27,12 +29,14 @@ Oppure installa direttamente il modulo che ti serve:
 ```
 workflow/
 ├── install.sh                          # Master installer (auto-detect)
+├── CLAUDE.md                           # Istruzioni globali per Claude Code
 │
 ├── scripts/
 │   ├── install-ciccio.sh               # Installa modulo Ciccio (VPS)
 │   ├── install-claude-code.sh          # Installa modulo Claude Code (Linux/WSL)
 │   ├── install-claude-code.ps1         # Installa modulo Claude Code (Windows)
 │   ├── install-telegram-bot.sh         # Installa bot Telegram
+│   ├── sync.ps1                        # Sync leggero skills+monitor (Windows, ogni sessione)
 │   │
 │   ├── project_board.py                # Helper: muove card GitHub Project board
 │   ├── issue_slash_command.py          # Handler /issue e /reject (Telegram → GitHub)
@@ -77,19 +81,57 @@ workflow/
 - Spawna subagenti per issue con label `ciccio` o `needs-fix`
 - Deploy su ambienti test
 
+**Aggiornamento Ciccio:**
+```bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash
+```
+
 ---
 
 ### 💻 Claude Code (PC)
 
-**Cosa installa `install-claude-code.sh` / `.ps1`:**
-- Skills `8020-commit-workflow` e `issue-resolver` in `~/.claude/skills/`
-- Script monitor in `~/.claude/monitor/`
-- Cron/Task Scheduler ogni 5 min per issue monitoring
+**Cosa installa `install-claude-code.ps1` (una tantum):**
+- Skills `8020-commit-workflow` e `issue-resolver` in `~\.claude\skills\`
+- Script monitor in `C:\claude-workspace\monitor\`
+- Task Scheduler: ogni 5 min + all'avvio
+
+**Cosa fa `sync.ps1` (ogni sessione, automatico):**
+- `git pull origin master` sul clone locale del workflow repo
+- Aggiorna skills e monitor all'ultima versione
+- Non tocca il Task Scheduler
 
 **Responsabilità:**
 - Processa issue con label `claude-code` autonomamente
 - Commit convenzionali + push + PR
 - Aggiorna `PROJECT.md` a ogni issue completata
+- Sync workflow all'avvio di ogni sessione (definito in `CLAUDE.md`)
+
+---
+
+## 🔄 Sync — Aggiornamento quotidiano
+
+Il repo è la **fonte unica** per tutti i componenti. Nessun file viene duplicato o mantenuto manualmente.
+
+### Claude Code (PC) — automatico ad ogni sessione
+`CLAUDE.md` istruisce Claude Code a syncronizzare all'avvio:
+```powershell
+cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+git pull origin master
+powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
+```
+
+### Ciccio (VPS) — su richiesta o dopo aggiornamenti workflow
+```bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash
+```
+
+### Flusso aggiornamenti
+```
+Davide aggiorna workflow repo (push su master)
+        ↓
+Claude Code: sync automatico alla prossima sessione
+Ciccio: re-installa su richiesta (o heartbeat periodico)
+```
 
 ---
 
@@ -131,7 +173,7 @@ Davide: /reject "feedback" → card 🔄 In Progress → rework automatico
 **Helper**: `scripts/project_board.py` — importabile da qualsiasi script Python.
 
 ```bash
-# Uso diretto
+# CLI diretta
 python3 project_board.py ecologicaleaving/finn 6 "In Progress"
 ```
 
@@ -146,20 +188,6 @@ python3 project_board.py ecologicaleaving/finn 6 "In Progress"
 | `WORKFLOW_DAVID.md` | Flusso dal punto di vista di Davide |
 | `BRANCH_STRATEGY.md` | Strategia branch Git |
 | `COMMIT_CONVENTIONS.md` | Formato commit (Conventional Commits) |
-
----
-
-## 🔄 Aggiornamento
-
-Per aggiornare un modulo già installato, ri-esegui il suo installer:
-
-```bash
-# Ciccio
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash
-
-# Claude Code
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claude-code.sh | bash
-```
 
 ---
 
