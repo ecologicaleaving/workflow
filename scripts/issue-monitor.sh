@@ -158,7 +158,8 @@ $feedback_section
   fi
 
   # Label → in-progress + sposta card
-  gh issue edit "$number" --repo "$repo" --add-label "$LABEL_PROCESSING" 2>/dev/null \
+  gh issue edit "$number" --repo "$repo" \
+    --add-label    "$LABEL_PROCESSING" \
     && log "Issue #$number: label → in-progress" \
     || warn "Impossibile aggiornare label per #$number"
   move_card "$repo" "$number" "In Progress"
@@ -202,6 +203,97 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
 
 3. Push, aggiorna label e sposta card:
    git push origin feature/issue-$number
-  gh issue edit "$number" --repo "$repo" --add-label "$LABEL_PROCESSING" 2>/dev/null \
-    && log "Issue #$number: label → in-progress" \
-    || warn "Impossibile aggiornare label per #$number"
+   gh issue edit $number --repo $repo \\
+     --add-label $LABEL_DONE \\
+     --remove-label $LABEL_PROCESSING
+   $board_cmd
+
+4. Notifica Davide via Telegram (chat $TELEGRAM_CHAT):
+   $([ "$is_rework" = "true" ] \
+     && echo "\"🔧 Issue #$number ($title) — rework completato. Branch: feature/issue-$number | Repo: $repo\"" \
+     || echo "\"✅ Issue #$number ($title) risolta. Branch: feature/issue-$number | Repo: $repo\"")
+
+5. Rimuovi il lock: rm -f $lock_file
+
+VINCOLI ASSOLUTI:
+- NO: git merge / git reset / modifica master o main
+- Se i test falliscono dopo 5 iterazioni: documenta, stoppa, notifica Davide
+- Il lock file DEVE essere rimosso a completamento: $lock_file
+TASK_EOF
+)
+
+  local session_label
+  session_label="$([ "$is_rework" = "true" ] && echo "rework" || echo "issue")-${repo_short}-${number}"
+
+  local session
+  session=$(spawn_agent "$task" "$session_label")
+  log "Issue #$number → subagente spawned (session: $session). Monitor libero."
+}
+
+# ---- Processa tutte le issue di un agente ----
+process_agent_issues() {
+  local trigger_label="$1" agent_name="$2" agent_identity="$3" is_rework="${4:-false}"
+
+  log "--- Checking label: $trigger_label ---"
+
+  local issues_json
+  issues_json=$(gh search issues \
+    --label "$trigger_label" \
+    --owner "$GITHUB_ORG" \
+    --state open \
+    --json number,title,body,url,labels,repository \
+    --limit 5 2>/dev/null) || { warn "gh search issues fallita per $trigger_label"; return; }
+
+  local count
+  count=$(echo "$issues_json" | \
+    python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo 0)
+  log "Trovate $count issue(s) con label '$trigger_label'"
+  [ "$count" = "0" ] && return
+
+  while IFS= read -r issue; do
+    local number title body repo
+    number=$(echo "$issue" | python3 -c "import sys,json; print(json.load(sys.stdin)['number'])")
+    title=$(echo  "$issue" | python3 -c "import sys,json; print(json.load(sys.stdin)['title'])")
+    body=$(echo   "$issue" | python3 -c "import sys,json; print(json.load(sys.stdin).get('body',''))")
+    repo=$(echo   "$issue" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+print(d.get('repository', {}).get('nameWithOwner', '$GITHUB_ORG/unknown'))
+")
+    process_issue "$repo" "$number" "$title" "$body" \
+      "$trigger_label" "$agent_name" "$agent_identity" "$is_rework"
+
+  done < <(echo "$issues_json" | python3 -c "
+import sys, json
+for i in json.load(sys.stdin): print(json.dumps(i))
+")
+}
+
+# ============================================================
+# MAIN
+# ============================================================
+
+log "=== Issue Monitor v1.0 | Cycle Start | Agents: $AGENT_COUNT ==="
+
+command -v gh      >/dev/null 2>&1 || { log "ERROR: gh CLI non trovato"; exit 1; }
+command -v curl    >/dev/null 2>&1 || { log "ERROR: curl non trovato"; exit 1; }
+command -v python3 >/dev/null 2>&1 || { log "ERROR: python3 non trovato"; exit 1; }
+
+# Processa ogni agente configurato
+for i in $(seq 1 "$AGENT_COUNT"); do
+  # bash indirect expansion
+  _lv="AGENT_${i}_LABEL";    trigger_label="${!_lv:-}"
+  _nv="AGENT_${i}_NAME";     agent_name="${!_nv:-Agent $i}"
+  _iv="AGENT_${i}_IDENTITY"; agent_identity="${!_iv:-Sei un agente developer di 8020 Solutions.}"
+
+  [ -z "$trigger_label" ] && { warn "AGENT_${i}_LABEL non impostato, skip"; continue; }
+
+  process_agent_issues "$trigger_label" "$agent_name" "$agent_identity" "false"
+done
+
+# Rework (needs-fix) — usa l'identity del primo agente configurato
+_rv="AGENT_1_NAME";     _rework_name="${!_rv:-Agent}"
+_ri="AGENT_1_IDENTITY"; _rework_identity="${!_ri:-}"
+process_agent_issues "$REWORK_LABEL" "$_rework_name" "$_rework_identity" "true"
+
+log "=== Cycle complete ==="
