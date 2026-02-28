@@ -109,12 +109,30 @@
 - [add common troubleshooting scenarios]
 
 ## Testing
-- **Framework**: [flutter_test|playwright|jest|vitest|none]
-- **Unit/Widget Tests**: [flutter test|npm test|none]
-- **Integration/E2E Tests**: [integration_test|playwright|cypress|none]
-- **Test URL**: [https://test-xxx.dominio.com o APK: https://apps.xxx.org/downloads/test/]
-- **Run Tests**: [comando per eseguire i test in locale]
+
+### Strumenti
+- **Framework Unit/Widget**: [flutter_test|jest|vitest|none]
+- **Framework E2E**: [playwright|cypress|integration_test|none]
+- **Run Unit Tests**: `[flutter test|npm test|npx vitest]`
+- **Run E2E Tests**: `[npx playwright test|flutter drive]`
 - **Coverage**: [required|optional|none]
+
+### Ambienti di test
+- **URL Test Web**: [https://test-xxx.dominio.com o N/A]
+- **APK Test**: [https://apps.dominio.com/downloads/test/ o N/A]
+- **Dispositivo/Emulatore**: [Pixel_7 emulator|device fisico|browser]
+
+### Flusso di test standard
+1. Scrivi/aggiorna i test pertinenti alla feature/fix
+2. Esegui `[run command]` — tutti verdi prima di aprire PR
+3. Verifica manuale su ambiente test
+4. Nessuna regressione su test esistenti
+
+### ⚠️ Flusso custom (se diverso dallo standard)
+[Lasciare vuoto se il flusso standard si applica. Altrimenti descrivere qui le deviazioni:
+es. "I test E2E richiedono variabili d'ambiente specifiche",
+es. "Il DB di test va resettato prima di ogni run con `npm run db:reset:test`",
+es. "I widget test Flutter richiedono mock di Supabase — vedere test/mocks/"]
 
 ## Backlog
 - **TODO**: [Task description - generic but informative]
