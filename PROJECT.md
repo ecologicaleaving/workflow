@@ -2,7 +2,7 @@
 
 ## Project Info
 - **Name**: Workflow Hub
-- **Version**: v1.1.0
+- **Version**: v1.1.1
 - **Status**: production
 - **Platforms**: documentation
 - **Description**: Sistema workflow standardizzato per sviluppo collaborativo AI-assisted

@@ -282,10 +282,6 @@ command -v python3 >/dev/null 2>&1 || { log "ERROR: python3 non trovato"; exit 1
 
 # Processa ogni agente configurato
 for i in $(seq 1 "$AGENT_COUNT"); do
-  trigger_label="${!( echo "AGENT_${i}_LABEL" ):-}"
-  agent_name="${!( echo "AGENT_${i}_NAME" ):-Agent $i}"
-  agent_identity="${!( echo "AGENT_${i}_IDENTITY" ):-Sei un agente developer di 8020 Solutions.}"
-
   # bash indirect expansion
   _lv="AGENT_${i}_LABEL";    trigger_label="${!_lv:-}"
   _nv="AGENT_${i}_NAME";     agent_name="${!_nv:-Agent $i}"
