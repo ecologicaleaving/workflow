@@ -82,6 +82,14 @@
 - **Issue Type 4**: [e.g., SSL: certbot status]
 - [add common troubleshooting scenarios]
 
+## Testing
+- **Framework**: [flutter_test|playwright|jest|vitest|none]
+- **Unit/Widget Tests**: [flutter test|npm test|none]
+- **Integration/E2E Tests**: [integration_test|playwright|cypress|none]
+- **Test URL**: [https://test-xxx.dominio.com o APK: https://apps.xxx.org/downloads/test/]
+- **Run Tests**: [comando per eseguire i test in locale]
+- **Coverage**: [required|optional|none]
+
 ## Backlog
 - **TODO**: [Task description - generic but informative]
 - **TODO**: [Another planned feature]

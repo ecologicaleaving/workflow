@@ -105,6 +105,38 @@ gh project item-edit `
 Vedi `assets/issue-template.md` — popolarlo con le risposte prima di creare la issue.
 Salvare il file temporaneo in `C:\Users\KreshOS\.openclaw\workspace\issue-body.md` ed eliminarlo dopo la creazione.
 
+## Testing Section — Come popolarla
+
+### 1. Leggi PROJECT.md → sezione `## Testing`
+Se presente, usa quei valori. Se assente, applica i default per stack.
+
+### 2. Default per stack (fallback)
+
+| Stack | tool_principale | tool_e2e | run_command |
+|-------|----------------|----------|-------------|
+| Flutter | `flutter_test` | `integration_test` | `flutter test` |
+| Next.js / React | `jest` / `vitest` | `playwright` | `npm test` / `npx playwright test` |
+| Node.js API | `jest` / `vitest` | N/A | `npm test` |
+| Static / nessun test | `none` | `none` | verifica manuale |
+
+### 3. Esempi di test
+Genera 1-2 esempi **pertinenti alla feature/fix** della issue — mai esempi generici.
+
+**Flutter:**
+```dart
+testWidgets('comportamento atteso', (tester) async {
+  await tester.pumpWidget(const NomeWidget());
+  // azioni e assert pertinenti
+});
+```
+**Playwright:**
+```ts
+test('comportamento atteso', async ({ page }) => {
+  await page.goto('/rotta-pertinente');
+  // azioni e assert pertinenti
+});
+```
+
 ## Regole
 - **Mai aggiungere label** — Davide le assegna manualmente dopo
 - **Sempre Backlog** — mai Todo o altro per issue appena create

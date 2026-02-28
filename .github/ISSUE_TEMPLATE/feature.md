@@ -28,19 +28,29 @@ Ogni criterio deve essere verificabile autonomamente dal dev.
 - [ ] AC2: ...
 - [ ] AC3: ...
 
-## 🎭 Playwright Tests (se applicabile)
-Il dev deve scrivere/eseguire questi test prima di aprire la PR.
+## 🧪 Testing
+**Strumenti:** {tool_principale} · {tool_e2e}
+**Ambiente:** {test_url}
+**Comando:** `{run_command}`
 
-```ts
-// Esempio: test login fallito
-test('mostra errore con credenziali errate', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('[name=email]', 'wrong@test.com');
-  await page.fill('[name=password]', 'wrong');
-  await page.click('button[type=submit]');
-  await expect(page.locator('.error-message')).toBeVisible();
-});
+Il dev deve scrivere ed eseguire i test prima di aprire la PR. Tutti i test devono essere verdi.
+
+### Test da implementare / verificare
+
+#### Unit / Widget test
 ```
+{unit_test_example}
+```
+
+#### Integration / E2E test (se applicabile)
+```
+{e2e_test_example}
+```
+
+### Checklist test pre-PR
+- [ ] `{run_command}` → tutti verdi
+- [ ] Nessuna regressione su test esistenti
+- [ ] Coverage mantenuta (se richiesta dal progetto)
 
 ## 🚫 Out of Scope
 [Cosa NON deve essere toccato in questa issue]
