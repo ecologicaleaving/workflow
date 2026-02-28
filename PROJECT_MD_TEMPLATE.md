@@ -57,10 +57,18 @@
 - **CI Status**: [passing|failing|pending]
 - **Last Deploy**: [YYYY-MM-DDTHH:MM:SSZ]
 
-### 🔑 Environment Variables
-- `VARIABILE_1`: [descrizione — auto-injected via GitHub Secrets]
-- `DATABASE_URL`: [fonte della connection string]
-- [aggiungere tutte le variabili critiche]
+### 🔑 Environment Variables (GitHub Secrets)
+> ⚠️ Le credenziali non vanno mai nel repo. Vedi `CREDENTIALS_WORKFLOW.md` per il workflow completo.
+
+| Secret | Descrizione | Dove si trova |
+|--------|-------------|---------------|
+| `SUPABASE_URL` | URL progetto Supabase | Dashboard → Settings → API |
+| `SUPABASE_ANON_KEY` | Chiave pubblica client | Dashboard → Settings → API |
+| `DATABASE_URL` | Connection string DB | Provider DB (Neon, Supabase, etc.) |
+| `JWT_SECRET` | Firma JWT backend | Generato (min 32 chars) |
+
+**Secrets configurati**: [sì/no — se no, APK/deploy non funzionerà]
+**Ultimo aggiornamento secrets**: [YYYY-MM-DD]
 
 ## Repository
 - **Main Branch**: [main|master|trunk]
