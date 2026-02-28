@@ -5,12 +5,12 @@
 | Role | Person | Responsibilities |
 |------|--------|-----------------|
 | Product Owner | David (Davide) | Vision, requirements, final validation, business decisions |
-| Senior Developer | Claude Code (this agent) | Development, commits, builds, code quality |
+| Senior Developer | Claudio (this agent) | Development, commits, builds, code quality |
 | Orchestrator | Ciccio (OpenClaw VPS) | Deploy, merge, infrastructure, DB, monitoring |
 
 **Communication channels:**
 - David <-> Ciccio: Telegram (@dadecresce) for task delegation
-- Ciccio <-> Claude Code: sessions_send HTTP + GitHub activity
+- Ciccio <-> Claudio: sessions_send HTTP + GitHub activity
 - Team group: Telegram 8020dev
 
 ---
@@ -19,11 +19,11 @@
 
 ```
 1.  David         -> Telegram a Ciccio: richiesta feature/fix
-2.  Ciccio        -> Delega a Claude Code via sessions_send
-3.  Claude Code   -> Crea feature branch: git checkout -b feature/nome
-4.  Claude Code   -> Sviluppa + commit con conventional commits
-5.  Claude Code   -> Push: git push origin feature/nome
-6.  Claude Code   -> Notifica David: "Pronto per deploy su test"
+2.  Ciccio        -> Delega a Claudio via sessions_send
+3.  Claudio       -> Crea feature branch: git checkout -b feature/nome
+4.  Claudio       -> Sviluppa + commit con conventional commits
+5.  Claudio       -> Push: git push origin feature/nome
+6.  Claudio       -> Notifica (via David): "Pronto per deploy su test"
 7.  David         -> Dice a Ciccio: "Deploy [progetto] su test"
 8.  Ciccio        -> Build + deploy su test-*.8020solutions.org
 9.  Ciccio        -> Notifica David: "Test ready: [URL]"
@@ -54,6 +54,7 @@
 - 1 PR reviewer required before merge
 - Status checks must pass
 - Up-to-date with base branch required
+- Dismiss stale reviews on new commits
 - **NEVER push directly to master**
 
 ---
@@ -63,6 +64,10 @@
 ### Format
 ```
 <type>[optional scope]: <short description>
+
+[optional body]
+
+[optional footer]
 ```
 
 ### Types & Semantic Version Impact
@@ -94,33 +99,56 @@ chore(deps): update Flutter to 3.24.0
 fixed stuff
 WIP
 update
-temp
+asdfgh
 ```
 
 ---
 
 ## PROJECT.md - Single Source of Truth
 
-Every project MUST have a `PROJECT.md` at root. Template in `PROJECT_MD_TEMPLATE.md`.
+Every project MUST have a `PROJECT.md` at root with these sections:
 
-### Required Fields
-- `Version` - semantic version (auto-updated by commit automation)
-- `Status` - development | staging | production
-- `Live URL` - deploy target
-- `Last Deploy` - ISO timestamp
-- `Backlog` - TODO / IN PROGRESS / DONE sections
+### Required Sections
+```markdown
+# Project Name
 
-### Privacy Rules
+## Project Info
+- **Version**: 1.2.3
+- **Status**: development | staging | production
+- **Description**: Brief description
+
+## Deployment
+- **Live URL**: https://app.8020solutions.org
+- **Deploy Method**: vps-nginx | netlify | github-pages
+- **Last Deploy**: 2026-02-22
+
+## Repository
+- **Main Branch**: master
+- **GitHub**: https://github.com/ecologicaleaving/project-name
+
+## Backlog
+### TODO
+- [ ] Feature to implement
+
+### IN PROGRESS
+- [ ] Current work item
+
+### DONE
+- [x] Completed item
+```
+
+### Privacy Rules for PROJECT.md
 - No client names, no credentials, no sensitive data
-- Generic business terms only
+- Generic business terms
+- Vague but professional descriptions
 
 ---
 
-## Commit Automation Tool
+## Commit Skin (Automation Tool)
 
-### Installation (per project, from project root)
+### Installation (per project)
 ```bash
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
 ```
 
 ### What it Does Automatically (pre-commit hook)
@@ -132,32 +160,39 @@ curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scr
    - Node.js/React: `npm run build`
    - Static: zip packaging
 5. Copies artifact to `releases/` directory
-6. Naming: `{project}-{type}-v{version}.{ext}`
-7. Stages all changes + logs to `.commit-automation/commit.log`
+6. Naming pattern: `{project}-{type}-v{version}.{ext}`
+7. Stages all changes (PROJECT.md + artifacts)
+8. Logs everything to `.commit-skin/commit.log`
+
+### Config Files Created
+- `.commit-skin/project-config.json` - project name, type, github URL, skin version
+- `.commit-skin/version-rules.json` - semantic versioning rules
+- `.commit-skin/commit.log` - execution log
 
 ### Verify Installation
 ```bash
-ls .commit-automation/project-config.json   # exists = installed
-cat .commit-automation/commit.log           # check execution log
-```
-
-### Troubleshoot
-```bash
-# Reinstall
-rm -rf .commit-automation .git/hooks/pre-commit
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-commit-automation.sh | bash
+ls .commit-skin/project-config.json  # exists = installed
+cat .commit-skin/project-config.json  # check configuration
 ```
 
 ---
 
-## Claude Code Quality Standards
+## Claudio's Quality Standards
 
-Non-negotiables before every commit/push:
+Before every commit/push, verify:
 - [ ] Conventional commit format used
-- [ ] On correct feature branch (not master/main)
-- [ ] No broken builds - tested locally
-- [ ] PROJECT.md is updated (or automation handles it)
-- [ ] Only relevant files staged (no .env, secrets, large binaries)
+- [ ] No broken builds (app compiles/runs)
+- [ ] PROJECT.md is updated (or commit skin handles it)
+- [ ] On correct feature branch (not master)
+- [ ] Only relevant files staged (no .env, secrets, binaries)
+- [ ] Linting passes (if configured)
+
+### Non-negotiables
+- NEVER commit to master directly
+- NEVER push broken code
+- NEVER commit credentials or secrets
+- NEVER skip PROJECT.md update
+- ALWAYS use conventional commits
 
 ---
 
@@ -166,12 +201,29 @@ Non-negotiables before every commit/push:
 - **VPS**: Hetzner CiccioHouse 46.225.60.101, Ubuntu 22.04 LTS
 - **Database**: PostgreSQL Docker (porta 5433 local), Neon/Supabase cloud
 - **Deploy targets**: VPS nginx + SSL, Netlify (static), GitHub APK distribution
-- **Test environments**: `test-*.8020solutions.org`
-- **Production**: `app.8020solutions.org` (project-specific)
+- **Test environments**: test-*.8020solutions.org
+- **Production**: app.8020solutions.org (and project-specific)
+
+### Ciccio's Cron Jobs
+```
+*/30 * * * * project-sync-cron.sh     # Status dashboard sync
+0 */2 * * * openclaw cron emergency   # Emergency checks
+0 */3 * * * openclaw cron ci-monitor  # CI monitoring
+```
+
+### KPI Targets
+- Deploy success rate: >95%
+- System uptime: 99.5% for critical
+- Deploy response: <2h from request
+- Emergency response: <30min
 
 ---
 
 ## Active Projects
-- Maestro, StageConnect, BeachRef, (+ future projects)
-- All at: https://github.com/ecologicaleaving/
-- Workflow hub: https://github.com/ecologicaleaving/workflow
+- Maestro
+- StageConnect
+- BeachRef
+- (future projects follow same workflow)
+
+All at: https://github.com/ecologicaleaving/
+Workflow hub: https://github.com/ecologicaleaving/workflow
