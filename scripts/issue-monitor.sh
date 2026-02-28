@@ -95,11 +95,14 @@ print(json.dumps({
   }
 }))" <<< "$task")
 
-  local response session
+  local tmp_f; tmp_f=$(mktemp)
+  printf "%s" "$payload" > "$tmp_f"
+  local response
   response=$(curl -s -X POST "$GATEWAY_URL/tools/invoke" \
     -H "Authorization: Bearer $GATEWAY_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "$payload" 2>/dev/null) || response="{}"
+    --data-binary "@$tmp_f" 2>/dev/null) || response="{}"
+  rm -f "$tmp_f"
 
   session=$(echo "$response" | python3 -c "
 import sys, json
