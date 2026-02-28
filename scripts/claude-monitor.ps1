@@ -286,7 +286,8 @@ function Invoke-IssueProcessor {
     }
 
     # Skip if an open PR already exists for this issue (agent completed in a prior run)
-    $existingPr = gh pr list --repo "$org/$Repo" --state open --search "#$Number" --json number --jq ".[0].number" 2>$null
+    # Use --head to match the exact branch name (avoids false positives with --search "#N")
+    $existingPr = gh pr list --repo "$org/$Repo" --state open --head "feature/issue-$Number-*" --json number --jq ".[0].number" 2>$null
     if (-not [string]::IsNullOrWhiteSpace($existingPr)) {
         Write-Log "Issue ${Repo}#${Number} already has open PR #$existingPr - marking review-ready and skipping."
         # NON rimuovere $agentLabel — serve per routing in caso di rework successivo
