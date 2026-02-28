@@ -146,7 +146,7 @@ process_issue() {
 
   # Prepara contesto rework se necessario
   local rework_header=""
-  if [ "$is_rework" = "true" ]; then
+  local rework_branch=""
     local feedback_section
     feedback_section=$(get_feedback "$repo" "$number")
     rework_header="⚠️  REWORK RICHIESTO — questa issue è già stata lavorata ma i test hanno rilevato problemi.
@@ -156,7 +156,10 @@ NON ripartire da zero: analizza cosa non funzionava e correggi solo quello.
 $feedback_section
 =========================="
     log "REWORK issue #$number: $title ($repo) → $agent_name"
-  else
+    # Rileva branch esistente per il rework
+    rework_branch=$(gh api "repos/$repo/branches" --jq "[.[] | .name | select(startswith(\"feature/issue-$number\"))] | first" 2>/dev/null || echo "feature/issue-$number")
+    rework_branch="${rework_branch:-feature/issue-$number}"
+    log "Issue #$number: rework branch → $rework_branch"
     log "NEW issue #$number: $title ($repo) → $agent_name"
   fi
 
@@ -165,8 +168,11 @@ $feedback_section
     --add-label    "$LABEL_PROCESSING" \
     && log "Issue #$number: label → in-progress" \
     || warn "Impossibile aggiornare label per #$number"
+  # FIX: in rework rimuovi needs-fix subito
+  if [ "$is_rework" = "true" ]; then
+    gh issue edit "$number" --repo "$repo" --remove-label "$REWORK_LABEL" 2>/dev/null || true
+  fi
   move_card "$repo" "$number" "In Progress"
-
   # ---- Costruisci il task prompt ----
   local board_cmd=""
   if [ -n "$PROJECT_BOARD_SCRIPT" ]; then
@@ -193,7 +199,8 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
      || gh repo clone $repo $repo_short
    cd $repo_short
    $([ "$is_rework" = "true" ] \
-     && echo "git checkout feature/issue-$number 2>/dev/null || git checkout -b feature/issue-$number" \
+   $([ "$is_rework" = "true" ] \
+     && echo "git checkout $rework_branch 2>/dev/null || git checkout -b $rework_branch" \
      || echo "git checkout -b feature/issue-$number 2>/dev/null || git checkout feature/issue-$number")
 
 2. Segui ESATTAMENTE la skill issue-resolver (fasi 1-6):
@@ -209,8 +216,8 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
    gh issue edit $number --repo $repo \\
      --add-label $LABEL_DONE \\
      --remove-label $LABEL_PROCESSING
+   gh pr create --repo $repo --head $([ "$is_rework" = "true" ] && echo "$rework_branch" || echo "feature/issue-$number") --base master --title "$([ "$is_rework" = "true" ] && echo "fix" || echo "feat"): $title" --body "Fixes #$number" 2>/dev/null || true
    $board_cmd
-
 4. Notifica Davide via Telegram (chat $TELEGRAM_CHAT):
    $([ "$is_rework" = "true" ] \
      && echo "\"🔧 Issue #$number ($title) — rework completato. Branch: feature/issue-$number | Repo: $repo\"" \
