@@ -26,15 +26,41 @@
 - **Admin URL**: [dashboard URL or N/A]
 
 ## Deployment
-- **Live URL**: [https://... or N/A for mobile apps]
-- **Deploy Method**: [netlify|vps-nginx|github-actions|manual]
-- **Deploy Host**: [server identifier or cloud provider]
+
+### 🌐 Frontend
+- **URL Produzione**: [https://app.dominio.com o N/A]
+- **URL Test/Staging**: [https://test-xxx.dominio.com o N/A]
+- **Hosting**: [netlify|vps-nginx|github-pages|vercel|N/A]
+- **Deploy Method**: [github-actions|manual|auto-push]
+
+### 📱 App Mobile (se applicabile)
+- **APK Produzione**: [https://apps.dominio.com/downloads/app.apk o N/A]
+- **APK Test**: [https://apps.dominio.com/downloads/test/ o N/A]
+- **Build Method**: [github-actions|manual flutter build]
+- **Distribuzione**: [VPS download|Play Store|direct install]
+
+### ⚙️ Backend / API (se applicabile)
+- **URL**: [https://api.dominio.com o N/A]
+- **Hosting**: [vps-nginx|railway|render|supabase-functions|N/A]
+- **Server**: [IP o hostname se VPS]
+
+### 🗄️ Database
+- **Provider**: [supabase-cloud|neon-cloud|postgresql-vps|sqlite-local|none]
+- **Host**: [URL dashboard o IP server]
+- **Database ID / Project**: [identificatore progetto]
+- **Admin URL**: [https://supabase.com/dashboard/project/xxx o N/A]
+- **Backup**: [auto-managed|manual|not-required]
+
+### 🔄 CI/CD
+- **Pipeline**: [github-actions|none]
+- **Trigger**: [push to main|manual]
 - **CI Status**: [passing|failing|pending]
-- **Last Deploy**: [YYYY-MM-DDTHH:MM:SSZ ISO timestamp]
-- **Environment Variables**: 
-  - `VAR_NAME`: [description or auto-injected]
-  - `DATABASE_URL`: [connection string source]
-  - [add other critical env vars]
+- **Last Deploy**: [YYYY-MM-DDTHH:MM:SSZ]
+
+### 🔑 Environment Variables
+- `VARIABILE_1`: [descrizione — auto-injected via GitHub Secrets]
+- `DATABASE_URL`: [fonte della connection string]
+- [aggiungere tutte le variabili critiche]
 
 ## Repository
 - **Main Branch**: [main|master|trunk]
@@ -108,7 +134,7 @@
 
 ### **✅ MUST HAVE**
 - **Project Info**: Nome, versione, status, descrizione
-- **Deployment**: URL live, metodo deploy, CI status
+- **Deployment**: URL frontend, URL test, dove vive il DB, CI status
 - **Repository**: Link GitHub, branch strategy  
 - **Backlog**: TODO/IN PROGRESS/DONE items
 
