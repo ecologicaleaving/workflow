@@ -270,6 +270,19 @@ process_agent_issues() {
     python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo 0)
   log "Trovate $count issue(s) con label '$trigger_label'"
   [ "$count" = "0" ] && return
+  # Skip se agente ha gia' una issue in-progress (max 1 attiva per agente)
+  local active_count
+  active_count=$(gh search issues \
+    --label "$trigger_label" \
+    --label "$LABEL_PROCESSING" \
+    --owner "$GITHUB_ORG" \
+    --state open \
+    --json number \
+    --limit 5 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo 0)
+  if [ "$active_count" -gt 0 ]; then
+    log "Agente $agent_name: gia' $active_count issue in-progress, skip cycle"
+    return
+  fi
 
   while IFS= read -r issue; do
     local number title body repo
