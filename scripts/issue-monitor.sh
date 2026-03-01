@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ============================================================
-# issue-monitor.sh ÔÇö 8020 Solutions Unified Issue Monitor v1.0
+# issue-monitor.sh Ã”Ã‡Ã¶ 8020 Solutions Unified Issue Monitor v1.0
 # One script, any machine. Config: ~/.openclaw/monitor.conf
 #
 # VPS cron:   */10 * * * * /path/to/issue-monitor.sh >> /var/log/issue-monitor.log 2>&1
@@ -47,7 +47,7 @@ move_card() {
   local repo="$1" number="$2" status="$3"
   if [ -n "$PROJECT_BOARD_SCRIPT" ] && [ -f "$PROJECT_BOARD_SCRIPT" ]; then
     python3 "$PROJECT_BOARD_SCRIPT" "$repo" "$number" "$status" 2>/dev/null \
-      && log "Card #$number ÔåÆ $status" \
+      && log "Card #$number Ã”Ã¥Ã† $status" \
       || warn "Card move fallito per #$number"
   fi
 }
@@ -125,19 +125,28 @@ process_issue() {
   labels=$(gh issue view "$number" --repo "$repo" \
     --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
 
+  # Skip se NON assegnata a ecologicaleaving (gate: Davide sblocca assegnandosi)
+  local assignees
+  assignees=$(gh issue view "$number" --repo "$repo" \
+    --json assignees --jq '[.assignees[].login] | join(",")' 2>/dev/null || echo "")
+  if ! echo "$assignees" | grep -q "ecologicaleaving"; then
+    log "Issue #$number: non assegnata a ecologicaleaving, skip"
+    return
+  fi
+
   # Skip se locked
   if [ -f "$lock_file" ]; then
     log "Issue #$number: locked, skip"
     return
   fi
-  # Skip se gi├á in-progress
+  # Skip se giâ”œÃ¡ in-progress
   if echo "$labels" | grep -q "$LABEL_PROCESSING"; then
-    log "Issue #$number: gi├á in-progress, skip"
+    log "Issue #$number: giâ”œÃ¡ in-progress, skip"
     return
   fi
-  # Skip se gi├á completata
+  # Skip se giâ”œÃ¡ completata
   if echo "$labels" | grep -q "$LABEL_DONE"; then
-    log "Issue #$number: gi├á review-ready, skip"
+    log "Issue #$number: giâ”œÃ¡ review-ready, skip"
     return
   fi
 
@@ -150,24 +159,24 @@ process_issue() {
   if [ "$is_rework" = "true" ]; then
     local feedback_section
     feedback_section=$(get_feedback "$repo" "$number")
-    rework_header="ÔÜá´©Å  REWORK RICHIESTO ÔÇö questa issue ├¿ gi├á stata lavorata ma i test hanno rilevato problemi.
+    rework_header="Ã”ÃœÃ¡Â´Â©Ã…  REWORK RICHIESTO Ã”Ã‡Ã¶ questa issue â”œÂ¿ giâ”œÃ¡ stata lavorata ma i test hanno rilevato problemi.
 Leggi ATTENTAMENTE il feedback qui sotto prima di fare qualsiasi cosa.
 NON ripartire da zero: analizza cosa non funzionava e correggi solo quello.
 
 $feedback_section
 =========================="
-    log "REWORK issue #$number: $title ($repo) ÔåÆ $agent_name"
+    log "REWORK issue #$number: $title ($repo) Ã”Ã¥Ã† $agent_name"
     rework_branch=$(gh api "repos/$repo/branches" --jq "[.[] | .name | select(startswith(\"feature/issue-$number\"))] | first" 2>/dev/null || echo "")
     rework_branch="${rework_branch:-feature/issue-$number}"
     gh issue edit "$number" --repo "$repo" --remove-label "$REWORK_LABEL" 2>/dev/null || true
   else
-    log "NEW issue #$number: $title ($repo) ÔåÆ $agent_name"
+    log "NEW issue #$number: $title ($repo) Ã”Ã¥Ã† $agent_name"
   fi
 
-  # Label ÔåÆ in-progress + sposta card
+  # Label Ã”Ã¥Ã† in-progress + sposta card
   gh issue edit "$number" --repo "$repo" \
     --add-label    "$LABEL_PROCESSING" \
-    && log "Issue #$number: label ÔåÆ in-progress" \
+    && log "Issue #$number: label Ã”Ã¥Ã† in-progress" \
     || warn "Impossibile aggiornare label per #$number"
   move_card "$repo" "$number" "In Progress"
 
@@ -203,7 +212,7 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
 2. Segui ESATTAMENTE la skill issue-resolver (fasi 1-6):
    - Fase 1: Research codebase $([ "$is_rework" = "true" ] && echo "(focalizzati sulle aree segnalate nel feedback)" || echo "")
    - Fase 2: Plan $([ "$is_rework" = "true" ] && echo "(piano di fix basato sul feedback)" || echo "")
-   - Fase 3: Implementazione iterativa (implement ÔåÆ test ÔåÆ fix, max 5 iter/suite)
+   - Fase 3: Implementazione iterativa (implement Ã”Ã¥Ã† test Ã”Ã¥Ã† fix, max 5 iter/suite)
    - Fase 4: Verifica finale
    - Fase 5: Aggiorna PROJECT.md (version bump, backlog, timestamp)
    - Fase 6: Commit convenzionale (NO git push manuale)
@@ -222,8 +231,8 @@ ISTRUZIONI (segui in ordine, non saltare fasi):
 
 4. Notifica Davide via Telegram (chat $TELEGRAM_CHAT):
    $([ "$is_rework" = "true" ] \
-     && echo "\"­ƒöº Issue #$number ($title) ÔÇö rework completato. Branch: feature/issue-$number | Repo: $repo\"" \
-     || echo "\"Ô£à Issue #$number ($title) risolta. Branch: feature/issue-$number | Repo: $repo\"")
+     && echo "\"Â­Æ’Ã¶Âº Issue #$number ($title) Ã”Ã‡Ã¶ rework completato. Branch: feature/issue-$number | Repo: $repo\"" \
+     || echo "\"Ã”Â£Ã  Issue #$number ($title) risolta. Branch: feature/issue-$number | Repo: $repo\"")
 
 5. Rimuovi il lock: rm -f $lock_file
 
@@ -239,7 +248,7 @@ TASK_EOF
 
   local session
   session=$(spawn_agent "$task" "$session_label")
-  log "Issue #$number ÔåÆ subagente spawned (session: $session). Monitor libero."
+  log "Issue #$number Ã”Ã¥Ã† subagente spawned (session: $session). Monitor libero."
 }
 
 # ---- Processa tutte le issue di un agente ----
@@ -303,7 +312,7 @@ for i in $(seq 1 "$AGENT_COUNT"); do
   process_agent_issues "$trigger_label" "$agent_name" "$agent_identity" "false"
 done
 
-# Rework (needs-fix) ÔÇö usa l'identity del primo agente configurato
+# Rework (needs-fix) Ã”Ã‡Ã¶ usa l'identity del primo agente configurato
 _rv="AGENT_1_NAME";     _rework_name="${!_rv:-Agent}"
 _ri="AGENT_1_IDENTITY"; _rework_identity="${!_ri:-}"
 process_agent_issues "$REWORK_LABEL" "$_rework_name" "$_rework_identity" "true"
