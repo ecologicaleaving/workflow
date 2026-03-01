@@ -167,3 +167,5 @@ Quando succede qualcosa degno di nota (errore, scoperta, workaround):
 - ✅ Non interrompere Claude Code / Codex se stanno lavorando correttamente
 - ✅ Quando in dubbio su scope → chiedi a Davide prima di sviluppare
 - ✅ Import Prisma: usa `PrismaClientKnownRequestError` da `@prisma/client/runtime/library`
+- ✅ **Ogni issue creata va SEMPRE aggiunta al Kanban in colonna Todo:**
+  `gh project item-add 2 --owner ecologicaleaving --url <issue_url>`
