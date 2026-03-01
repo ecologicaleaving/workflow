@@ -142,3 +142,4 @@ test('comportamento atteso', async ({ page }) => {
 - **Sempre Backlog** — mai Todo o altro per issue appena create
 - **Branch name** (da inserire nel body): `feature/issue-{N}-{slug}` dove N è assegnato da GitHub dopo la creazione
 - Se PROJECT.md non esiste, chiedere stack e URL test come domanda separata
+- **⚠️ OBBLIGATORIO: ogni issue creata va SEMPRE aggiunta al Kanban** — eseguire sempre il blocco "Aggiungi al progetto e imposta Backlog" dopo `gh issue create`. Non saltare mai questo step.
