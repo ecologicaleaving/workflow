@@ -72,14 +72,32 @@ Se la root cause non è chiara:
 
 ---
 
-## STEP 5 — Verifica AC e DoD
+## STEP 5 — Verifica AC e DoD (max 3 iterazioni)
 
-Rileggi la skill **`issue-done`** da STEP 1 in poi.
+```
+iterazione = 0
+while DoD non completo AND iterazione < 3:
+    verifica ogni AC uno per uno
+    esegui tutti i test (lint + unit)
+    se tutto verde → procedi a STEP 6
+    altrimenti:
+        identifica quale AC o test fallisce
+        analizza root cause (non indovinare)
+        applica fix mirato
+        iterazione++
 
-In particolare:
-- Verifica **ogni AC** uno per uno — inclusi quelli già passati (assicurati di non aver introdotto regressioni)
-- Applica la **Definition of Done** completa
-- Max 3 iterazioni fix → se ancora bloccato, segnala all'orchestratore
+if iterazione == 3 AND ancora non completo:
+    NON pushare
+    Segnala all'orchestratore (Claudio o Ciccio) con:
+      - quale AC/criterio non è soddisfatto
+      - cosa hai provato nelle 3 iterazioni
+      - ipotesi sul blocco
+    L'orchestratore valuta e se necessario scala a Davide.
+```
+
+In ogni iterazione:
+- Verifica **ogni AC** uno per uno — inclusi quelli già passati (no regressioni)
+- Applica la **Definition of Done** completa (vedi `issue-done` STEP 1b)
 
 ---
 
