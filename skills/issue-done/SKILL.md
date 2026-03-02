@@ -200,14 +200,11 @@ In attesa di build CI e deploy su test da parte di Claudio/Ciccio."
 
 ---
 
-## STEP 7 — Aggiorna label
+## STEP 7 — Label: non toccare
 
-```bash
-# Rimuovi in-progress, aggiungi review-ready
-gh issue edit <N> --repo <owner/repo> \
-  --remove-label "in-progress" \
-  --add-label "review-ready"
-```
+Le label NON vanno modificate al completamento.
+Mantieni solo label agente (`codex`, `claude-code`, `ciccio`) + label progetto.
+Lo stato è indicato dalla colonna Kanban.
 
 ---
 
@@ -230,7 +227,7 @@ gh issue edit <N> --repo <owner/repo> \
 - [ ] Branch pushato
 - [ ] PR aperta con body descrittivo (AC soddisfatti esplicitati)
 - [ ] Commento sull'issue
-- [ ] Label aggiornata → `review-ready`
+- [ ] Label NON toccate (solo agente + progetto rimangono)
 
 ---
 

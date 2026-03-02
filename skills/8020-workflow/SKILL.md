@@ -38,10 +38,9 @@ Davide testa:
 
 ## Quando Ciccio riceve /reject
 1. Aggiungi commento GitHub con feedback completo
-2. Rimuovi `deployed-test`, aggiungi `needs-fix`
-3. Sposta card: `Test` → `Review`
-4. Lavora il fix → quando pronto → sposta card: `Review` → `Test`
-5. Notifica Davide con nuovo APK/link
+2. Sposta card: `Test` → `Review` (non toccare le label)
+3. Lavora il fix → quando pronto → sposta card: `Review` → `Test`
+4. Notifica Davide con nuovo APK/link
 
 ## Quando Ciccio riceve /approve
 1. Mergia PR su master
@@ -63,20 +62,20 @@ Davide testa:
 - **Deploy key**: `/root/.ssh/github-actions-deploy`
 
 ## Labels sistema
+Le issue usano **sole due label**:
+1. **Label progetto** — nome del progetto (es. `beachref`, `finn`)
+2. **Label agente** — chi lavora l'issue (`ciccio`, `claude-code`, `codex`)
+
 | Label | Significato |
 |-------|-------------|
 | `ciccio` | Ciccio (VPS) — routing obbligatorio |
 | `claude-code` | Claude Code (PC) — routing obbligatorio |
 | `codex` | Codex (PC) — routing obbligatorio |
-| `in-progress` | In lavorazione (agente attivo) |
-| `review-ready` | Pronto per deploy/test |
-| `deployed-test` | Live su ambiente test |
-| `needs-fix` | Rework richiesto — NON cambia routing, si abbina a ciccio/claude-code/codex |
 
-## Regola routing
-- Label agente (`ciccio`/`claude-code`/`codex`) NON viene mai rimossa durante la lavorazione
-- `needs-fix` è un segnale di rework: il monitor che gestisce la label agente la prende
-- VPS skippa sempre issue con `claude-code` o `codex` (anche se hanno `needs-fix`)
+**Regole:**
+- Le label di stato (`in-progress`, `review-ready`, `deployed-test`, `needs-fix`) NON si usano — lo stato è indicato dalla colonna Kanban
+- Label agente NON viene mai rimossa durante la lavorazione
+- VPS skippa sempre issue con `claude-code` o `codex`
 
 ## Riferimenti completi
 - `references/WORKFLOW_CICCIO.md` — procedure complete Ciccio
