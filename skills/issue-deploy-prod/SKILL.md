@@ -52,14 +52,22 @@ Usa `--squash` per mantenere la history di master pulita.
 ## STEP 3 — Deploy in produzione
 
 ### Flutter APK
-La CI su master si triggera automaticamente dopo il merge e deploya l'APK in prod:
-```
-https://apps.8020solutions.org/downloads/<repo-name>-latest.apk
-```
+La CI su master si triggera automaticamente dopo il merge.
+
+> ⚠️ **Flavor**: per master/produzione la CI deve usare `--release --flavor prod`.
+> Verifica in `PROJECT.md` del repo i flavor configurati e il comando corretto.
+> Esempio finn: `flutter build apk --release --flavor prod`
+> Il nome dell'app nel APK deve corrispondere al flavor prod (es. "Fin", non "Fin Dev").
+
 Attendi il completamento della CI run su master:
 ```bash
 gh run list --repo <owner/repo> --branch master --limit 1 \
   --json status,conclusion,url
+```
+
+L'APK prod sarà disponibile su:
+```
+https://apps.8020solutions.org/downloads/<repo-name>-latest.apk
 ```
 
 ### Web App (eseguito da Ciccio su VPS)

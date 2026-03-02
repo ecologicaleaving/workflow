@@ -40,6 +40,11 @@ La CI deploya automaticamente l'APK su:
 ```
 https://apps.8020solutions.org/downloads/test/<repo-name>-<branch>.apk
 ```
+
+> ⚠️ **Flavor**: per branch/test la CI deve usare `--debug --flavor dev`.
+> Verifica in `PROJECT.md` del repo i flavor configurati.
+> Il nome dell'app nel APK test deve essere quello del flavor dev (es. "Fin Dev").
+
 Verifica che il link sia raggiungibile:
 ```bash
 curl -sI "https://apps.8020solutions.org/downloads/test/<nome>.apk" | head -1
