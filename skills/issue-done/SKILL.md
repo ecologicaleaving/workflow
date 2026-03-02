@@ -19,9 +19,45 @@ Leggi questa skill **solo quando il codice è pronto e tutti i test sono verdi**
 
 ---
 
-## STEP 1 — Verifica finale
+## STEP 1 — Verifica Acceptance Criteria (AC)
 
-Prima di qualsiasi commit:
+**Prima di tutto**: rileggi l'issue.
+
+```bash
+gh issue view <N> --repo <owner/repo>
+```
+
+Per ogni AC elencato nell'issue, verifica **uno per uno**:
+
+- AC soddisfatto? Hai una prova concreta (test, output, log)?
+- Se l'AC richiede verifica manuale, documentala nel commento finale
+- **Se anche un solo AC non è soddisfatto → non andare avanti, torna a fixare**
+
+> ⚠️ Non basta che il codice "funzioni" — deve soddisfare esattamente
+> i criteri scritti nell'issue. Ogni AC è un contratto con Davide.
+
+---
+
+## STEP 1b — Definition of Done (DoD)
+
+Prima di qualsiasi commit, **tutti** questi punti devono essere veri:
+
+| # | Criterio | ✅ |
+|---|----------|----|
+| 1 | Tutti gli AC dell'issue sono soddisfatti | |
+| 2 | Test scritti che dimostrano il fix/feature | |
+| 3 | `flutter analyze` / `npm run lint` → zero errori | |
+| 4 | `flutter test` / `npm test` → tutti verdi | |
+| 5 | Nessuna regressione sui test esistenti | |
+| 6 | Nessun `print()` / `console.log()` di debug lasciato | |
+| 7 | Nessun TODO irrisolto nel codice toccato | |
+| 8 | Nessun `.env` o credenziale nei file modificati | |
+
+**Se anche un solo punto è ❌ → non commitare. Torna a fixare.**
+
+---
+
+## STEP 1c — Esegui i test
 
 ```bash
 # Flutter
@@ -33,13 +69,6 @@ npm run lint
 npm run typecheck   # se disponibile
 npm test
 ```
-
-**Regola**: se anche un solo test è rosso, non andare avanti — torna a fixare.
-
-Controlla anche:
-- Nessun `print()` / `console.log()` di debug lasciato
-- Nessun TODO irrisolto nel codice che hai toccato
-- Nessun file `.env` o credenziale nei file modificati
 
 ---
 
@@ -162,13 +191,22 @@ gh issue edit <N> --repo <owner/repo> \
 
 ## ✅ Checklist pre-consegna
 
-- [ ] Tutti i test verdi (lint + unit)
+**AC & DoD**
+- [ ] Ogni Acceptance Criteria dell'issue è soddisfatto
+- [ ] Test scritti che dimostrano ogni AC
+- [ ] Tutti i test verdi (lint + unit), zero regressioni
+- [ ] DoD completo (Step 1b tutto ✅)
+
+**Codice**
 - [ ] Nessun debug code lasciato
+- [ ] Nessun TODO irrisolto
+
+**Git & GitHub**
 - [ ] PROJECT.md aggiornato (version + CI Status + Backlog + timestamp)
 - [ ] Versione allineata in pubspec.yaml / package.json
 - [ ] Commit convenzionale con `Closes #N`
 - [ ] Branch pushato
-- [ ] PR aperta con body descrittivo
+- [ ] PR aperta con body descrittivo (AC soddisfatti esplicitati)
 - [ ] Commento sull'issue
 - [ ] Label aggiornata → `review-ready`
 
