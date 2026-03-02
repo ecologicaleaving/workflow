@@ -49,13 +49,11 @@ L'agente riprendera' la lavorazione sul branch feature/issue-<N>-<slug>."
 
 ---
 
-## STEP 3 — Aggiorna label
+## STEP 3 — Label: non toccare
 
-```bash
-gh issue edit <N> --repo <owner/repo> \
-  --remove-label "review-ready" \
-  --add-label "needs-fix"
-```
+Le label NON vanno modificate durante il reject.
+L'unica label da mantenere è quella dell'agente (`codex`, `claude-code`, `ciccio`) + quella del progetto.
+Lo stato è indicato dalla colonna Kanban, non dalle label.
 
 ---
 
@@ -122,7 +120,7 @@ Ciccio spawna subagente autonomamente con:
 
 - [ ] Feedback chiaro (se ambiguo -> chiesto chiarimento a Davide)
 - [ ] Commento registrato sull'issue con feedback dettagliato e AC fallito
-- [ ] Label aggiornata -> `needs-fix`
+- [ ] Label NON toccate (solo agente + progetto rimangono)
 - [ ] Card Kanban -> Review (`03f548ab`)
 - [ ] Agente notificato / rilanciato con feedback
 - [ ] Davide informato che il rework e' in corso
