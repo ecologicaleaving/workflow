@@ -53,7 +53,29 @@ Prima di qualsiasi commit, **tutti** questi punti devono essere veri:
 | 7 | Nessun TODO irrisolto nel codice toccato | |
 | 8 | Nessun `.env` o credenziale nei file modificati | |
 
-**Se anche un solo punto è ❌ → non commitare. Torna a fixare.**
+**Se anche un solo punto è ❌ → non commitare. Segui questo processo:**
+
+```
+iterazione = 0
+while DoD non completo AND iterazione < 3:
+    identifica il criterio che fallisce
+    analizza root cause (non indovinare)
+    applica il fix mirato
+    ri-esegui i test
+    iterazione++
+
+if iterazione == 3 AND DoD ancora non completo:
+    NON committare
+    Segnala all'orchestratore (Claudio o Ciccio) con:
+      - quale criterio/AC non è soddisfatto
+      - cosa hai provato (le 3 iterazioni)
+      - ipotesi sul blocco
+
+    L'orchestratore valuta e se necessario scala a Davide per decisione.
+```
+
+> ⚠️ Dopo 3 iterazioni fallite, fermarsi è la cosa giusta.
+> Pushare codice broken o con AC non soddisfatti è peggio di non pushare.
 
 ---
 
