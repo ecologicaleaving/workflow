@@ -104,14 +104,20 @@ Manda un messaggio con:
 
 ## STEP 5 — Aggiungi commento sull'issue
 
+> ⚠️ Il link alla build è **obbligatorio** nel commento. Davide non deve cercarlo — deve poter cliccare e testare subito.
+
 ```bash
 gh issue comment <N> --repo <owner/repo> \
-  --body "🧪 **Deploy su test completato.**
+  --body "🧪 **Pronto per test.**
 
-Build disponibile: <link APK o URL test>
-Card spostata → Test.
+📲 **Link test:** <URL APK o web app>
 
-@Davide: quando sei pronto, testa e dai \`/approve #<N>\` o \`/reject #<N> \"feedback\"\`."
+🔍 **Cosa verificare (AC):**
+- AC1: <descrizione breve>
+- AC2: <descrizione breve>
+
+PR: #<PR_N>
+Rispondi con \`/approve #<N>\` o \`/reject #<N> \"feedback\"\`."
 ```
 
 ---
@@ -121,8 +127,8 @@ Card spostata → Test.
 - [ ] CI verde sul branch della PR
 - [ ] Build/APK disponibile e raggiungibile
 - [ ] Card Kanban → Test
-- [ ] Davide notificato con link + cosa testare
-- [ ] Commento sull'issue
+- [ ] Commento sull'issue con **link diretto** alla build + AC da verificare
+- [ ] Davide notificato via Telegram con link + cosa testare
 
 ---
 
