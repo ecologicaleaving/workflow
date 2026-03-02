@@ -1,7 +1,7 @@
 #!/bin/bash
 # ================================================================
 # install-ciccio.sh — Setup Ciccio (OpenClaw VPS)
-# Installa script, skill e cron per l'agente orchestratore.
+# Installa script e skill per l'agente orchestratore.
 #
 # Uso:
 #   curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash
@@ -25,9 +25,9 @@ h()    { echo -e "\n\033[1m▸ $1\033[0m"; }
 h "Verifica prerequisiti"
 
 [ -d "/root/.openclaw" ] || err "OpenClaw non trovato. Questo script è per il VPS Ciccio."
-command -v gh   &>/dev/null || err "gh CLI non trovato (installa: https://cli.github.com)"
+command -v gh      &>/dev/null || err "gh CLI non trovato (installa: https://cli.github.com)"
 command -v python3 &>/dev/null || err "python3 non trovato"
-command -v curl &>/dev/null || err "curl non trovato"
+command -v curl    &>/dev/null || err "curl non trovato"
 
 ok "Prerequisiti OK"
 
@@ -43,7 +43,6 @@ h "Download script"
 SCRIPTS=(
   "scripts/project_board.py"
   "scripts/issue_slash_command.py"
-  "scripts/ciccio-issue-monitor.sh"
   "scripts/triage_command.py"
   "scripts/auto_issue_parser.py"
 )
@@ -55,7 +54,7 @@ for FILE in "${SCRIPTS[@]}"; do
   ok "$(basename $FILE)"
 done
 
-# ── Skill 8020-workflow (OpenClaw) ────────────────────────────
+# ── Skill 8020-workflow ───────────────────────────────────────
 h "Installazione skill 8020-workflow"
 
 SKILL_DIR="$SKILLS_DIR/8020-workflow"
@@ -63,41 +62,64 @@ SKILL_REFS="$SKILL_DIR/references"
 mkdir -p "$SKILL_REFS"
 
 curl -sSL "$REPO_RAW/skills/8020-workflow/SKILL.md" -o "$SKILL_DIR/SKILL.md"
-ok "SKILL.md"
+ok "8020-workflow/SKILL.md"
 
-REFS=(
-  "WORKFLOW_CICCIO.md"
-  "WORKFLOW_CLAUDE_CODE.md"
-  "WORKFLOW_DAVID.md"
-  "BRANCH_STRATEGY.md"
-  "COMMIT_CONVENTIONS.md"
-)
-for REF in "${REFS[@]}"; do
+for REF in WORKFLOW_CICCIO.md WORKFLOW_CLAUDE_CODE.md WORKFLOW_DAVID.md BRANCH_STRATEGY.md COMMIT_CONVENTIONS.md; do
   curl -sSL "$REPO_RAW/skills/8020-workflow/references/$REF" -o "$SKILL_REFS/$REF"
-  ok "references/$REF"
+  ok "  references/$REF"
 done
+
+# ── Skill workflow modulari ───────────────────────────────────
+h "Installazione skill workflow modulari"
+
+SIMPLE_SKILLS=(
+  "issue-start"
+  "issue-done"
+  "issue-deploy-test"
+  "issue-deploy-prod"
+  "issue-reject"
+  "issue-review"
+  "create-issue"
+)
+
+for SKILL in "${SIMPLE_SKILLS[@]}"; do
+  mkdir -p "$SKILLS_DIR/$SKILL"
+  curl -sSL "$REPO_RAW/skills/$SKILL/SKILL.md" -o "$SKILLS_DIR/$SKILL/SKILL.md"
+  ok "$SKILL"
+done
+
+# create-issue ha assets
+mkdir -p "$SKILLS_DIR/create-issue/assets"
+curl -sSL "$REPO_RAW/skills/create-issue/assets/issue-template.md" \
+  -o "$SKILLS_DIR/create-issue/assets/issue-template.md"
+ok "  create-issue/assets/issue-template.md"
+
+# ── Skill 8020-commit-workflow ────────────────────────────────
+h "Installazione skill 8020-commit-workflow"
+
+mkdir -p "$SKILLS_DIR/8020-commit-workflow/references"
+curl -sSL "$REPO_RAW/skills/8020-commit-workflow/SKILL.md" \
+  -o "$SKILLS_DIR/8020-commit-workflow/SKILL.md"
+ok "8020-commit-workflow/SKILL.md"
+curl -sSL "$REPO_RAW/skills/8020-commit-workflow/references/workflow-rules.md" \
+  -o "$SKILLS_DIR/8020-commit-workflow/references/workflow-rules.md"
+ok "  references/workflow-rules.md"
 
 # ── ciccio-notify ─────────────────────────────────────────────
 h "Installazione ciccio-notify"
 
-if [ ! -f "/usr/local/bin/ciccio-notify" ]; then
-  curl -sSL "$REPO_RAW/scripts/ciccio-notify.sh" -o /usr/local/bin/ciccio-notify
-  chmod +x /usr/local/bin/ciccio-notify
-  ok "ciccio-notify installato in /usr/local/bin/"
+curl -sSL "$REPO_RAW/scripts/ciccio-notify.sh" -o /usr/local/bin/ciccio-notify
+chmod +x /usr/local/bin/ciccio-notify
+ok "ciccio-notify → /usr/local/bin/"
+
+# ── Rimuovi cron obsoleto ─────────────────────────────────────
+h "Pulizia cron obsoleti"
+
+if crontab -l 2>/dev/null | grep -q "issue-monitor"; then
+  crontab -l 2>/dev/null | grep -v "issue-monitor" | crontab -
+  ok "Cron issue-monitor rimosso (monitor deprecato)"
 else
-  ok "ciccio-notify già presente"
-fi
-
-# ── Cron job ──────────────────────────────────────────────────
-h "Configurazione cron"
-
-CRON_CMD="*/10 * * * * $SCRIPTS_DIR/ciccio-issue-monitor.sh >> /var/log/ciccio-issue-monitor.log 2>&1"
-
-if crontab -l 2>/dev/null | grep -q "ciccio-issue-monitor"; then
-  ok "Cron già configurato"
-else
-  (crontab -l 2>/dev/null; echo "$CRON_CMD") | crontab -
-  ok "Cron aggiunto: ogni 10 minuti"
+  ok "Nessun cron obsoleto da rimuovere"
 fi
 
 # ── Riepilogo ─────────────────────────────────────────────────
@@ -106,8 +128,12 @@ echo -e "\033[1m✅ Ciccio setup completato!\033[0m"
 echo ""
 echo "Installato in:"
 echo "  Scripts : $SCRIPTS_DIR"
-echo "  Skill   : $SKILLS_DIR/8020-workflow"
+echo "  Skills  : $SKILLS_DIR"
+echo "    - 8020-workflow (+ references)"
+echo "    - 8020-commit-workflow (+ references)"
+echo "    - issue-start / issue-done / issue-deploy-test"
+echo "    - issue-deploy-prod / issue-reject / issue-review"
+echo "    - create-issue (+ assets)"
 echo "  Notify  : /usr/local/bin/ciccio-notify"
-echo "  Cron    : ogni 10 min (ciccio-issue-monitor)"
 echo ""
 echo "Per aggiornare: ri-esegui questo script"
