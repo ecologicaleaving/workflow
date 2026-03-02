@@ -122,7 +122,7 @@ Le label indicano **chi deve lavorare** l'issue. Lo stato è gestito dalla colon
 |---------|-----------|--------|
 | `📋 Todo` | Davide | Issue creata e priorizzata |
 | `🔄 In Progress` | Agente assegnato | Inizio lavorazione (Phase 2b issue-resolver) |
-| `🚀 PUSH` | Agente assegnato | Commit completato (Phase 6 issue-resolver) = Review Ready |
+| `Test` | Agente assegnato | Commit completato (Phase 6 issue-resolver) = Review Ready |
 | `🧪 Test` | Ciccio | Deploy su test-*.8020solutions.org eseguito + notifica Davide |
 | `✔️ Done` | Ciccio | `/approve` di Davide + deploy prod completato |
 
@@ -133,7 +133,7 @@ Le label indicano **chi deve lavorare** l'issue. Lo stato è gestito dalla colon
         ↓
 🔄 In Progress  →  Agente inizia (sposta card)
         ↓
-🚀 PUSH  →  Agente finisce commit (sposta card) = Review Ready
+Test  →  Agente finisce commit (sposta card) = Review Ready
         ↓
 🧪 Test  →  Ciccio deploya su test + notifica Davide
         ↓
@@ -159,7 +159,7 @@ Monitor legge label assignee sulla card:
                        riprende branch feature/issue-N
                        legge TUTTI i commenti (storico feedback)
                        fix → re-commit → re-push
-                       sposta card: 🔄 In Progress → 🚀 PUSH
+                       sposta card: 🔄 In Progress → Test
                        notifica Davide: "🔧 Rework #123 completato"
 
   agent:claude-code → notifica Davide su Telegram:
@@ -169,7 +169,7 @@ Monitor legge label assignee sulla card:
 
   agent:codex       → trigger codex-monitor con contesto feedback
                        fix → re-commit → re-push
-                       sposta card: 🔄 In Progress → 🚀 PUSH
+                       sposta card: 🔄 In Progress → Test
                        notifica Davide: "🔧 Rework #123 completato"
 ```
 

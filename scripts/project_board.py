@@ -20,8 +20,9 @@ STATUS_OPTIONS = {
     "Backlog":     "2ab61313",
     "Todo":        "f75ad846",
     "In Progress": "47fc9ee4",
-    "PUSH":        "03f548ab",
     "Test":        "1d6a37f9",
+    "Review":      "03f548ab",
+    "Deploy":      "37c4aa50",
     "Done":        "98236657",
 }
 
@@ -93,7 +94,7 @@ def move_card(repo: str, issue_number: int, column: str) -> bool:
     Args:
         repo:         es. "ecologicaleaving/finn"
         issue_number: numero issue (int)
-        column:       "Todo" | "In Progress" | "PUSH" | "Test" | "Done"
+        column:       "Todo" | "In Progress" | "Test" | "Review" | "Deploy" | "Done"
 
     Returns:
         True se successo, False altrimenti
@@ -142,11 +143,12 @@ def move_card(repo: str, issue_number: int, column: str) -> bool:
 
 # ── Shortcut per casi comuni ───────────────────────────────────────────────────
 
-def card_backlog(repo, issue_number):    return move_card(repo, issue_number, "Backlog")
+def card_backlog(repo, issue_number):     return move_card(repo, issue_number, "Backlog")
 def card_todo(repo, issue_number):        return move_card(repo, issue_number, "Todo")
 def card_in_progress(repo, issue_number): return move_card(repo, issue_number, "In Progress")
-def card_push(repo, issue_number):        return move_card(repo, issue_number, "PUSH")
 def card_test(repo, issue_number):        return move_card(repo, issue_number, "Test")
+def card_review(repo, issue_number):      return move_card(repo, issue_number, "Review")
+def card_deploy(repo, issue_number):      return move_card(repo, issue_number, "Deploy")
 def card_done(repo, issue_number):        return move_card(repo, issue_number, "Done")
 
 

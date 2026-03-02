@@ -11,45 +11,49 @@ description: "80/20 Solutions team workflow rules for Ciccio. Use when handling 
 - **Claude Code (PC)**: Development senior, commit, push (label `claude-code`)
 - **Codex (PC)**: Development alternativo, commit, push (label `codex`)
 
-## 📋 Board Kanban — 5 colonne
+## 📋 Board Kanban — 7 colonne
 **GitHub Project**: https://github.com/users/ecologicaleaving/projects/2
 
 | Colonna | Chi sposta | Quando |
 |---------|-----------|--------|
-| `📥 Backlog` | Ciccio | Issue creata, nessun agente assegnato |
-| `📋 Todo` | Ciccio/Davide | Label agente assegnata / dopo /reject |
-| `🔄 In Progress` | Monitor | Solo quando agente prende in carico |
-| `🚀 PUSH` | Monitor/Agente | Commit fatto (label review-ready) |
-| `🧪 Test` | CI GitHub Actions | APK deployato (label deployed-test) |
-| `✔️ Done` | Ciccio | /approve + deploy prod |
+| `Backlog` | Ciccio | Issue creata, nessun agente assegnato |
+| `Todo` | Ciccio/Davide | Label agente assegnata, pronta per lavorazione |
+| `In Progress` | Ciccio/Agente | Agente ha preso in carico |
+| `Test` | Ciccio | PR aperta + APK/build disponibile — Davide testa |
+| `Review` | Ciccio | Dopo /reject — agente sta rilavorando |
+| `Deploy` | Ciccio | Dopo /approve — deploy prod in corso |
+| `Done` | Ciccio | Issue chiusa, in produzione |
 
 ## Flusso standard
 
 ```
-Issue creata → label agent:xxx → 📋 Todo
-  → agente inizia → 🔄 In Progress
-  → commit/push → 🚀 PUSH (review-ready)
-  → Ciccio deploya test → 🧪 Test → notifica Davide
+Issue creata → Todo
+  → agente inizia → In Progress
+  → PR aperta + build → Test → notifica Davide
 
 Davide testa:
-  /approve → ✔️ Done (merge → prod)
-  /reject  → 🔄 In Progress (routing automatico per agente)
+  /approve → Deploy → Done (merge → prod)
+  /reject  → Review (agente rilav ora) → Test
 ```
 
 ## Quando Ciccio riceve /reject
 1. Aggiungi commento GitHub con feedback completo
 2. Rimuovi `deployed-test`, aggiungi `needs-fix`
-3. Sposta card: `🧪 Test` → `📋 Todo` (il monitor la prende al prossimo ciclo)
-4. **NON** toccare la label `agent:xxx` (il monitor la usa per routing)
-5. `🔄 In Progress` scatta solo quando il monitor spawna l'agente
+3. Sposta card: `Test` → `Review`
+4. Lavora il fix → quando pronto → sposta card: `Review` → `Test`
+5. Notifica Davide con nuovo APK/link
 
-Per dettagli routing agente, leggi `references/WORKFLOW_CICCIO.md`.
+## Quando Ciccio riceve /approve
+1. Mergia PR su master
+2. Sposta card: `Test` → `Deploy`
+3. Deploya in produzione
+4. Sposta card: `Deploy` → `Done`, chiudi issue
+5. Notifica Davide con link prod
 
-## Quando Ciccio fa deploy test
-1. Pull da GitHub releases/
-2. Deploy su `test-REPO.8020solutions.org`
-3. Sposta card: `🚀 PUSH` → `🧪 Test`
-4. Notifica Davide con link APK/URL test
+## Quando Ciccio fa deploy test (dopo PR aperta)
+1. Build/APK disponibile (CI verde)
+2. Sposta card: `In Progress` → `Test`
+3. Notifica Davide con link APK/URL test
 
 ## Regole fondamentali
 - **Mai committare su master/main** — sempre feature branch + PR
