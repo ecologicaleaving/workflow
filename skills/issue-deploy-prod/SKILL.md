@@ -169,4 +169,6 @@ Messaggio con:
 | Todo | `f75ad846` |
 | In Progress | `47fc9ee4` |
 | Test | `1d6a37f9` |
+| Review | `03f548ab` |
+| Deploy | `37c4aa50` |
 | Done | `98236657` |

@@ -5,7 +5,7 @@ description: >
   Procedura di gestione /reject da parte di Davide.
   Usata da Claudio (agenti PC) o Ciccio (agenti VPS) quando Davide
   scrive /reject #N "feedback". Copre: registrazione feedback,
-  spostamento card → Review, ri-assegnazione all'agente, notifica.
+  spostamento card -> Review, ri-assegnazione all'agente, notifica.
 triggers:
   - "/reject"
   - "issue rifiutata"
@@ -17,20 +17,20 @@ triggers:
 
 Questa skill si attiva quando Davide scrive **`/reject #N "feedback"`**.
 
-- **Agenti PC** (Claude Code, Codex) → eseguita da **Claudio**
-- **Agenti VPS** (Ciccio) → eseguita da **Ciccio**
+- **Agenti PC** (Claude Code, Codex) -> eseguita da **Claudio**
+- **Agenti VPS** (Ciccio) -> eseguita da **Ciccio**
 
 ---
 
 ## STEP 1 — Leggi il feedback di Davide
 
 Estrai chiaramente:
-- Quale AC non è soddisfatto
+- Quale AC non e' soddisfatto
 - Cosa non funziona o cosa si aspetta di diverso
 - Eventuali screenshot, log o esempi forniti
 
-Se il feedback è ambiguo → **chiedi chiarimento a Davide prima di procedere**.
-Non passare il feedback all'agente se non è chiaro — un rework basato su feedback vago produce un secondo reject.
+Se il feedback e' ambiguo -> **chiedi chiarimento a Davide prima di procedere**.
+Non passare il feedback all'agente se non e' chiaro — un rework basato su feedback vago produce un secondo reject.
 
 ---
 
@@ -38,15 +38,13 @@ Non passare il feedback all'agente se non è chiaro — un rework basato su feed
 
 ```bash
 gh issue comment <N> --repo <owner/repo> \
-  --body "❌ **Reject da Davide — rework richiesto.**
+  --body "REJECT da Davide — rework richiesto.
 
-**Feedback:**
-<testo feedback di Davide>
+Feedback: <testo feedback di Davide>
 
-**AC non soddisfatto:**
-<quale AC specifico ha fallito>
+AC non soddisfatto: <quale AC specifico ha fallito>
 
-L'agente riprenderà la lavorazione sul branch \`feature/issue-<N>-<slug>\`."
+L'agente riprendera' la lavorazione sul branch feature/issue-<N>-<slug>."
 ```
 
 ---
@@ -61,10 +59,11 @@ gh issue edit <N> --repo <owner/repo> \
 
 ---
 
-## STEP 4 — Sposta card → Review
+## STEP 4 — Sposta card -> Review
 
-**Option ID Review**: da aggiornare quando la colonna Review sarà creata sul Kanban.
-Nel frattempo usa **In Progress** (`47fc9ee4`) come proxy.
+**Project ID**: `PVT_kwHODSTPQM4BP1Xp`
+**Status Field ID**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
+**Option ID Review**: `03f548ab`
 
 ```bash
 ITEM_ID=$(gh api graphql -f query='
@@ -85,7 +84,7 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 -f projectId="PVT_kwHODSTPQM4BP1Xp" \
 -f itemId="$ITEM_ID" \
 -f fieldId="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw" \
--f optionId="47fc9ee4"
+-f optionId="03f548ab"
 ```
 
 ---
@@ -102,13 +101,14 @@ Determina l'agente dalla label dell'issue:
 
 ### Se agente PC (claude-code / codex)
 Claudio avvisa Davide:
-> ⚠️ **Issue #N — rework richiesto**
+> Issue #N — rework richiesto
 > Agente: Claude Code / Codex
 > Branch: `feature/issue-<N>-<slug>`
 > Feedback: "<testo>"
 > Quando sei pronto, riavvia l'agente puntando a questo branch.
 
-Oppure rilancia direttamente Codex/Claude Code in background con il feedback nel prompt, indicando di leggere `issue-review` prima di scrivere codice.
+Oppure rilancia direttamente Codex/Claude Code in background con il feedback nel prompt,
+indicando di leggere `issue-review` prima di scrivere codice.
 
 ### Se agente VPS (ciccio)
 Ciccio spawna subagente autonomamente con:
@@ -118,18 +118,32 @@ Ciccio spawna subagente autonomamente con:
 
 ---
 
-## ✅ Checklist
+## Checklist
 
-- [ ] Feedback chiaro (se ambiguo → chiesto chiarimento a Davide)
-- [ ] Commento registrato sull'issue con feedback dettagliato
-- [ ] Label aggiornata → `needs-fix`
-- [ ] Card Kanban → Review (o In Progress come proxy)
+- [ ] Feedback chiaro (se ambiguo -> chiesto chiarimento a Davide)
+- [ ] Commento registrato sull'issue con feedback dettagliato e AC fallito
+- [ ] Label aggiornata -> `needs-fix`
+- [ ] Card Kanban -> Review (`03f548ab`)
 - [ ] Agente notificato / rilanciato con feedback
-- [ ] Davide informato che il rework è in corso
+- [ ] Davide informato che il rework e' in corso
 
 ---
 
-## ⏭️ Cosa succede dopo
+## Cosa succede dopo
 
 L'agente dev legge la skill **`issue-review`**, applica il fix e ripercorre **`issue-done`**.
-Quando la nuova build è pronta → **`issue-deploy-test`** → Davide ritesta.
+Quando la nuova build e' pronta -> **`issue-deploy-test`** -> Davide ritesta.
+
+---
+
+## Riferimento rapido Option ID colonne Kanban
+
+| Colonna | Option ID |
+|---------|-----------|
+| Backlog | `2ab61313` |
+| Todo | `f75ad846` |
+| In Progress | `47fc9ee4` |
+| Test | `1d6a37f9` |
+| Review | `03f548ab` |
+| Deploy | `37c4aa50` |
+| Done | `98236657` |
