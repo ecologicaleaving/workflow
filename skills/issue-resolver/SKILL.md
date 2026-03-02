@@ -124,7 +124,7 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 }' -f projectId="PVT_kwHODSTPQM4BP1Xp" \
    -f itemId="$ITEM_ID" \
    -f fieldId="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw" \
-   -f optionId="f32f156c"
+   -f optionId="47fc9ee4"
 ```
 
 **Option ID per ogni colonna (Status field del progetto):**
@@ -137,7 +137,7 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 | 🧪 Test | `1d6a37f9` |
 | ✔️ Done | `98236657` |
 
-Alla fine della Phase 6 (commit), ripeti il comando sopra con `optionId="03f548ab"` per spostare in `🚀 PUSH` (Review Ready).
+Alla fine della Phase 6 (commit), ripeti il comando sopra con `optionId="03f548ab  # Review (ex PUSH)` (Review Ready).
 
 ---
 
