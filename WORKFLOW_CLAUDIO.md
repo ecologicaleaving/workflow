@@ -132,6 +132,22 @@ CI fallita? Agente bloccato? Card in stato sbagliato?
 
 ---
 
+## 🚀 Lancio Agenti PC
+
+### **Claude Code**
+```bash
+claude --dangerously-skip-permissions
+```
+Il flag bypassa i prompt di conferma permessi — necessario per lavoro autonomo su issue.
+
+### **Codex**
+```bash
+codex --yolo
+```
+Il flag abilita modalità fully autonomous (nessuna conferma richiesta) — necessario per lavoro autonomo su issue.
+
+---
+
 ## 🧠 Memoria e Continuità
 
 - **Ogni sessione**: leggo `SOUL.md`, `USER.md`, `memory/` recente, `MEMORY.md`
