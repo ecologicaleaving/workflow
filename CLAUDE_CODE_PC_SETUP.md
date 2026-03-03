@@ -148,6 +148,15 @@ claude --version
 claude "Hello, testing Claude CLI integration"
 ```
 
+### **⚠️ Flag obbligatori per lavoro autonomo:**
+```bash
+# Claude Code — bypassa prompt permessi (necessario per issue autonome)
+claude --dangerously-skip-permissions
+
+# Codex — modalità fully autonomous (nessuna conferma richiesta)
+codex --yolo
+```
+
 ### **Task Scheduler Manual Setup:**
 ```powershell
 # Import task manually if needed
