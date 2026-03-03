@@ -1,0 +1,50 @@
+## ⚠️ AVVIO SESSIONE — OBBLIGATORIO
+
+Prima di fare qualsiasi cosa, esegui questi 3 step nell'ordine:
+
+### 1. Sync workflow
+```bash
+git submodule update --remote .workflow
+```
+*(Windows PowerShell: `git submodule update --remote .\.workflow`)*
+
+> Se il submodule non è ancora inizializzato:
+> ```bash
+> git submodule update --init --remote .workflow
+> ```
+
+### 2. Leggi il workflow completo
+`.workflow/CLAUDE.md`
+
+Contiene tutte le regole operative del team: branch strategy, commit conventions,
+kanban workflow, ruoli, procedure. Non improvvisare — tutto è documentato lì.
+
+### 3. Leggi il contesto del progetto
+`PROJECT.md`
+
+Contiene stack, URL, stato deploy, backlog attivo.
+
+---
+
+Non procedere con nessuna attività prima di aver completato questi 3 step.
+
+---
+
+## Progetto: {repo}
+
+- **Repo:** `{owner}/{repo}`
+- **Stack:** {stack}
+- **Descrizione:** {description}
+
+## Team
+
+- **Davide (Boss):** Decisore finale, approva/rifiuta il lavoro
+- **Claude Code (io):** Senior Dev — sviluppo, debug, test, code review
+- **Ciccio (VPS):** Orchestratore — merge, deploy, infrastruttura
+
+## Regole Fondamentali
+
+- **MAI pushare su main/master** — sempre branch `feature/issue-{N}-{slug}`
+- **MAI inventare** credenziali, configurazioni o soluzioni incerte — chiedi a Davide
+- **Segui le skill** del workflow (issue-start, issue-done, 8020-commit-workflow)
+- Se serve infrastruttura VPS/DB → chiedi a Ciccio tramite Davide
