@@ -4,6 +4,27 @@ Repository centralizzato per workflow, script e skills del team AI di 80/20 Solu
 
 ---
 
+## 🤖 Setup progetto (agenti)
+
+Per includere il workflow in un progetto nuovo o esistente, esegui dalla **root del progetto**:
+
+```bash
+# Linux / Mac / WSL
+curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/setup-project.sh | bash
+
+# Windows (PowerShell)
+iwr https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/setup-project.ps1 -OutFile setup-project.ps1; powershell -ExecutionPolicy Bypass -File setup-project.ps1; Remove-Item setup-project.ps1
+```
+
+Lo script aggiunge automaticamente:
+- **`.workflow/`** — submodule puntato a questo repo (si aggiorna ad ogni sessione)
+- **`CLAUDE.md`** — istruzioni di avvio per Claude Code
+- **`AGENTS.md`** — istruzioni di avvio per Codex
+
+Ogni agente che apre il progetto troverà il suo file nativo, sincronizzerà il workflow e leggerà le regole aggiornate — senza configurazione manuale.
+
+---
+
 ## 🚀 Installazione rapida
 
 ```bash
