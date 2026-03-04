@@ -120,6 +120,20 @@ Oppure rieseguire lo script di installazione, che sovrascrive le versioni preced
 
 ---
 
+### `issue-rework-fast`
+Skill per orchestratori (Claudio/Ciccio) — fix diretto di problemi CI/deploy senza coinvolgere l'agente dev.
+
+**Cosa fa:**
+- Valuta se il problema è un "fast fix" (CI rotta, dipendenza mancante, path errato, config)
+- Guida il clone del branch, applicazione del fix, commit e push
+- Commenta sull'issue con spiegazione del fix
+- Mantiene la card Kanban dove si trova (non la sposta)
+- Monitora CI e notifica Davide solo quando verde
+
+**Si attiva quando:** CI fallisce per motivi infrastrutturali/config, build rotta per poche righe mancanti, fix rapido senza logica di business
+
+---
+
 ### `8020-workflow`
 Skill per Ciccio (OpenClaw/VPS) — caricata automaticamente quando Ciccio gestisce issue, deploy, PR, APK, o qualsiasi task di workflow.
 
