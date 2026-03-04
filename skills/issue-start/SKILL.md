@@ -33,7 +33,22 @@ Capisci:
 
 ---
 
-## STEP 2 — Checkout branch
+## STEP 2 — Aggiorna submodule .workflow
+
+**Prima di toccare qualsiasi codice**, assicurati che il submodule `.workflow` sia all'ultima versione disponibile:
+
+```bash
+cd <repo-locale>
+git submodule update --init --remote .workflow
+```
+
+Questo garantisce che CLAUDE.md, AGENTS.md e tutte le skill che leggi siano aggiornate all'ultima versione del workflow del team.
+
+> ⚠️ Se `.workflow` non è presente o non è inizializzato, esegui prima il setup del progetto.
+
+---
+
+## STEP 3 — Checkout branch
 
 ```bash
 cd <repo-locale>
@@ -53,7 +68,7 @@ gh issue view <N> --repo <owner/repo> --comments
 
 ---
 
-## STEP 3 — Sposta card → In Progress
+## STEP 4 — Sposta card → In Progress
 
 **Project ID**: `PVT_kwHODSTPQM4BP1Xp`
 **Status Field ID**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
@@ -85,7 +100,7 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 
 ---
 
-## STEP 4 — Leggi il contesto del progetto
+## STEP 5 — Leggi il contesto del progetto
 
 ```bash
 cat PROJECT.md          # versione, stack, stato, backlog
@@ -99,7 +114,7 @@ Tieni PROJECT.md come riferimento attivo per tutto il lavoro.
 
 ---
 
-## STEP 5 — Esplora il codice rilevante
+## STEP 6 — Esplora il codice rilevante
 
 - Cerca i file correlati all'issue (widget, service, provider, datasource...)
 - Leggi i test esistenti — ti dicono cosa "corretto" significa
@@ -110,6 +125,7 @@ Tieni PROJECT.md come riferimento attivo per tutto il lavoro.
 ## ✅ Checklist pre-codice
 
 - [ ] Issue letta e AC chiari
+- [ ] Submodule `.workflow` aggiornato all'ultima versione (`git submodule update --init --remote .workflow`)
 - [ ] Branch creato e aggiornato da master
 - [ ] Card Kanban → In Progress
 - [ ] PROJECT.md letto

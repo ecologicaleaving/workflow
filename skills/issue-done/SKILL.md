@@ -155,15 +155,22 @@ Closes #22
 
 ---
 
-## STEP 4 — Push branch
+## ⚠️ STEP 4 — Push branch (OBBLIGATORIO)
+
+**Non saltare questo step.** Il push è obbligatorio — senza non puoi aprire la PR.
 
 ```bash
 git push -u origin feature/issue-<N>-<slug>
 ```
 
+Verifica che il push sia andato a buon fine prima di procedere.
+
 ---
 
-## STEP 5 — Apri PR
+## ⚠️ STEP 5 — Apri PR (OBBLIGATORIO)
+
+**Non saltare questo step.** La PR è la consegna ufficiale del lavoro.  
+Senza PR, Davide non può vedere né approvare il lavoro.
 
 ```bash
 gh pr create \
@@ -183,6 +190,8 @@ Risolve #<N>
 - ✅ <N> test passati
 - ✅ Nessuna regressione"
 ```
+
+Copia l'URL della PR appena creata — ti serve per il prossimo step.
 
 ---
 
@@ -224,8 +233,9 @@ Lo stato è indicato dalla colonna Kanban.
 - [ ] PROJECT.md aggiornato (version + CI Status + Backlog + timestamp)
 - [ ] Versione allineata in pubspec.yaml / package.json
 - [ ] Commit convenzionale con `Closes #N`
-- [ ] Branch pushato
-- [ ] PR aperta con body descrittivo (AC soddisfatti esplicitati)
+- [ ] ⚠️ Branch pushato (`git push -u origin <branch>`) — OBBLIGATORIO
+- [ ] ⚠️ PR aperta con `gh pr create` — OBBLIGATORIO — senza PR il lavoro non esiste
+- [ ] PR body descrittivo (AC soddisfatti esplicitati)
 - [ ] Commento sull'issue
 - [ ] Label NON toccate (solo agente + progetto rimangono)
 
