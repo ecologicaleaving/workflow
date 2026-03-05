@@ -81,6 +81,11 @@ if iterazione == 3 AND DoD ancora non completo:
 
 ## STEP 1c — Esegui i test
 
+> ⚠️ **Codex: esegui i test FUORI dalla sandbox.**
+> I test dentro la sandbox di Codex vanno sistematicamente in timeout.
+> Usa `--full-auto` o `--yolo` (che disabilitano la sandbox) oppure
+> esegui i comandi di test con `exec` direttamente nel workspace, non nel container sandbox.
+
 ```bash
 # Flutter
 flutter analyze
