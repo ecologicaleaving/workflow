@@ -81,6 +81,11 @@ if iterazione == 3 AND DoD ancora non completo:
 
 ## STEP 1c — Esegui i test
 
+> ⚠️ **Codex: esegui i test FUORI dalla sandbox.**
+> I test dentro la sandbox di Codex vanno sistematicamente in timeout.
+> Usa `--full-auto` o `--yolo` (che disabilitano la sandbox) oppure
+> esegui i comandi di test con `exec` direttamente nel workspace, non nel container sandbox.
+
 ```bash
 # Flutter
 flutter analyze
@@ -209,7 +214,28 @@ In attesa di build CI e deploy su test da parte di Claudio/Ciccio."
 
 ---
 
-## STEP 7 — Label: non toccare
+## STEP 7 — Messaggio per Ciccio (deploy test)
+
+Dopo push e PR, **stampa un messaggio pronto da copiare** per Davide, che lo girerà a Ciccio per avviare il deploy su test.
+
+**Formato messaggio:**
+```
+claudio: deploy su test per <repo> PR #<PR_N> (issue #<N>).
+<breve descrizione di cosa è cambiato>.
+```
+
+**Esempio:**
+```
+claudio: deploy su test per finn PR #25 (issue #21).
+Fix bilanci — le entrate venivano contate come uscite nella dashboard. Ora corretto.
+```
+
+> ⚠️ Questo messaggio è **obbligatorio**. Davide lo copia e lo manda a Ciccio (o a Claudio)
+> per triggerare la skill `issue-deploy-test`.
+
+---
+
+## STEP 8 — Label: non toccare
 
 Le label NON vanno modificate al completamento.
 Mantieni solo label agente (`codex`, `claude-code`, `ciccio`) + label progetto.
@@ -237,6 +263,7 @@ Lo stato è indicato dalla colonna Kanban.
 - [ ] ⚠️ PR aperta con `gh pr create` — OBBLIGATORIO — senza PR il lavoro non esiste
 - [ ] PR body descrittivo (AC soddisfatti esplicitati)
 - [ ] Commento sull'issue
+- [ ] ⚠️ Messaggio per Ciccio stampato (Step 7) — Davide lo gira per deploy test
 - [ ] Label NON toccate (solo agente + progetto rimangono)
 
 ---
