@@ -18,7 +18,22 @@ Leggi questa skill **prima di scrivere qualsiasi codice**.
 
 ---
 
-## STEP 1 — Leggi l'issue
+## STEP 1 — Aggiorna submodule .workflow
+
+**Prima di qualsiasi altra operazione**, assicurati che il submodule `.workflow` sia all'ultima versione disponibile:
+
+```bash
+cd <repo-locale>
+git submodule update --init --remote .workflow
+```
+
+Questo garantisce che CLAUDE.md, AGENTS.md e tutte le skill che leggi siano aggiornate all'ultima versione del workflow del team.
+
+> ⚠️ Se `.workflow` non è presente o non è inizializzato, esegui prima il setup del progetto.
+
+---
+
+## STEP 2 — Leggi l'issue
 
 ```bash
 gh issue view <N> --repo <owner/repo>
@@ -30,21 +45,6 @@ Capisci:
 - Acceptance Criteria (AC) — sono i tuoi criteri di successo
 - Branch suggerito (solitamente indicato nell'issue)
 - Repo e stack tecnico
-
----
-
-## STEP 2 — Aggiorna submodule .workflow
-
-**Prima di toccare qualsiasi codice**, assicurati che il submodule `.workflow` sia all'ultima versione disponibile:
-
-```bash
-cd <repo-locale>
-git submodule update --init --remote .workflow
-```
-
-Questo garantisce che CLAUDE.md, AGENTS.md e tutte le skill che leggi siano aggiornate all'ultima versione del workflow del team.
-
-> ⚠️ Se `.workflow` non è presente o non è inizializzato, esegui prima il setup del progetto.
 
 ---
 
@@ -124,8 +124,8 @@ Tieni PROJECT.md come riferimento attivo per tutto il lavoro.
 
 ## ✅ Checklist pre-codice
 
-- [ ] Issue letta e AC chiari
 - [ ] Submodule `.workflow` aggiornato all'ultima versione (`git submodule update --init --remote .workflow`)
+- [ ] Issue letta e AC chiari
 - [ ] Branch creato e aggiornato da master
 - [ ] Card Kanban → In Progress
 - [ ] PROJECT.md letto
