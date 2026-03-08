@@ -1,33 +1,37 @@
 # Template canonico: GitHub Actions — Build & Deploy Flutter APK
-# Versione: 2026-02-27
+# Versione: 2026-03-08
 #
 # ISTRUZIONI:
 #   1. Copia questo file in .github/workflows/build-apk.yml del tuo repo
-#   2. Sostituisci ogni occorrenza di __REPO_NAME__ con il nome del repo (es: beachref, finn, x32-assist)
+#   2. Sostituisci ogni occorrenza di __REPO_NAME__ con il nome del repo (es: finn, beachref)
 #   3. Se l'app usa Supabase, mantieni i --dart-define; altrimenti rimuovili
 #   4. Aggiungi i secrets GitHub (vedi sezione "Secrets richiesti" sotto)
 #
-# SECRETS RICHIESTI (GitHub → Settings → Secrets and variables → Actions):
-#   VPS_SSH_KEY   — chiave privata SSH per deploy sul VPS (corrisponde a /root/.ssh/github-actions-deploy)
-#   VPS_HOST      — IP del VPS (46.225.60.101)
-#   VPS_USER      — utente SSH (root)
-#   SUPABASE_URL  — (opzionale) se l'app usa Supabase
-#   SUPABASE_ANON_KEY — (opzionale) se l'app usa Supabase
+# SECRETS RICHIESTI:
+#   VPS_SSH_KEY, VPS_HOST, VPS_USER
+#   SUPABASE_URL, SUPABASE_ANON_KEY  (opzionali)
 #
-# REGOLE FONDAMENTALI (non modificare senza motivo):
-#   - Trigger: SOLO "push", MAI "pull_request" → evita build/APK/notifiche duplicate
-#   - Flutter: SOLO "channel: stable", MAI flutter-version: 'x.y.z' → evita breaking changes dipendenze
-#   - APK build: usa "|| true" + "find" per sicurezza → Gradle può misreportare il path
+# REGOLE FONDAMENTALI:
+#   - Trigger: SOLO feature/**, fix/** e pull_request
+#     → MAI "branches: ['**']" → genera build su ogni commit di infra/chore
+#   - Flutter: SOLO "channel: stable" → evita breaking changes
+#   - APK build: usa "|| true" + "find" per sicurezza
+#   - Notifica: include SEMPRE issue # e PR # per chiarezza a Davide
 
 name: Build & Deploy APK
 
 on:
-  push:
+  pull_request:
     branches: ['**']
-  # ⚠️ NON aggiungere "pull_request" qui — causa APK e notifiche duplicate
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build-and-deploy:
@@ -44,7 +48,6 @@ jobs:
           java-version: 17
           cache: gradle
 
-      # ⚠️ NON usare flutter-version: 'x.y.z' — rompe dipendenze come flutter_timezone
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -53,54 +56,30 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Generate code (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs || true
+
       - name: Extract version & branch info
         id: info
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
-          BRANCH="${{ github.ref_name }}"
-          SLUG=$(echo "$BRANCH" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          ISSUE_NUM=$(echo "$BRANCH" | grep -oP 'issue-\K\d+' || echo "")
 
-          if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
-            APK_NAME="__REPO_NAME__-v${VERSION}-${SHORT}.apk"
-            DEST="downloads"
-            IS_PROD="true"
+          if [ -n "$PR_NUMBER" ]; then
+            APK_NAME="__REPO_NAME__-pr${PR_NUMBER}-${SHORT}.apk"
           else
-            APK_NAME="__REPO_NAME__-${SLUG}-${SHORT}.apk"
-            DEST="downloads/test"
-            IS_PROD="false"
+            APK_NAME="__REPO_NAME__-${BRANCH//\//-}-${SHORT}.apk"
           fi
 
           echo "version=$VERSION"     >> $GITHUB_OUTPUT
           echo "branch=$BRANCH"       >> $GITHUB_OUTPUT
-          echo "slug=$SLUG"           >> $GITHUB_OUTPUT
           echo "short=$SHORT"         >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
           echo "apk_name=$APK_NAME"   >> $GITHUB_OUTPUT
-          echo "dest=$DEST"           >> $GITHUB_OUTPUT
-          echo "is_prod=$IS_PROD"     >> $GITHUB_OUTPUT
-          echo "url=https://apps.8020solutions.org/${DEST}/${APK_NAME}" >> $GITHUB_OUTPUT
-
-      # ⚠️ Usa "|| true" + find perché Gradle può misreportare il path dell'APK
-      - name: Build APK
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2g"
-        run: |
-          # Rimuovi --dart-define se l'app non usa Supabase
-          flutter build apk --debug --target-platform android-arm64 \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            || true
-
-      - name: Trova e rinomina APK
-        id: apk
-        run: |
-          APK_PATH=$(find build -name "*.apk" | head -1)
-          if [ -z "$APK_PATH" ]; then
-            echo "❌ Nessun APK trovato"
-            exit 1
-          fi
-          cp "$APK_PATH" "${{ steps.info.outputs.apk_name }}"
-          echo "found=$APK_PATH" >> $GITHUB_OUTPUT
 
       - name: Setup SSH
         run: |
@@ -109,65 +88,100 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy APK su app-hub
+      - name: Create .env file
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "mkdir -p /var/www/app-hub/${{ steps.info.outputs.dest }}"
-          rsync -avz \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            ${{ steps.info.outputs.apk_name }} \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/${{ steps.info.outputs.dest }}/
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Aggiorna label GitHub + sposta card Kanban (test)
-        if: steps.info.outputs.is_prod == 'false'
+      - name: Build APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2g"
+        run: |
+          flutter build apk --release --target-platform android-arm64 || true
+
+      - name: Find & rename APK
+        id: apk
+        run: |
+          APK_PATH=$(find build -name "*.apk" 2>/dev/null | grep -v "intermediates\|test" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Nessun APK trovato"
+            exit 1
+          fi
+          cp "$APK_PATH" "${{ steps.info.outputs.apk_name }}"
+          echo "APK: ${{ steps.info.outputs.apk_name }}"
+
+      - name: Deploy APK su app-hub
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd /root/.openclaw/workspace-ciccio && \
-             REPO=\$(echo '${{ github.repository }}' | sed 's|ecologicaleaving/||') && \
-             ISSUE=\$(gh search issues --repo '${{ github.repository }}' \
-               --label 'review-ready' --state open --json number --jq '.[0].number' 2>/dev/null) && \
-             if [ -n \"\$ISSUE\" ]; then \
-               gh issue edit \$ISSUE --repo '${{ github.repository }}' \
-                 --remove-label 'review-ready' --add-label 'deployed-test' && \
-               python3 scripts/project_board.py '${{ github.repository }}' \$ISSUE 'Test'; \
-             fi" || true
+            "mkdir -p /var/www/app-hub/downloads/test"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ steps.info.outputs.apk_name }}" \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/downloads/test/
 
-      - name: Update symlink latest (master only)
-        if: steps.info.outputs.is_prod == 'true'
+      - name: Fetch issue title
+        id: issue
+        if: steps.info.outputs.issue_num != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd /var/www/app-hub/downloads && \
-             ln -sf ${{ steps.info.outputs.apk_name }} __REPO_NAME__-latest.apk"
+          ISSUE_NUM="${{ steps.info.outputs.issue_num }}"
+          TITLE=$(gh issue view "$ISSUE_NUM" --repo "${{ github.repository }}" --json title --jq '.title' 2>/dev/null || echo "")
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
 
-      - name: Crea GitHub Release (master only)
-        if: steps.info.outputs.is_prod == 'true'
-        uses: softprops/action-gh-release@v2
+      - name: Comment PR with APK link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          tag_name: v${{ steps.info.outputs.version }}
-          name: __REPO_NAME__ v${{ steps.info.outputs.version }}
-          files: ${{ steps.info.outputs.apk_name }}
-          make_latest: true
-          body: |
-            🚀 Build automatica da CI
-            Commit: ${{ github.sha }}
-            📲 Download: ${{ steps.info.outputs.url }}
+          script: |
+            const apkName = '${{ steps.info.outputs.apk_name }}';
+            const url = `https://apps.8020solutions.org/downloads/test/${apkName}`;
+            const issueNum = '${{ steps.info.outputs.issue_num }}';
+            const issueTitle = '${{ steps.issue.outputs.title }}';
+            const repo = context.repo;
+            const issueRef = issueNum
+              ? `\n\n📋 **Issue:** [#${issueNum} — ${issueTitle}](https://github.com/${repo.owner}/${repo.repo}/issues/${issueNum})`
+              : '';
+            await github.rest.issues.createComment({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: context.issue.number,
+              body: `📲 **APK pronto per il test!**\n\n🔗 [Scarica ${apkName}](${url})${issueRef}`
+            });
 
-      - name: Notifica Ciccio (sempre, anche su fail)
-        if: always()
+      - name: Notify Ciccio
+        if: success()
         run: |
-          STATUS="${{ job.status }}"
-          EMOJI=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
-          URL="${{ steps.info.outputs.url }}"
-          BRANCH="${{ steps.info.outputs.branch }}"
+          ISSUE_NUM="${{ steps.info.outputs.issue_num }}"
+          PR_NUM="${{ steps.info.outputs.pr_number }}"
           SHORT="${{ steps.info.outputs.short }}"
+          BRANCH="${{ steps.info.outputs.branch }}"
+          REPO="${{ github.repository }}"
+          APK_URL="https://apps.8020solutions.org/downloads/test/${{ steps.info.outputs.apk_name }}"
 
-          if [ "$STATUS" = "success" ]; then
-            MSG="${EMOJI} __REPO_NAME__ — ${BRANCH} (${SHORT})\n📲 APK pronto: ${URL}"
+          if [ -n "$PR_NUM" ] && [ -n "$ISSUE_NUM" ]; then
+            CONTEXT="Issue #${ISSUE_NUM} — PR #${PR_NUM}\nhttps://github.com/${REPO}/issues/${ISSUE_NUM}"
+          elif [ -n "$PR_NUM" ]; then
+            CONTEXT="PR #${PR_NUM}\nhttps://github.com/${REPO}/pull/${PR_NUM}"
+          elif [ -n "$ISSUE_NUM" ]; then
+            CONTEXT="Issue #${ISSUE_NUM}\nhttps://github.com/${REPO}/issues/${ISSUE_NUM}"
           else
-            MSG="${EMOJI} __REPO_NAME__ — build fallita\nBranch: ${BRANCH} (${SHORT})"
+            CONTEXT="Branch: ${BRANCH}"
           fi
 
+          MSG="✅ __REPO_NAME__ — APK pronto (${SHORT})\n${CONTEXT}\n📲 ${APK_URL}"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "ciccio-notify '${MSG}'" || true
+
+      - name: Notify Ciccio (build fallita)
+        if: failure()
+        run: |
+          SHORT="${{ steps.info.outputs.short }}"
+          BRANCH="${{ steps.info.outputs.branch }}"
+          MSG="❌ __REPO_NAME__ — build fallita (${SHORT})\nBranch: ${BRANCH}\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "ciccio-notify '${MSG}'" || true
