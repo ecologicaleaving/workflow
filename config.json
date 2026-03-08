@@ -1,6 +1,6 @@
 {
   "_comment": "Fonte di verità per tutti i valori strutturati del team. NON duplicare questi valori nei file .md.",
-  "_version": "1.0.0",
+  "_version": "1.1.0",
   "_updated": "2026-03-08",
 
   "github": {
@@ -22,7 +22,19 @@
     "repos": {
       "workflow":    "ecologicaleaving/workflow",
       "finn":        "ecologicaleaving/finn",
+      "stageconnect": "ecologicaleaving/StageConnect",
       "beachref":    "ecologicaleaving/BeachRef-app"
+    },
+    "templates": {
+      "build-apk": {
+        "source": "templates/build-apk.yml",
+        "dest": ".github/workflows/build-apk.yml",
+        "repos": [
+          "ecologicaleaving/finn",
+          "ecologicaleaving/StageConnect",
+          "ecologicaleaving/BeachRef-app"
+        ]
+      }
     },
     "agents": {
       "claudeCode": { "label": "agent:claude-code", "host": "PC Windows" },
