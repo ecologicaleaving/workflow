@@ -12,11 +12,14 @@ name: Build & Deploy APK
 # Flusso automatico card Project board:
 #   commit → review-ready → PUSH
 #   CI deploy OK → deployed-test → Test (notifica Davide)
+#
+# TRIGGER: solo PR (build su feature branch) + push main/master (release)
+# Evita doppio run su push+PR sullo stesso commit.
 # ============================================================
 
 on:
   push:
-    branches: ['**']
+    branches: ['main', 'master']
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
