@@ -1,10 +1,11 @@
 ---
 name: issue-start
-version: 1.0.0
+version: 2.0.0
 description: >
   Procedura di avvio lavorazione issue. L'agente dev legge questa skill
-  prima di toccare qualsiasi codice. Copre: checkout branch, spostamento
-  card Kanban → In Progress, lettura contesto progetto.
+  prima di toccare qualsiasi codice. Copre: sync workflow, checkout branch,
+  spostamento card Kanban → In Progress, lettura contesto progetto.
+  ATTENZIONE: i controlli sono rigidi. Ogni check fallito è un BLOCCO DURO.
 triggers:
   - "inizia issue"
   - "start issue"
@@ -14,77 +15,161 @@ triggers:
 
 # Issue Start — Avvio Lavorazione
 
-Leggi questa skill **prima di scrivere qualsiasi codice**.
+> ⛔ **REGOLA ZERO**: Non scrivere una sola riga di codice finché tutti gli STEP non sono completati senza errori.
+> Ogni check fallito = STOP. Risolvi prima di andare avanti.
 
 ---
 
-## STEP 1 — Aggiorna submodule .workflow
-
-**Prima di qualsiasi altra operazione**, assicurati che il submodule `.workflow` sia all'ultima versione disponibile:
+## STEP 1 — Aggiorna submodule .workflow ⛔ BLOCCO DURO
 
 ```bash
 cd <repo-locale>
 git submodule update --init --remote .workflow
 ```
 
-Questo garantisce che CLAUDE.md, AGENTS.md e tutte le skill che leggi siano aggiornate all'ultima versione del workflow del team.
+**Verifica che il submodule sia aggiornato:**
+```bash
+cd .workflow && git log --oneline -1
+```
 
-> ⚠️ Se `.workflow` non è presente o non è inizializzato, esegui prima il setup del progetto.
+Se `.workflow` non è presente o non è inizializzato:
+```bash
+git submodule add https://github.com/ecologicaleaving/workflow.git .workflow
+git submodule update --init --remote .workflow
+```
+
+> ⛔ Se il submodule non si aggiorna correttamente → **FERMATI**. Non procedere.
+> Segnala il problema a Ciccio prima di toccare qualsiasi file.
 
 ---
 
-## STEP 2 — Leggi l'issue
+## STEP 2 — Verifica struttura repo ⛔ BLOCCO DURO
+
+Esegui il pre-flight check canonico:
+
+```bash
+bash .workflow/scripts/validate-project.sh .
+```
+
+Output atteso: `✅ Pre-flight OK — puoi lanciare l'agente`
+
+**Se il check fallisce** (exit code 1):
+- Leggi gli errori uno per uno
+- Crea i file mancanti usando i template in `.workflow/templates/`
+- **Non procedere** finché `validate-project.sh` non ritorna exit 0
+
+File obbligatori verificati:
+| File | Scopo |
+|------|-------|
+| `AGENTS.md` | Istruzioni per Codex/agenti |
+| `CLAUDE.md` | Istruzioni per Claude Code |
+| `PROJECT.md` | Stato progetto, versione, stack |
+| `.workflow` | Submodule workflow team |
+| `.github/workflows/` | CI/CD configurata |
+| `.gitignore` | Esclusioni git |
+
+> ⛔ Anche un solo file mancante = STOP. Usa `scripts/setup-project.sh` per creare i mancanti.
+
+---
+
+## STEP 3 — Verifica template CI aggiornato ⛔ BLOCCO DURO
+
+Il file `.github/workflows/build-apk.yml` deve essere allineato al template canonico del workflow.
+
+**Controlla i trigger:**
+```bash
+grep -A5 "^on:" .github/workflows/build-apk.yml
+```
+
+Il trigger deve contenere **solo**:
+```yaml
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+  workflow_dispatch:
+```
+
+Se il trigger è `branches: ['**']` (build su ogni branch) → **aggiorna il file** con il template corretto da `.workflow/templates/build-apk.yml` prima di procedere.
+
+**Controlla la notifica Ciccio:**
+```bash
+grep -A5 "Notify Ciccio\|ciccio-notify" .github/workflows/build-apk.yml
+```
+
+La notifica deve includere issue # e PR #. Se non li include → aggiorna il template.
+
+> ⛔ Un CI che builda su ogni branch genera notifiche false a Davide. Aggiornalo prima di pushare.
+
+---
+
+## STEP 4 — Leggi l'issue ⛔ BLOCCO DURO
 
 ```bash
 gh issue view <N> --repo <owner/repo>
+gh issue view <N> --repo <owner/repo> --comments
 ```
 
-Capisci:
-- Obiettivo e contesto
-- Task da svolgere
-- Acceptance Criteria (AC) — sono i tuoi criteri di successo
-- Branch suggerito (solitamente indicato nell'issue)
-- Repo e stack tecnico
+Prima di andare avanti devi sapere con certezza:
+- [ ] Obiettivo principale dell'issue
+- [ ] **Acceptance Criteria (AC)** — lista numerata, li conosci tutti?
+- [ ] Branch da usare (indicato nell'issue o da creare)
+- [ ] Stack tecnico (Flutter / Node / React)
+- [ ] Se è un rework (/reject): feedback di Davide letto dai commenti
+
+> ⛔ Se non ci sono AC chiari nell'issue → NON iniziare. Aggiungi un commento chiedendo chiarimento a Davide/Ciccio.
 
 ---
 
-## STEP 3 — Checkout branch
+## STEP 5 — Verifica label agente ⛔ BLOCCO DURO
+
+```bash
+gh issue view <N> --repo <owner/repo> --json labels --jq '.labels[].name'
+```
+
+La tua label agente deve essere presente (`claude-code`, `codex` o `agent:claude-code`, `agent:codex`).
+
+> ⛔ Se la label è `ciccio` o `agent:ciccio` → questa issue NON è tua. Fermati immediatamente.
+
+---
+
+## STEP 6 — Checkout branch
 
 ```bash
 cd <repo-locale>
-git checkout master          # o main, verifica quale è il branch principale
+git checkout master
 git pull origin master
 git checkout -b feature/issue-<N>-<slug>
-# usa il branch name indicato nell'issue se presente
 ```
 
 Se il branch esiste già (rework dopo /reject):
 ```bash
 git checkout feature/issue-<N>-<slug>
 git pull origin feature/issue-<N>-<slug>
-# leggi i commenti dell'issue per il feedback di Davide
-gh issue view <N> --repo <owner/repo> --comments
 ```
+
+**Formato branch obbligatorio:** `feature/issue-{N}-{slug}`
+Esempi: `feature/issue-28-offline-cache-sync`, `feature/issue-42-fix-login`
+
+> ⛔ Non usare branch diversi da questo formato. Il CI estrae l'issue # dal nome del branch per le notifiche.
 
 ---
 
-## STEP 4 — Sposta card → In Progress
-
-**Project ID**: `PVT_kwHODSTPQM4BP1Xp`
-**Status Field ID**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
-**Option ID In Progress**: `47fc9ee4`
+## STEP 7 — Sposta card → In Progress
 
 ```bash
-# Recupera item ID della card
+ISSUE_ID=$(gh issue view <N> --repo <owner/repo> --json id --jq '.id')
+
 ITEM_ID=$(gh api graphql -f query='
 query($issueId: ID!) {
   node(id: $issueId) {
     ... on Issue { projectItems(first: 5) { nodes { id } } }
   }
-}' -f issueId="$(gh issue view <N> --repo <owner/repo> --json id --jq '.id')" \
---jq '.data.node.projectItems.nodes[0].id')
+}' -f issueId="$ISSUE_ID" --jq '.data.node.projectItems.nodes[0].id')
 
-# Sposta In Progress
 gh api graphql -f query='
 mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
   updateProjectV2ItemFieldValue(input: {
@@ -100,44 +185,38 @@ mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
 
 ---
 
-## STEP 5 — Leggi il contesto del progetto
+## STEP 8 — Leggi contesto progetto
 
 ```bash
-cat PROJECT.md          # versione, stack, stato, backlog
-cat README.md           # overview progetto
-cat pubspec.yaml        # Flutter: dipendenze e versione
+cat PROJECT.md
+cat README.md
+cat pubspec.yaml   # Flutter
 # oppure
-cat package.json        # Node/React: dipendenze e script
+cat package.json   # Node/React
 ```
 
-Tieni PROJECT.md come riferimento attivo per tutto il lavoro.
-
 ---
 
-## STEP 6 — Esplora il codice rilevante
+## ✅ Checklist pre-codice — TUTTI i check devono essere ✅
 
-- Cerca i file correlati all'issue (widget, service, provider, datasource...)
-- Leggi i test esistenti — ti dicono cosa "corretto" significa
-- Identifica il comando di test: `flutter test` / `npm test` / `pytest`
-
----
-
-## ✅ Checklist pre-codice
-
-- [ ] Submodule `.workflow` aggiornato all'ultima versione (`git submodule update --init --remote .workflow`)
-- [ ] Issue letta e AC chiari
-- [ ] Branch creato e aggiornato da master
+- [ ] `.workflow` submodule aggiornato all'ultima versione
+- [ ] `validate-project.sh` → exit 0 (tutti i file obbligatori presenti)
+- [ ] CI trigger corretto (solo `feature/**`, `fix/**`, `pull_request`)
+- [ ] Notifica CI include issue # e PR #
+- [ ] Issue letta, AC tutti chiari
+- [ ] Branch nel formato `feature/issue-{N}-{slug}`
+- [ ] Label agente verificata (non è `ciccio`)
 - [ ] Card Kanban → In Progress
 - [ ] PROJECT.md letto
-- [ ] File rilevanti esplorati
-- [ ] Comando di test identificato
 
-Quando la checklist è completa → inizia a scrivere codice.  
-Quando hai finito → leggi la skill **`issue-done`**.
+> ⛔ Se anche un solo check è ❌ → NON iniziare a scrivere codice.
+
+Quando la checklist è completa → inizia a sviluppare.
+Quando hai finito → leggi **`issue-done`**.
 
 ---
 
-## 📊 Option ID colonne Kanban (riferimento rapido)
+## 📊 Kanban — Option ID colonne
 
 | Colonna | Option ID |
 |---------|-----------|
@@ -148,3 +227,5 @@ Quando hai finito → leggi la skill **`issue-done`**.
 | Review | `03f548ab` |
 | Deploy | `37c4aa50` |
 | Done | `98236657` |
+
+> ℹ️ Valori strutturati completi in `.workflow/config.json`
