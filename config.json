@@ -1,0 +1,62 @@
+{
+  "_comment": "Fonte di verità per tutti i valori strutturati del team. NON duplicare questi valori nei file .md.",
+  "_version": "1.0.0",
+  "_updated": "2026-03-08",
+
+  "github": {
+    "owner": "ecologicaleaving",
+    "kanban": {
+      "projectId": "PVT_kwHODSTPQM4BP1Xp",
+      "projectNumber": 2,
+      "statusFieldId": "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw",
+      "columns": {
+        "Backlog":     { "id": "2ab61313", "description": "Issue create, non ancora assegnate" },
+        "Todo":        { "id": "f75ad846", "description": "Assegnate, pronte per l'agente" },
+        "InProgress":  { "id": "47fc9ee4", "description": "Agente al lavoro" },
+        "Test":        { "id": "1d6a37f9", "description": "PR aperta, in attesa di test Davide" },
+        "Review":      { "id": "03f548ab", "description": "Rejected, in rework" },
+        "Deploy":      { "id": "37c4aa50", "description": "Approvato, Ciccio deploya" },
+        "Done":        { "id": "98236657", "description": "Deployato e chiuso" }
+      }
+    },
+    "repos": {
+      "workflow":    "ecologicaleaving/workflow",
+      "finn":        "ecologicaleaving/finn",
+      "beachref":    "ecologicaleaving/BeachRef-app"
+    },
+    "agents": {
+      "claudeCode": { "label": "agent:claude-code", "host": "PC Windows" },
+      "ciccio":     { "label": "agent:ciccio",       "host": "VPS" },
+      "codex":      { "label": "agent:codex",         "host": "PC Windows" }
+    }
+  },
+
+  "team": {
+    "davide": {
+      "role": "product-owner",
+      "commands": ["/approve", "/reject"]
+    },
+    "claudio": {
+      "role": "supervisor-pc",
+      "responsibilities": ["launch-agents-pc", "create-issues", "monitor-workflow"]
+    },
+    "ciccio": {
+      "role": "orchestrator-vps",
+      "responsibilities": ["merge-prs", "deploy-prod", "manage-infra"]
+    }
+  },
+
+  "workflow": {
+    "branchPattern": "feature/issue-{N}-{slug}",
+    "defaultBranch": "master",
+    "newIssueColumn": "Backlog",
+    "approvedColumn": "Deploy",
+    "rejectedColumn": "Review"
+  },
+
+  "vps": {
+    "host": "46.225.60.101",
+    "user": "root",
+    "alias": "CiccioHouse"
+  }
+}

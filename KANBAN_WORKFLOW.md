@@ -1,3 +1,6 @@
+## ?? Valori strutturati
+Tutti gli ID Kanban, project ID, field ID e option ID sono in `config.json`.
+Leggere sempre da lì — non hardcodare mai valori nei file .md.
 # KANBAN_WORKFLOW.md - Flusso di Lavorazione
 
 ## ğŸ—‚ï¸ Colonne del Board
