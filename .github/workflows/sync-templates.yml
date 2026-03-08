@@ -1,0 +1,32 @@
+name: Sync Workflow Templates
+
+# Propaga i template aggiornati a tutte le repo target
+# Triggerato su push a main quando cambiano i file in templates/
+
+on:
+  push:
+    branches: ['main', 'master']
+    paths:
+      - 'templates/**'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync templates to all repos
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Trigger sync on VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "bash /root/.openclaw/workspace-ciccio/scripts/sync-workflow-templates.sh" 2>&1
