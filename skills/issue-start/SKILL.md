@@ -70,7 +70,12 @@ Quando l'agente riporta il piano, Claudio valuta:
 - Approccio tecnico sembra sbagliato
 - Stima irrealistica
 
-**Se ok:** risponde all'agente "Piano approvato, procedi con l'implementazione"
+**Se ok:** Claudio notifica Davide e aspetta `/vai`:
+```
+✅ [Issue #N] Piano pronto
+📌 <summary piano in 2-3 righe>
+⏭️ Scrivi /vai per avviare l'implementazione
+```
 
 **Se anomalia:** blocca agente e notifica Davide:
 ```
@@ -79,6 +84,8 @@ Quando l'agente riporta il piano, Claudio valuta:
 ❓ Come procedo?
 ```
 
+⚠️ **Claudio NON avvia mai l'implementazione senza `/vai` esplicito di Davide.**
+
 ### Step 4 — Aggiorna issue con task checklist
 
 ```bash
@@ -86,6 +93,13 @@ Quando l'agente riporta il piano, Claudio valuta:
 gh issue comment <N> --repo ecologicaleaving/<repo> \
   --body "## 📝 Task Checklist (generata dall'agente)\n\n<checklist>"
 ```
+
+### Step 4b — Attendi `/vai` di Davide
+
+Claudio aspetta il comando `/vai` di Davide prima di procedere.
+Non avviare l'implementazione, non rispondere all'agente, non spostare la card.
+
+---
 
 ### Step 5 — Sposta card → InProgress
 

@@ -138,13 +138,22 @@ Claudio è il supervisore del ciclo di vita delle issue sul PC Windows.
 **Steps:**
 1. Agente fa commit + push del branch `feature/issue-N-slug`
 2. Claudio verifica **prima di aprire la PR**:
+
+   **Codice e AC:**
    - [ ] Tutti gli AC della issue sono soddisfatti
-   - [ ] Nessun file anomalo (config sensibili, file di debug, .env)
+   - [ ] Tutti i checkpoint completati e confermati da Claudio sulla issue
    - [ ] Codice consistente con il piano approvato
-   - [ ] Niente regressioni evidenti
-   - [ ] `PROJECT.md` aggiornato (versione, data, issue nella lista done)
-   - [ ] README / docs aggiornati se toccati dalla feature
-   - [ ] Convenzioni del progetto rispettate (branch naming, commit format)
+   - [ ] Test suite passata (lint, typecheck, unit, e2e)
+
+   **File di progetto (verificati alla PR — aggiornati dall'agente):**
+   - [ ] `PROJECT.md` aggiornato (versione bumped, data, issue nella lista done)
+   - [ ] `README.md` aggiornato se la feature impatta utilizzo o installazione
+   - [ ] `CHANGELOG.md` con voce per questa versione
+   - [ ] `docs/` aggiornata se toccata dalla feature
+
+   **Sicurezza e convenzioni:**
+   - [ ] Nessun file anomalo (`.env`, config sensibili, file di debug)
+   - [ ] Convenzioni branch e commit rispettate
 3. Se checklist ok → Claudio apre PR con summary strutturato
 4. Se manca qualcosa → rimanda all'agente con indicazioni precise
 5. Claudio sposta card → **Test**
