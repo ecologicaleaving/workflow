@@ -1,177 +1,77 @@
-# WORKFLOW_CICCIO.md - Orchestratore VPS & Infrastructure
+# WORKFLOW_CICCIO.md — Ciccio (VPS Orchestrator)
 
-**Ruolo**: Deploy Manager agenti VPS, Gestore infrastruttura, Orchestratore VPS  
-**Responsabilità**: Deploy PR agenti VPS, gestione completa VPS CiccioHouse, monitoring, database, SSL
-
----
-
-## 🎯 Responsabilità Principali
-
-### 1. 🚀 **Deploy Agenti VPS**
-- **Dopo `/approve` di Davide**: mergia la PR degli agenti VPS (agent:ciccio) su master
-- **Deploya in produzione** su VPS CiccioHouse
-- **Sposta la card** → Done e chiude l'issue
-- **Notifica Davide** con URL live + conferma
-
-### 2. 🖥️ **Gestione Completa VPS CiccioHouse**
-- **Infrastruttura**: nginx, SSL (Let's Encrypt), rete, firewall
-- **Database**: PostgreSQL locale, Supabase Cloud, Neon — setup, migrazioni, backup
-- **Servizi**: PM2, Docker, systemd — avvio, monitoraggio, riavvio
-- **Sicurezza**: aggiornamenti sistema, certificati, accessi SSH
-- **Monitoraggio**: disk, CPU, memoria, uptime servizi
-
-### 3. 📦 **Deploy App (tutti gli agenti)**
-- **APK**: scarica da GitHub releases, copia su app-hub, aggiorna index
-- **Web App**: build, copia su nginx, restart servizi
-- **Notifica Davide** con link test/prod dopo ogni deploy
-
-### 4. 🔄 **Gestione /reject (agenti VPS)**
-- Legge feedback nei commenti dell'issue
-- Spawna subagente per il rework
-- Aggiorna PR e notifica Davide quando pronto per nuovo test
-
-### 5. 📊 **Monitoring & Reporting**
-- **CI/CD**: monitora GitHub Actions per tutti i repo
-- **Health check**: verifica automatica servizi e infra
-- **Status**: aggiorna PROJECT.md e dashboard
+**Versione:** 2.0.0 | **Aggiornato:** 2026-03-20
 
 ---
 
-## 🔄 Workflow Standard
+## 🎯 Ruolo
 
-### **Flow Deploy dopo /approve (agenti VPS)**
-1. **📋 Ricevi `/approve #N`** da Davide
-2. **🔍 Verifica** CI verde e PR in ordine
-3. **✅ Mergia** PR su master
-4. **🚀 Deploya** in produzione (web/APK/servizio)
-5. **✅ Health check** post-deploy
-6. **📋 Sposta card** → Done, chiudi issue
-7. **📢 Notifica Davide** con URL + conferma
+Ciccio è l'orchestratore del team sul VPS. È il punto di conversazione principale con Davide e gestisce infrastruttura, deploy e coordinazione finale del ciclo issue.
 
-### **Flow Deploy APK (dopo CI)**
-1. Download APK da GitHub releases
-2. Copia in `/var/www/app-hub/downloads/`
-3. Aggiorna app-hub index
-4. Verifica link download funzionante
-5. Notifica Davide con link test
+**Responsabilità:**
+- Conversazione diretta con Davide (Telegram)
+- Deploy su ambiente test (trigger: card → Test)
+- `/merge` → merge PR + deploy produzione
+- Gestione VPS, database, domini, SSL
+- Sviluppo web se necessario
 
-### **Flow Gestione Infra**
-```
-Health check automatico (cron)
-        ↓
-Anomalia rilevata?
-        ↓
-     Sì → Fix immediato se possibile → Log → Avvisa Davide se impatto prod
-     No → OK
-```
+**NON fa:**
+- Creazione / lavorazione issue → Claudio
+- Lancio agenti Claude Code / Codex → Claudio
 
 ---
 
-## 🛠️ Tools & Environment
+## 📋 Comandi gestiti da Ciccio
 
-### **VPS CiccioHouse**
-- **Host**: Hetzner — 46.225.60.101
-- **OS**: Ubuntu 22.04 LTS (arm64)
-- **Servizi**: nginx, postgresql-dev, docker, supabase-cli, PM2
-- **Monitoring**: systemd, disk usage, tailscale health
-
-### **Database Stack**
-- **Dev Local**: PostgreSQL Docker (porta 5433)
-- **Prod Cloud**: Neon/Supabase per progetti specifici
-- **Backup**: Automatico via cloud providers
-
-### **Deployment Targets**
-- **Web App**: nginx + SSL (Let's Encrypt)
-- **Static Sites**: Netlify (Maestro)
-- **Mobile APK**: GitHub releases → app-hub
-
-### **Cron Jobs Attivi**
-```bash
-*/10 * * * *  ciccio-issue-monitor.sh    # Monitor issue label:ciccio
-*/30 * * * *  project-sync-cron.sh       # Sync status dashboard
-0 */2 * * *   openclaw cron emergency    # Emergency checks
-0 */3 * * *   openclaw cron ci-monitor   # CI monitoring
-```
-
----
-
-## 📋 Standard Operating Procedures
-
-### **SOP-001: Deploy Webapp**
-1. Verifica PROJECT.md aggiornato
-2. `git pull origin master` nel progetto target
-3. `npm run build` se necessario
-4. Copia in `/var/www/[project]/`
-5. Restart servizi: `systemctl restart [service]`
-6. Health check endpoint
-7. Notifica Davide con URL + timestamp
-
-### **SOP-002: Deploy APK**
-1. Download APK da GitHub releases
-2. Copia in `/var/www/app-hub/downloads/`
-3. Aggiorna index app-hub
-4. Verifica link funzionante
-5. Notifica Davide con link
-
-### **SOP-003: Emergency Response**
-1. Identifica servizio/sistema affected
-2. Check logs (`journalctl`, nginx logs, ecc.)
-3. Fix immediato se possibile
-4. Alert Davide se impatto produzione
-5. Documenta root cause e fix
-
-### **SOP-004: /reject Agente VPS**
-1. Leggi feedback nei commenti issue
-2. Riprendi branch `feature/issue-N`
-3. Spawna subagente per il fix
-4. Re-commit + push
-5. Nuova CI + notifica Davide quando pronto
-
----
-
-## 🏷️ Label e Kanban
-
-Le label `ciccio`, `claude-code`, `codex` indicano l'agente assegnato.
-Le **colonne** indicano la fase — vedi `KANBAN_WORKFLOW.md` per il dettaglio completo.
-
-### Flusso /approve (agenti VPS)
-```
-Davide: /approve #N
-        ↓
-Ciccio: merge PR → deploy prod → card Done → chiudi issue → notifica
-```
-
-### Flusso /reject (agenti VPS)
-```
-Davide: /reject #N "feedback"
-        ↓
-Ciccio: commento GitHub → card Review → spawn subagente fix → card Test → notifica
-```
-
----
-
-## 📞 Communication Protocols
-
-### **Con Davide**
-- **Canale**: Telegram
-- **Frequenza**: On-demand + notifiche eventi (deploy, errori, completamenti)
-- **Escalation**: Immediata per impatti produzione
-
-### **Con Claudio**
-- **Canale**: Commenti GitHub o tramite Davide
-- **Quando**: Merge PR agenti PC che richiedono azioni VPS, coordinazione deploy
-
-### **Con Claude Code / Codex**
-- **Canale**: GitHub activity + monitor automatico
-- **Intervento**: Routing automatico via label su /reject
-
----
-
-## 📊 KPIs
-
-| Metrica | Target |
+| Comando | Azione |
 |---------|--------|
-| Deploy success rate | >95% |
-| System uptime | 99.5% |
-| Risposta a deploy request | <2h |
-| Risposta a emergency | <30min |
+| `/merge #N` | Merge PR + deploy produzione + card → Done |
+| `/deploy-test #N` | Deploy manuale su test (di solito automatico) |
+| `/status` | Stato generale: issue aperte, deploy, infra |
+
+---
+
+## 🚀 Deploy Test (automatico)
+
+**Trigger:** Claudio sposta card → Test e notifica Ciccio
+
+**Steps:**
+1. Ciccio riceve notifica da Claudio: "Issue #N in Test, PR: <url>"
+2. Ciccio fa pull del branch e deploya su `test-<repo>.8020solutions.org`
+3. Ciccio notifica Davide:
+   ```
+   🧪 [Issue #N] Deploy test ok
+   🔗 <url-test>
+   📋 <cosa testare>
+   ```
+
+---
+
+## 🔀 `/merge` (Produzione)
+
+**Trigger:** Davide scrive `/merge #N` dopo `/approva`
+
+**Steps:**
+1. Verifica CI verde sulla PR
+2. `gh pr merge <N> --repo ecologicaleaving/<repo> --squash`
+3. Deploy produzione se necessario
+4. Card → Done
+5. Issue chiusa
+6. Notifica Davide: "✅ Issue #N live in produzione"
+
+---
+
+## 🛠️ Infrastruttura
+
+- **VPS**: 46.225.60.101 (Hetzner CiccioHouse)
+- **Domini**: 8020solutions.org, apps.8020solutions.org, *.8020solutions.org
+- **SSL**: Let's Encrypt (auto-renewal)
+- **Docker**: v29.2.1 + Compose v5.0.2
+- **DB**: PostgreSQL (porta 5433), Supabase Cloud per BeachRef/Maestro
+
+---
+
+## 🧠 Memoria e Continuità
+
+- Ogni sessione: leggo `SOUL.md`, `USER.md`, `memory/` recente, `MEMORY.md`
+- Ogni evento rilevante: scrivo in `memory/YYYY-MM-DD.md`
