@@ -1,84 +1,70 @@
 ---
 name: 8020-workflow
-description: "80/20 Solutions team workflow rules for Ciccio. Use when handling GitHub issues, creating/merging PRs, deploying apps, managing branches, writing commit messages, coordinating with Claude Code, triggering CI/CD builds, managing APK releases, processing /reject or /approve commands, moving Kanban board cards, or doing any development or infrastructure task. Ensures Ciccio follows the correct process for the hybrid VPS+PC team system."
+description: "80/20 Solutions team workflow rules for Ciccio and Claudio. Use when handling GitHub issues, creating/merging PRs, deploying apps, managing branches, writing commit messages, coordinating with Claude Code, triggering CI/CD builds, managing APK releases, processing /reject or /approve commands, moving Kanban board cards, or doing any development or infrastructure task. Ensures agents follow the correct process for the hybrid VPS+PC team system."
 ---
 
-# 80/20 Solutions — Workflow (Ciccio)
+# 80/20 Solutions — Workflow
 
-## Ruoli nel team
-- **Davide**: Product owner, testa APK, approva deploy in produzione
-- **Ciccio (VPS)**: Orchestrazione, deploy, infra, monitoring, issue management (label `ciccio`)
-- **Claude Code (PC)**: Development senior, commit, push (label `claude-code`)
-- **Codex (PC)**: Development alternativo, commit, push (label `codex`)
+## ⚙️ STEP 0 — Verifica aggiornamento workflow (OBBLIGATORIO)
 
-## 📋 Board Kanban — 7 colonne
-**GitHub Project**: https://github.com/users/ecologicaleaving/projects/2
+Prima di procedere con qualsiasi operazione GitHub, verifica che il workflow locale sia allineato alla versione online:
 
-| Colonna | Chi sposta | Quando |
-|---------|-----------|--------|
-| `Backlog` | Ciccio | Issue creata, nessun agente assegnato |
-| `Todo` | Ciccio/Davide | Label agente assegnata, pronta per lavorazione |
-| `In Progress` | Ciccio/Agente | Agente ha preso in carico |
-| `Test` | Ciccio | PR aperta + APK/build disponibile — Davide testa |
-| `Review` | Ciccio | Dopo /reject — agente sta rilavorando |
-| `Deploy` | Ciccio | Dopo /approve — deploy prod in corso |
-| `Done` | Ciccio | Issue chiusa, in produzione |
+```bash
+export PATH=$PATH:/root/go/bin
+REMOTE_SHA=$(gh api "repos/ecologicaleaving/workflow/commits?path=skills/8020-workflow&per_page=1" --jq '.[0].sha' 2>/dev/null)
+LOCAL_SHA=$(cat <SKILL_DIR>/.version 2>/dev/null || echo "none")
 
-## Flusso standard
-
-```
-Issue creata → Todo
-  → agente inizia → In Progress
-  → PR aperta + build → Test → notifica Davide
-
-Davide testa:
-  /approve → Deploy → Done (merge → prod)
-  /reject  → Review (agente rilav ora) → Test
+if [ "$REMOTE_SHA" != "$LOCAL_SHA" ]; then
+  echo "⚠️ Workflow aggiornato online — notifica Davide prima di procedere"
+fi
 ```
 
-## Quando Ciccio riceve /reject
-1. Aggiungi commento GitHub con feedback completo
-2. Sposta card: `Test` → `Review` (non toccare le label)
-3. Lavora il fix → quando pronto → sposta card: `Review` → `Test`
-4. Notifica Davide con nuovo APK/link
+Dove `<SKILL_DIR>` è la directory locale di questa skill.
 
-## Quando Ciccio riceve /approve
-1. Mergia PR su master
-2. Sposta card: `Test` → `Deploy`
-3. Deploya in produzione
-4. Sposta card: `Deploy` → `Done`, chiudi issue
-5. Notifica Davide con link prod
+- **Se aggiornato online** → notifica Davide e chiedi se sincronizzare prima di procedere
+- **Se allineato** → prosegui con l'operazione richiesta
 
-## Quando Ciccio fa deploy test (dopo PR aperta)
-1. Build/APK disponibile (CI verde)
-2. Sposta card: `In Progress` → `Test`
-3. Notifica Davide con link APK/URL test
+---
 
-## Regole fondamentali
-- **Mai committare su master/main** — sempre feature branch + PR
-- **PROJECT.md** va aggiornato ad ogni issue completata (version bump + DONE)
-- **APK test**: `https://apps.8020solutions.org/downloads/test/`
-- **ciccio-notify**: `/usr/local/bin/ciccio-notify` per notifiche da CI
-- **Deploy key**: `/root/.ssh/github-actions-deploy`
+## 🗺️ INDICE OPERAZIONI — Leggi solo il file che ti serve
 
-## Labels sistema
-Le issue usano **sole due label**:
-1. **Label progetto** — nome del progetto (es. `beachref`, `finn`)
-2. **Label agente** — chi lavora l'issue (`ciccio`, `claude-code`, `codex`)
+| Operazione | File da leggere |
+|-----------|----------------|
+| Creare una issue | `references/CREATE_ISSUE.md` |
+| Avviare lavorazione (assegnare agente) | `references/ISSUE_START.md` |
+| Deploy su ambiente test | `references/DEPLOY_TEST.md` |
+| /reject da Davide | `references/REJECT.md` |
+| /approva da Davide → prod | `references/APPROVE_DEPLOY.md` |
+| Kanban: colonne e regole | `references/KANBAN.md` |
+| Branch e commit | `references/BRANCH_STRATEGY.md` |
+| Convenzioni commit | `references/COMMIT_CONVENTIONS.md` |
 
-| Label | Significato |
-|-------|-------------|
-| `ciccio` | Ciccio (VPS) — routing obbligatorio |
-| `claude-code` | Claude Code (PC) — routing obbligatorio |
-| `codex` | Codex (PC) — routing obbligatorio |
+---
 
-**Regole:**
-- Le label di stato (`in-progress`, `review-ready`, `deployed-test`, `needs-fix`) NON si usano — lo stato è indicato dalla colonna Kanban
-- Label agente NON viene mai rimossa durante la lavorazione
-- VPS skippa sempre issue con `claude-code` o `codex`
+## 👥 Ruoli (riferimento rapido)
 
-## Riferimenti completi
-- `references/WORKFLOW_CICCIO.md` — procedure complete Ciccio
-- `references/WORKFLOW_CLAUDE_CODE.md` — workflow Claude Code (coordinamento)
-- `references/BRANCH_STRATEGY.md` — git branching
-- `references/COMMIT_CONVENTIONS.md` — formato commit
+| Chi | Cosa fa |
+|-----|---------|
+| **Davide** | Product owner, approva, testa |
+| **Claudio (PC)** | Assegna agente, lancia lavorazione, supervisiona dev |
+| **Ciccio (VPS)** | Crea issue, Kanban, deploy, infra |
+| **Claude Code / Codex** | Sviluppo, commit, push |
+
+## 🏷️ Label agente (riferimento rapido)
+
+- `agent:claude-code` — Claude Code (PC)
+- `agent:ciccio` — Ciccio (VPS)
+- `agent:codex` — Codex (PC)
+- **MAI assegnare label agente senza indicazione di Davide**
+
+## 📋 Kanban colonne (riferimento rapido)
+
+| Colonna | Quando |
+|---------|--------|
+| `Backlog` | Issue creata, **nessun agente assegnato** |
+| `Todo` | Label agente assegnata da Claudio |
+| `In Progress` | Agente in lavorazione |
+| `Test` | Build/APK disponibile — Davide testa |
+| `Review` | Dopo /reject |
+| `Deploy` | Dopo /approva — deploy prod in corso |
+| `Done` | In produzione, issue chiusa |
