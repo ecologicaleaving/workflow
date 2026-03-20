@@ -18,14 +18,25 @@ Verificare che tutto sia in ordine, aprire la PR, spostare la card in Test, noti
 
 Claudio verifica prima di aprire la PR:
 
+**Codice e AC:**
 - [ ] Tutti gli AC della issue sono soddisfatti
-- [ ] Nessun file anomalo (`.env`, config sensibili, file di debug)
+- [ ] Tutti i checkpoint completati e confermati da Claudio sulla issue
 - [ ] Codice consistente con il piano approvato
 - [ ] Niente regressioni evidenti nei test
+- [ ] Test suite passata (lint, typecheck, unit, e2e)
+
+**File di progetto:**
 - [ ] `PROJECT.md` aggiornato (versione bumped, data, issue nella lista done)
-- [ ] README / docs aggiornati se toccati dalla feature
+- [ ] `README.md` aggiornato se la feature impatta utilizzo o installazione
+- [ ] `CHANGELOG.md` con voce per questa versione
+- [ ] `docs/` aggiornata se toccata dalla feature
+
+**Sicurezza e convenzioni:**
+- [ ] Nessun file anomalo (`.env`, config sensibili, file di debug)
 - [ ] Convenzioni branch e commit rispettate
 - [ ] Label issue corrette
+
+Se manca qualcosa → rimanda all'agente con indicazioni precise prima di aprire la PR.
 
 Se manca qualcosa → rimanda all'agente con indicazioni precise prima di aprire la PR.
 

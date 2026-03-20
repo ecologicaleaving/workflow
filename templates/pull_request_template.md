@@ -18,9 +18,18 @@
 
 ---
 
+## 📌 Checkpoint completati
+
+<!-- Tutti i checkpoint della issue devono essere confermati da Claudio -->
+- [ ] CP1 — confermato da Claudio
+- [ ] CP2 — confermato da Claudio
+- [ ] CP3 — confermato da Claudio
+- [ ] CP4 — confermato da Claudio
+
+---
+
 ## 📁 File modificati
 
-<!-- Lista dei file principali toccati e perché -->
 | File | Modifica |
 |------|---------|
 | | |
@@ -38,19 +47,28 @@
 
 ---
 
-## 📦 PROJECT.md
+## 📦 File di progetto aggiornati
 
-- [ ] Versione aggiornata
-- [ ] Data aggiornata
-- [ ] Issue segnata come done
+- [ ] `PROJECT.md` — versione bumped, data aggiornata, issue nella lista done
+- [ ] `README.md` — aggiornato se la feature impatta l'utilizzo o l'installazione
+- [ ] `CHANGELOG.md` — voce aggiunta per questa versione
+- [ ] `docs/` — documentazione tecnica aggiornata se necessario
+
+---
+
+## 🔒 Sicurezza
+
+- [ ] Nessun file `.env` o config sensibile nel commit
+- [ ] Nessun file di debug o log nel commit
+- [ ] Branch corretto (non master/main)
 
 ---
 
 ## 📝 Note per il reviewer
 
-<!-- Cose da tenere a mente durante la review, scelte implementative particolari -->
+<!-- Scelte implementative particolari, cose da tenere a mente -->
 
 
 ---
 
-*PR generata da Claudio — Workflow 80/20 Solutions v2.0*
+*PR verificata da Claudio — Workflow 80/20 Solutions v2.0*

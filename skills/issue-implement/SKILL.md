@@ -8,86 +8,125 @@
 
 ## Obiettivo
 
-Supervisionare la lavorazione dell'agente, notificare Davide a ogni checkpoint obbligatorio, intervenire in caso di anomalie.
+Supervisionare la lavorazione dell'agente tramite il **protocollo checkpoint vincolante**: l'agente non procede senza il via esplicito di Claudio. Notifica Davide a ogni step, interviene in caso di anomalie.
 
 ---
 
-## Checkpoint Obbligatori
+## Protocollo Checkpoint Vincolante
 
-Ad ogni checkpoint Claudio notifica Davide con questo formato:
+### Come funziona
+
+1. L'agente completa uno step e **posta un commento sulla issue** con formato fisso
+2. Claudio legge il commento e valuta
+3. **Se ok** → Claudio risponde sulla issue: `✅ procedi`
+4. **Se anomalia** → Claudio risponde: `🔴 bloccato — <motivo>` + notifica Davide
+5. L'agente **non procede** finché non riceve `✅ procedi`
+
+### Formato commento checkpoint (agente)
 
 ```
-✅ [Issue #N] Checkpoint N — <titolo>
-📌 <summary di cosa è successo>
-🧪 Test: <risultato se applicabile>
-⏭️ Prossimo step: <cosa fa l'agente ora>
+## ✅ Checkpoint N — <titolo>
+
+**Stato:** completato
+
+**Cosa è stato fatto:**
+<descrizione dettagliata>
+
+**Risultati test (se applicabile):**
+<risultati lint / typecheck / unit / e2e>
+
+**Prossimo step pianificato:**
+<cosa farei dopo>
+
+**Aspetto conferma di Claudio prima di procedere.**
 ```
 
-### CP2 — Fine ogni iterazione di implementazione
+### Risposta Claudio (via commento issue)
 
-L'agente deve riportare:
-- Cosa ha implementato
-- Test eseguiti e risultati
-- Se ci sono stati problemi e come li ha risolti
-- Cosa fa nella prossima iterazione
+**Via libera:**
+```
+✅ procedi
+```
 
-Claudio valuta e notifica Davide.
+**Blocco:**
+```
+🔴 bloccato
+Motivo: <descrizione anomalia>
+Istruzioni: <cosa deve fare l'agente>
+```
 
-### CP3 — Fine test suite
+---
 
-L'agente deve riportare i risultati completi:
+## Checkpoint per tipo issue
 
-| Suite | Risultato | Dettagli |
-|-------|-----------|---------|
-| Lint | ✅/❌ | |
-| Typecheck | ✅/❌ | |
-| Unit tests | ✅/❌ | N passed / M failed |
-| E2E | ✅/❌ | |
+### Feature / Improvement
 
-Se qualcosa è ❌ → Claudio valuta se è bloccante o accettabile. Se bloccante, l'agente deve fixare prima di procedere.
+| CP | Titolo | Cosa verifica Claudio |
+|----|--------|----------------------|
+| CP1 | Piano approvato | Piano copre tutti gli AC, file sensati, nessun rischio |
+| CP2 | Fine iterazione N | Cosa implementato, test result, niente regressioni |
+| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
 
-### CP4 — Pronto per push
+### Bug
 
-L'agente riporta:
-- AC verificati (lista spuntata)
-- PROJECT.md aggiornato
-- Nessun file anomalo
-- Riepilogo modifiche
+| CP | Titolo | Cosa verifica Claudio |
+|----|--------|----------------------|
+| CP1 | Root cause identificata | Causa chiara, approccio fix sensato |
+| CP2 | Fix applicato | Fix mirato, test di regressione ok |
+| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
 
 ---
 
 ## Gestione Anomalie
 
-**Se l'agente si blocca o riporta un problema:**
-1. Claudio blocca l'agente
+**Criteri anomalia:**
+- Piano ignora degli AC
+- Test falliti non risolti
+- File modificati fuori scope
+- Più di 5 iterazioni senza convergenza
+- Comportamento inatteso o errori gravi
+
+**Procedura anomalia:**
+1. Claudio posta `🔴 bloccato` sulla issue con istruzioni
 2. Notifica Davide:
    ```
-   ⚠️ [Issue #N] Anomalia al CP-N
+   ⚠️ [Issue #N] Anomalia al CP-N — <titolo>
    📌 <descrizione problema>
-   🔧 <cosa ha provato l'agente>
+   🔧 <cosa ha fatto l'agente>
    ❓ Come procedo?
    ```
-3. Aspetta istruzioni di Davide prima di riprendere
+3. Aspetta istruzioni di Davide prima di sbloccare l'agente
 
-**Se l'agente supera le 5 iterazioni senza convergere:**
-→ Blocca e notifica Davide automaticamente
-
----
-
-## Regole per l'agente
-
-L'agente deve:
-- Riportare a ogni checkpoint **prima di procedere**
-- Non saltare checkpoint
-- Non modificare file fuori scope del piano approvato
-- Aggiornare `PROJECT.md` prima del push
-- Non committare file di debug, `.env`, config sensibili
+**Se l'agente supera 5 iterazioni senza convergere → blocco automatico + notifica Davide**
 
 ---
 
-## Convenzioni codice
+## Notifiche a Davide (formato)
 
-- Commit atomici con formato convenzionale (`feat:`, `fix:`, `improve:`)
+Ad ogni checkpoint Claudio notifica Davide su Telegram:
+
+```
+✅ [Issue #N] CP-N — <titolo>
+📌 <summary in 1-2 righe>
+⏭️ Prossimo step: <cosa fa l'agente ora>
+```
+
+In caso di anomalia:
+```
+⚠️ [Issue #N] Anomalia CP-N — <titolo>
+📌 <descrizione>
+❓ <domanda / cosa serve da Davide>
+```
+
+---
+
+## Convenzioni Agente
+
+L'agente deve rispettare:
+- Commit atomici: `feat:`, `fix:`, `improve:`, `docs:`, `chore:`
 - Branch: `feature/issue-N-slug`, `fix/issue-N-slug`, `improve/issue-N-slug`
-- Niente commit diretti su `main`/`master`
-- Test prima di ogni push
+- Niente commit su `main`/`master`
+- Niente `.env`, config sensibili, file di debug
+- `PROJECT.md` aggiornato prima del push
