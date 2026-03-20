@@ -1,26 +1,74 @@
-## Issue collegata
-Closes #{ISSUE_NUMBER}
+## 📋 Risolve Issue #N: [Titolo]
 
-## Cosa ho fatto
-<!-- Descrizione sintetica dei cambiamenti -->
+---
 
-## Acceptance Criteria verificati
-<!-- Spunta ogni criterio dopo averlo verificato -->
-- [ ] {AC_1}
-- [ ] {AC_2}
-- [ ] {AC_3}
+## 🎯 Cosa è stato fatto
 
-## Test
-- [ ] `{TEST_COMMAND}` eseguito — tutti verdi
-- [ ] Nessuna regressione su test esistenti
-- [ ] Verificato su {TEST_ENV}
+<!-- Summary delle modifiche principali -->
 
-## Checklist pre-PR
-- [ ] Branch creato da master/main (non da un altro feature branch)
-- [ ] Nessun secret o credenziale committata
-- [ ] Nessun file temporaneo o di debug incluso (`console.log`, `print`, ecc.)
-- [ ] `PROJECT.md` aggiornato se cambia stack, dipendenze o deploy
-- [ ] Commit con messaggi convenzionali (`feat:`, `fix:`, `chore:`, ecc.)
 
-## Screenshot / output test (se applicabile)
-<!-- Incolla qui l'output di flutter test / npm test / screenshot -->
+---
+
+## ✅ Acceptance Criteria verificati
+
+<!-- Spunta gli AC della issue -->
+- [ ] 
+- [ ] 
+- [ ] 
+
+---
+
+## 📌 Checkpoint completati
+
+<!-- Tutti i checkpoint della issue devono essere confermati da Claudio -->
+- [ ] CP1 — confermato da Claudio
+- [ ] CP2 — confermato da Claudio
+- [ ] CP3 — confermato da Claudio
+- [ ] CP4 — confermato da Claudio
+
+---
+
+## 📁 File modificati
+
+| File | Modifica |
+|------|---------|
+| | |
+
+---
+
+## 🧪 Test eseguiti
+
+| Suite | Risultato |
+|-------|-----------|
+| Lint | ✅ / ❌ |
+| Typecheck | ✅ / ❌ |
+| Unit tests | ✅ / ❌ |
+| E2E | ✅ / ❌ |
+
+---
+
+## 📦 File di progetto aggiornati
+
+- [ ] `PROJECT.md` — versione bumped, data aggiornata, issue nella lista done
+- [ ] `README.md` — aggiornato se la feature impatta l'utilizzo o l'installazione
+- [ ] `CHANGELOG.md` — voce aggiunta per questa versione
+- [ ] `docs/` — documentazione tecnica aggiornata se necessario
+
+---
+
+## 🔒 Sicurezza
+
+- [ ] Nessun file `.env` o config sensibile nel commit
+- [ ] Nessun file di debug o log nel commit
+- [ ] Branch corretto (non master/main)
+
+---
+
+## 📝 Note per il reviewer
+
+<!-- Scelte implementative particolari, cose da tenere a mente -->
+
+
+---
+
+*PR verificata da Claudio — Workflow 80/20 Solutions v2.0*

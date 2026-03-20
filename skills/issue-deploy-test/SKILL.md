@@ -1,145 +1,77 @@
----
-name: issue-deploy-test
-version: 1.0.0
-description: >
-  Procedura di deploy su ambiente test. Usata da Claudio (agenti PC)
-  o Ciccio (agenti VPS) dopo che l'agente dev ha aperto la PR.
-  Copre: verifica CI, deploy build su test, spostamento card → Test,
-  notifica Davide con link. Termina con la card in colonna Test.
-triggers:
-  - "deploy test"
-  - "metti in test"
-  - "deploy su test"
-  - "prepara test"
----
+# Skill: issue-deploy-test
 
-# Issue Deploy Test — Deploy su Ambiente Test
-
-Questa skill è per **Claudio** (agenti PC) o **Ciccio** (agenti VPS).
-Da leggere dopo che l'agente dev ha aperto la PR e la CI è partita.
+**Trigger:** Davide autorizza il deploy in test (dopo PR in Test)  
+**Agente:** Ciccio  
+**Versione:** 2.0.0
 
 ---
 
-## STEP 1 — Verifica CI verde
+## Obiettivo
+
+Deployare il branch della issue sull'ambiente test e notificare Davide con il link per testare.
+
+---
+
+## Procedura
+
+### Step 1 — Recupera info dalla PR
 
 ```bash
-gh run list --repo <owner/repo> --branch feature/issue-<N>-<slug> \
-  --limit 1 --json status,conclusion,name,url
+# Trova la PR aperta per la issue
+gh pr list --repo ecologicaleaving/<repo> --state open \
+  --json number,headRefName,url | jq '.[] | select(.headRefName | contains("issue-N"))'
 ```
 
-- `status: completed` + `conclusion: success` → ✅ procedi
-- `status: in_progress` → aspetta il completamento
-- `conclusion: failure` → ❌ **non deployare**. Segnala all'agente dev che la CI è rossa. L'agente deve fixare e ripushare.
-
----
-
-## STEP 2 — Scarica / verifica la build
-
-### Flutter APK
-La CI deploya automaticamente l'APK su:
-```
-https://apps.8020solutions.org/downloads/test/<repo-name>-<branch>.apk
-```
-
-> ⚠️ **Flavor**: per branch/test la CI deve usare `--debug --flavor dev`.
-> Verifica in `PROJECT.md` del repo i flavor configurati.
-> Il nome dell'app nel APK test deve essere quello del flavor dev (es. "Fin Dev").
-
-Verifica che il link sia raggiungibile:
-```bash
-curl -sI "https://apps.8020solutions.org/downloads/test/<nome>.apk" | head -1
-# atteso: HTTP/2 200
-```
-
-### Web App
-```bash
-# Verifica che il deploy su ambiente test sia avvenuto
-curl -sI "https://test.<dominio>.8020solutions.org" | head -1
-```
-
-Se la build non è disponibile → verifica i log CI e attendi o ri-triggera.
-
----
-
-## STEP 3 — Sposta card → Test
-
-**Project ID**: `PVT_kwHODSTPQM4BP1Xp`
-**Status Field ID**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
-**Option ID Test**: `1d6a37f9`
+### Step 2 — Pull branch e build
 
 ```bash
-ITEM_ID=$(gh api graphql -f query='
-query($issueId: ID!) {
-  node(id: $issueId) {
-    ... on Issue { projectItems(first: 5) { nodes { id } } }
-  }
-}' -f issueId="$(gh issue view <N> --repo <owner/repo> --json id --jq '.id')" \
---jq '.data.node.projectItems.nodes[0].id')
+cd /var/www/<repo>
+git fetch origin feature/issue-N-slug
+git checkout feature/issue-N-slug
+git pull origin feature/issue-N-slug
 
-gh api graphql -f query='
-mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: $projectId, itemId: $itemId, fieldId: $fieldId
-    value: { singleSelectOptionId: $optionId }
-  }) { projectV2Item { id } }
-}' \
--f projectId="PVT_kwHODSTPQM4BP1Xp" \
--f itemId="$ITEM_ID" \
--f fieldId="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw" \
--f optionId="1d6a37f9"
+# Build in base al tipo di progetto
+# Flutter web:
+# flutter build web --release
+
+# Node/React:
+# npm install && npm run build
+
+# Copia in webroot test
 ```
 
----
+### Step 3 — Deploy su test
 
-## STEP 4 — Notifica Davide
-
-Manda un messaggio con:
-- Issue number e titolo
-- Link diretto alla build/APK per il test
-- Cosa testare (AC dell'issue, in breve)
-- PR number per riferimento
-
-**Esempio:**
-> ✅ **Issue #22 pronta per test**
-> 📲 APK: https://apps.8020solutions.org/downloads/test/beachref-issue-22.apk
-> 🔍 Cosa verificare: tornei di luglio per 2+ arbitri — il totale deve contare eventi fisici, non tabelloni M+F separati
-> PR: #23
-
----
-
-## STEP 5 — Aggiungi commento sull'issue
-
-> ⚠️ Il link alla build è **obbligatorio** nel commento. Davide non deve cercarlo — deve poter cliccare e testare subito.
+Il sottodominio test segue il pattern: `test-<repo>.8020solutions.org`
 
 ```bash
-gh issue comment <N> --repo <owner/repo> \
-  --body "🧪 **Pronto per test.**
+# Esempio per app web
+cp -r build/ /var/www/test-<repo>/
+nginx -s reload
+```
 
-📲 **Link test:** <URL APK o web app>
+### Step 4 — Aggiorna label
 
-🔍 **Cosa verificare (AC):**
-- AC1: <descrizione breve>
-- AC2: <descrizione breve>
+```bash
+gh issue edit <N> --repo ecologicaleaving/<repo> \
+  --add-label "deployed-test"
+```
 
-PR: #<PR_N>
-Rispondi con \`/approve #<N>\` o \`/reject #<N> \"feedback\"\`."
+### Step 5 — Notifica Davide
+
+```
+🧪 [Issue #N] Deploy test ok
+🔗 https://test-<repo>.8020solutions.org
+📋 Cosa testare:
+  - <AC 1>
+  - <AC 2>
+  - <AC 3>
 ```
 
 ---
 
-## ✅ Checklist
+## Note
 
-- [ ] CI verde sul branch della PR
-- [ ] Build/APK disponibile e raggiungibile
-- [ ] Card Kanban → Test
-- [ ] Commento sull'issue con **link diretto** alla build + AC da verificare
-- [ ] Davide notificato via Telegram con link + cosa testare
-
----
-
-## ⏭️ Cosa succede dopo
-
-**Davide testa sull'APK/app.**
-
-- `/approve #N` → leggi la skill **`issue-deploy-prod`**
-- `/reject #N "feedback"` → leggi la skill **`issue-reject`**
+- Il deploy test non modifica mai la produzione
+- Se il build fallisce → notifica Claudio che notifica Davide
+- Ambiente test può essere sovrascritto da deploy successivi
