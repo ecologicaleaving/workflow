@@ -2,7 +2,7 @@
 
 **Trigger:** Claudio avvia la fase di piano su una issue  
 **Agente:** Claudio  
-**Versione:** 2.0.0
+**Versione:** 2.1.0
 
 ---
 
@@ -122,3 +122,83 @@ mutation {
 📌 <summary piano in 2-3 righe>
 ⏭️ Agente al lavoro sull'implementazione
 ```
+
+### Step 7 — Avvia Agent Monitor (obbligatorio)
+
+Dopo aver lanciato l'agente in background, avvia subito il monitor leggero.
+Vedi sezione **Agent Monitor** in fondo a questa skill.
+
+---
+
+## 🔍 Agent Monitor
+
+Dopo ogni `exec background` su un agente (research o implementazione), avvia questo monitor.
+
+**Obiettivo:** ricevere notifiche proattive senza polling manuale, con costo token minimo.
+
+### Come funziona
+
+- Loop ogni 60s: legge output nuovo del processo con `process log`
+- Keyword matching senza LLM (zero token per la maggior parte dei check)
+- Solo su output rilevante → spawn Haiku per summary (micro-costo)
+- Si auto-termina quando il processo finisce
+
+### Avvio monitor (PowerShell — Windows)
+
+```powershell
+# Avvia in background subito dopo exec background dell'agente
+# Sostituisci SESSION_ID e ISSUE_N con i valori reali
+
+$sessionId = "SESSION_ID"
+$issueN = "ISSUE_N"
+$repo = "REPO"
+$lastOffset = 0
+$keywords = @("error", "failed", "fail", "exception", "bloccato", "blocked", "?", "ask", "done", "completed", "finished", "push")
+
+while ($true) {
+    Start-Sleep -Seconds 60
+
+    # Controlla se il processo è ancora vivo
+    $status = openclaw process poll --session $sessionId 2>&1
+    $alive = $status -notmatch "exited|not found|No session"
+
+    # Leggi nuovo output
+    $log = openclaw process log --session $sessionId --offset $lastOffset 2>&1
+    if ($log) {
+        $lastOffset += ($log | Measure-Object -Line).Lines
+
+        # Keyword match (zero LLM)
+        $hit = $keywords | Where-Object { $log -match $_ }
+        if ($hit) {
+            # Output rilevante → notifica (Haiku per summary se output lungo)
+            $summary = if ($log.Length -gt 500) {
+                # Spawn Haiku solo se necessario
+                $log | claude --model claude-haiku-4-5 --print "Riassumi in max 2 righe cosa sta succedendo all'agente:" 2>&1
+            } else {
+                $log.Trim()
+            }
+            openclaw system event --text "👀 [Issue #$issueN] Agente: $summary" --mode now
+        }
+    }
+
+    # Processo terminato → notifica finale e stop
+    if (-not $alive) {
+        openclaw system event --text "🏁 [Issue #$issueN/$repo] Agente terminato. Controlla output." --mode now
+        break
+    }
+}
+```
+
+### Regole token
+
+| Caso | LLM usato | Costo |
+|------|-----------|-------|
+| Nessun keyword trovato | Nessuno | 0 token |
+| Keyword trovato, output < 500 chars | Nessuno | 0 token |
+| Keyword trovato, output ≥ 500 chars | Haiku | Micro |
+
+### ⚠️ Note
+
+- Non usare modelli pesanti (Sonnet/Opus) per il monitor
+- Se il processo non risponde per >10 min → notifica Davide
+- Il monitor non interagisce mai con l'agente, solo osserva
