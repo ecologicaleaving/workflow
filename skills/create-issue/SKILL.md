@@ -1,145 +1,97 @@
+# Skill: create-issue
+
+**Trigger:** `/create-issue` o Davide descrive un problema/feature  
+**Agente:** Claudio  
+**Versione:** 2.0.0
+
 ---
-name: create-issue
-description: "Crea una GitHub issue strutturata per il team 8020/BeachRef e la aggiunge al backlog Kanban (senza label). Use when: (1) Davide vuole creare una nuova issue, (2) si usa il comando /create-issue [owner/repo], (3) si parla di aggiungere un task/feature/bug al backlog. Il flusso: legge PROJECT.md del repo, fa domande UNA ALLA VOLTA con 3 opzioni suggerite, genera la issue con template standard, la aggiunge al progetto Kanban in colonna Backlog."
+
+## Obiettivo
+
+Raccogliere tutte le informazioni necessarie e creare una issue GitHub autosufficiente — l'agente che la prenderà in lavorazione non dovrà fare domande.
+
 ---
 
-# Create Issue Skill
+## Procedura
 
-Crea issue GitHub strutturate e le aggiunge al backlog Kanban.
+### Step 1 — Raccolta informazioni
 
-## Flusso
+Fai le domande **una alla volta**. Se Davide ha già fornito un'informazione, non chiederla di nuovo.
 
-1. **Identifica il repo** — dall'invocazione `/create-issue owner/repo` o chiedi a Davide se mancante
-2. **Leggi PROJECT.md** — fetch via `gh api` per estrarre stack, URL test, branch strategy
-3. **Fai le domande** — UNA ALLA VOLTA, con 3 opzioni suggerite (vedi Questions Protocol)
-4. **Genera e crea la issue** — popola il template e usa `gh issue create`
-5. **Aggiungi al Kanban in Backlog** — usa `gh project item-edit` con option ID Backlog
+**Informazioni obbligatorie:**
+1. **Repo** → su quale progetto? (StageConnect, BeachRef, Finn, Maestro, AutoDrum, altro)
+2. **Tipo** → bug / feature / improvement
+3. **Obiettivo** → cosa deve fare in una riga
+4. **Contesto** → comportamento attuale vs atteso
+5. **Note tecniche** → file rilevanti, dipendenze, vincoli (se noti)
+6. **Testing** → come verificare che sia fatto bene
 
-## Questions Protocol
+### Step 2 — Acceptance Criteria
 
-⚠️ **Regola fondamentale**: fai UNA domanda alla volta. Suggerisci sempre 3 opzioni di risposta plausibili (Davide può scegliere un'opzione o rispondere liberamente).
+Proponi gli AC basandoti su quanto raccolto. Formato:
+```
+"È done quando..."
+- AC 1
+- AC 2
+- AC 3
+```
+Aspetta approvazione/modifica di Davide prima di procedere.
 
-Ordine delle domande:
+### Step 3 — Checkpoint obbligatori
 
-1. **Tipo di issue**
-   > Che tipo di issue è?
-   > 1. 🚀 Feature — nuova funzionalità
-   > 2. 🐛 Bug — qualcosa non funziona
-   > 3. 🔧 Fix / Refactor — miglioramento interno
+Proponi i checkpoint in base al tipo:
 
-2. **Obiettivo** (solo se non già chiaro dall'invocazione)
-   > Qual è l'obiettivo principale?
-   > 1. [suggerimento A dedotto dal contesto]
-   > 2. [suggerimento B]
-   > 3. Descrivo io → (aspetta testo libero)
+**Feature / Improvement:**
+- CP1 — Piano: agente riporta piano + task checklist prima di scrivere codice
+- CP2 — Implementazione: report dopo ogni iterazione
+- CP3 — Test Suite: risultati completi lint / typecheck / unit / e2e
+- CP4 — Pronto per push: AC verificati, PROJECT.md aggiornato
 
-3. **Acceptance Criteria**
-   > Come verifichi che sia fatto? Scegli il formato:
-   > 1. Elenco comportamenti attesi (es. "cliccando X succede Y")
-   > 2. Scenari utente (es. "come utente voglio...")
-   > 3. Li definisco io → (aspetta testo libero)
+**Bug:**
+- CP1 — Root Cause: agente identifica causa prima di toccare codice
+- CP2 — Fix: report del fix con test di regressione
+- CP3 — Test Suite: risultati completi
+- CP4 — Pronto per push: AC verificati, PROJECT.md aggiornato
 
-4. **Playwright / test automatici** (solo per repo web)
-   > Servono test automatici?
-   > 1. Sì — Playwright (web)
-   > 2. Sì — widget test Flutter (mobile)
-   > 3. No — verifica manuale sull'APK/URL di test
+Aspetta approvazione di Davide.
 
-5. **Out of scope** (opzionale — salta se ovvio)
-   > Cosa NON va toccato?
-   > 1. Tutto il resto dell'app
-   > 2. [area specifica dedotta dal contesto]
-   > 3. Nessuna restrizione particolare
+### Step 4 — Creazione issue
 
-Se Davide ha già fornito informazioni nell'invocazione, salta le domande già risposte.
+Usa il template corretto (`templates/issue-feature.md`, `issue-bug.md`, `issue-improvement.md`).
 
-## Comandi
-
-### Leggi PROJECT.md dal repo (Windows PowerShell)
-```powershell
-$content = gh api repos/{owner}/{repo}/contents/PROJECT.md --jq '.content'
-[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($content))
+```bash
+gh issue create \
+  --repo ecologicaleaving/<repo> \
+  --title "<tipo>: <titolo>" \
+  --body "<contenuto template compilato>" \
+  --label "<tipo>,agent:<agente>"
 ```
 
-### Crea la issue
-```powershell
-gh issue create `
-  --repo {owner}/{repo} `
-  --title "{TIPO}: {titolo}" `
-  --body-file "C:\Users\KreshOS\.openclaw\workspace\issue-body.md"
+**NON compilare la sezione Task Checklist** — la riempie l'agente nella fase di piano.
+
+### Step 5 — Kanban
+
+```bash
+# Aggiungi la issue al project
+gh project item-add 2 --owner ecologicaleaving --url <issue_url>
+
+# La card parte in Backlog automaticamente
 ```
 
-### Aggiungi al progetto e imposta Backlog
-```powershell
-# 1. Aggiungi al progetto
-$issueUrl = gh issue view {N} --repo {owner}/{repo} --json url -q .url
-gh project item-add 2 --owner ecologicaleaving --url $issueUrl
+### Step 6 — Conferma a Davide
 
-# 2. Recupera l'item ID appena aggiunto
-$itemId = gh project item-list 2 --owner ecologicaleaving --format json |
-  ConvertFrom-Json | Select-Object -ExpandProperty items |
-  Where-Object { $_.title -like "*{titolo_parziale}*" } |
-  Select-Object -ExpandProperty id
-
-# 3. Imposta status = Backlog
-gh project item-edit `
-  --id $itemId `
-  --project-id PVT_kwHODSTPQM4BP1Xp `
-  --field-id PVTSSF_lAHODSTPQM4BP1Xpzg-INlw `
-  --single-select-option-id 2ab61313
+```
+✅ Issue #N creata: <url>
+📌 <titolo>
+🏷️ Tipo: <tipo> | Repo: <repo> | Agente: <agente>
+📋 Backlog — dimmi quando vuoi avviare il piano
 ```
 
-## Kanban IDs (progetto "80/20 Solutions - Development Hub")
-- **Project ID:** `PVT_kwHODSTPQM4BP1Xp`
-- **Status field ID:** `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
-- **Status options:**
-  - Backlog → `2ab61313` ← usare sempre per le nuove issue
-  - Todo → `f75ad846`
-  - In Progress → `47fc9ee4`
-  - PUSH → `03f548ab`
-  - Test → `1d6a37f9`
-  - Done → `98236657`
-
-## Template body issue
-
-Vedi `assets/issue-template.md` — popolarlo con le risposte prima di creare la issue.
-Salvare il file temporaneo in `C:\Users\KreshOS\.openclaw\workspace\issue-body.md` ed eliminarlo dopo la creazione.
-
-## Testing Section — Come popolarla
-
-### 1. Leggi PROJECT.md → sezione `## Testing`
-Se presente, usa quei valori. Se assente, applica i default per stack.
-
-### 2. Default per stack (fallback)
-
-| Stack | tool_principale | tool_e2e | run_command |
-|-------|----------------|----------|-------------|
-| Flutter | `flutter_test` | `integration_test` | `flutter test` |
-| Next.js / React | `jest` / `vitest` | `playwright` | `npm test` / `npx playwright test` |
-| Node.js API | `jest` / `vitest` | N/A | `npm test` |
-| Static / nessun test | `none` | `none` | verifica manuale |
-
-### 3. Esempi di test
-Genera 1-2 esempi **pertinenti alla feature/fix** della issue — mai esempi generici.
-
-**Flutter:**
-```dart
-testWidgets('comportamento atteso', (tester) async {
-  await tester.pumpWidget(const NomeWidget());
-  // azioni e assert pertinenti
-});
-```
-**Playwright:**
-```ts
-test('comportamento atteso', async ({ page }) => {
-  await page.goto('/rotta-pertinente');
-  // azioni e assert pertinenti
-});
-```
+---
 
 ## Regole
-- **Mai aggiungere label** — Davide le assegna manualmente dopo
-- **Sempre Backlog** — mai Todo o altro per issue appena create
-- **Branch name** (da inserire nel body): `feature/issue-{N}-{slug}` dove N è assegnato da GitHub dopo la creazione
-- Se PROJECT.md non esiste, chiedere stack e URL test come domanda separata
-- **⚠️ OBBLIGATORIO: ogni issue creata va SEMPRE aggiunta al Kanban** — eseguire sempre il blocco "Aggiungi al progetto e imposta Backlog" dopo `gh issue create`. Non saltare mai questo step.
+
+- Non creare la issue prima che Davide abbia approvato AC e checkpoint
+- La issue deve essere autosufficiente: niente domande aperte, niente TODO vaghi
+- I task li aggiunge l'agente, non Claudio
+- Scegli l'agente giusto: Claude Code per sviluppo, Codex come alternativa, Ciccio per infra/VPS

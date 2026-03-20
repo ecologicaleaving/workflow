@@ -1,26 +1,56 @@
-## Issue collegata
-Closes #{ISSUE_NUMBER}
+## 📋 Risolve Issue #N: [Titolo]
 
-## Cosa ho fatto
-<!-- Descrizione sintetica dei cambiamenti -->
+---
 
-## Acceptance Criteria verificati
-<!-- Spunta ogni criterio dopo averlo verificato -->
-- [ ] {AC_1}
-- [ ] {AC_2}
-- [ ] {AC_3}
+## 🎯 Cosa è stato fatto
 
-## Test
-- [ ] `{TEST_COMMAND}` eseguito — tutti verdi
-- [ ] Nessuna regressione su test esistenti
-- [ ] Verificato su {TEST_ENV}
+<!-- Summary delle modifiche principali -->
 
-## Checklist pre-PR
-- [ ] Branch creato da master/main (non da un altro feature branch)
-- [ ] Nessun secret o credenziale committata
-- [ ] Nessun file temporaneo o di debug incluso (`console.log`, `print`, ecc.)
-- [ ] `PROJECT.md` aggiornato se cambia stack, dipendenze o deploy
-- [ ] Commit con messaggi convenzionali (`feat:`, `fix:`, `chore:`, ecc.)
 
-## Screenshot / output test (se applicabile)
-<!-- Incolla qui l'output di flutter test / npm test / screenshot -->
+---
+
+## ✅ Acceptance Criteria verificati
+
+<!-- Spunta gli AC della issue -->
+- [ ] 
+- [ ] 
+- [ ] 
+
+---
+
+## 📁 File modificati
+
+<!-- Lista dei file principali toccati e perché -->
+| File | Modifica |
+|------|---------|
+| | |
+
+---
+
+## 🧪 Test eseguiti
+
+| Suite | Risultato |
+|-------|-----------|
+| Lint | ✅ / ❌ |
+| Typecheck | ✅ / ❌ |
+| Unit tests | ✅ / ❌ |
+| E2E | ✅ / ❌ |
+
+---
+
+## 📦 PROJECT.md
+
+- [ ] Versione aggiornata
+- [ ] Data aggiornata
+- [ ] Issue segnata come done
+
+---
+
+## 📝 Note per il reviewer
+
+<!-- Cose da tenere a mente durante la review, scelte implementative particolari -->
+
+
+---
+
+*PR generata da Claudio — Workflow 80/20 Solutions v2.0*

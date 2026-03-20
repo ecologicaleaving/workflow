@@ -1,147 +1,93 @@
----
-name: issue-implement
-version: 1.0.0
-description: >
-  Guida all'implementazione del codice per una issue assegnata.
-  Da leggere dopo issue-start, prima di issue-done.
-  Copre: ciclo TDD, scrittura codice pulito, gestione migrazioni DB,
-  commit atomici, regole generali per tutti gli stack del team.
-  Usa quando: stai per scrivere codice per una issue, hai dubbi su
-  come strutturare test o migrazioni, vuoi le convenzioni di scrittura.
-triggers:
-  - "implementa issue"
-  - "scrivi codice"
-  - "inizio implementazione"
-  - "come gestisco le migrazioni"
-  - "come scrivo i test"
----
+# Skill: issue-implement
 
-# Issue Implement — Guida all'Implementazione
-
-Leggi questa skill **dopo `issue-start`, prima di scrivere codice**.
+**Trigger:** Piano approvato, agente in fase di implementazione  
+**Agente:** Claudio (supervisione) + Claude Code / Codex (esecuzione)  
+**Versione:** 2.0.0
 
 ---
 
-## STEP 1 — Rileva lo stack e carica il riferimento
+## Obiettivo
 
-Identifica lo stack dal `PROJECT.md` o dai file del repo:
-
-| Stack | File spia | Riferimento |
-|---|---|---|
-| Flutter / Dart | `pubspec.yaml` | [references/flutter.md](references/flutter.md) |
-| React Native / Expo | `app.json` o `expo` in `package.json` | [references/react-native.md](references/react-native.md) |
-| Node.js / API | `package.json` senza Expo | [references/node.md](references/node.md) |
-
-Carica il file di riferimento appropriato **prima** di scrivere codice.
-
-Se il progetto usa Supabase (campo `supabase` in PROJECT.md o directory `supabase/`):
-→ carica anche [references/migrations.md](references/migrations.md)
+Supervisionare la lavorazione dell'agente, notificare Davide a ogni checkpoint obbligatorio, intervenire in caso di anomalie.
 
 ---
 
-## STEP 2 — Test-first dagli Acceptance Criteria
+## Checkpoint Obbligatori
 
-**Regola**: scrivi i test *prima* del codice di produzione. Gli AC dell'issue sono i tuoi test case.
+Ad ogni checkpoint Claudio notifica Davide con questo formato:
 
 ```
-Per ogni AC nell'issue:
-  1. Scrivi un test che fallisce (RED)
-  2. Scrivi il codice minimo per farlo passare (GREEN)
-  3. Refactora senza rompere il test (REFACTOR)
+✅ [Issue #N] Checkpoint N — <titolo>
+📌 <summary di cosa è successo>
+🧪 Test: <risultato se applicabile>
+⏭️ Prossimo step: <cosa fa l'agente ora>
 ```
 
-### Come leggere gli AC
+### CP2 — Fine ogni iterazione di implementazione
 
-```bash
-gh issue view <N> --repo <owner/repo>
-```
+L'agente deve riportare:
+- Cosa ha implementato
+- Test eseguiti e risultati
+- Se ci sono stati problemi e come li ha risolti
+- Cosa fa nella prossima iterazione
 
-Ogni AC deve diventare uno o più test. Esempio:
+Claudio valuta e notifica Davide.
 
-> AC: "La schermata non mostra overflow su nessun device size"
-> → `testWidgets('no overflow on small screen', ...)`
-> → `testWidgets('no overflow on large screen', ...)`
+### CP3 — Fine test suite
 
-**Non andare avanti finché il test non è scritto.**
+L'agente deve riportare i risultati completi:
+
+| Suite | Risultato | Dettagli |
+|-------|-----------|---------|
+| Lint | ✅/❌ | |
+| Typecheck | ✅/❌ | |
+| Unit tests | ✅/❌ | N passed / M failed |
+| E2E | ✅/❌ | |
+
+Se qualcosa è ❌ → Claudio valuta se è bloccante o accettabile. Se bloccante, l'agente deve fixare prima di procedere.
+
+### CP4 — Pronto per push
+
+L'agente riporta:
+- AC verificati (lista spuntata)
+- PROJECT.md aggiornato
+- Nessun file anomalo
+- Riepilogo modifiche
 
 ---
 
-## STEP 3 — Regole generali di scrittura
+## Gestione Anomalie
 
-### Naming
-- Nomi descrittivi, senza abbreviazioni (`userExpenseList` non `uel`)
-- Funzioni: verbo + oggetto (`calculateTotal`, `fetchUserExpenses`)
-- Booleani: prefisso `is/has/can` (`isLoading`, `hasError`)
+**Se l'agente si blocca o riporta un problema:**
+1. Claudio blocca l'agente
+2. Notifica Davide:
+   ```
+   ⚠️ [Issue #N] Anomalia al CP-N
+   📌 <descrizione problema>
+   🔧 <cosa ha provato l'agente>
+   ❓ Come procedo?
+   ```
+3. Aspetta istruzioni di Davide prima di riprendere
 
-### Funzioni
-- Una funzione = una responsabilità
-- Max ~30 righe; se supera, spezza in funzioni più piccole
-- Niente magic numbers: usa costanti con nome
-
-```dart
-// ❌
-if (attempts > 3) { ... }
-
-// ✅
-const int maxLoginAttempts = 3;
-if (attempts > maxLoginAttempts) { ... }
-```
-
-### Gestione errori
-- Non silenziare mai gli errori (no `catch (_) {}` vuoto)
-- Loga sempre l'errore con contesto (`debugPrint` / `logger.error`)
-- Mostra feedback utente per errori visibili (snackbar, dialog)
-
-### Sicurezza
-- **Zero credenziali nel codice** — usa variabili d'ambiente o `--dart-define`
-- **Zero `print()` / `console.log()` in produzione** — usa `debugPrint` (Flutter) o logger configurabile
-- Input utente: valida sempre lato server, non solo client
-
-### Scope
-- Implementa **solo** ciò che gli AC richiedono
-- Se scopri un bug correlato ma fuori scope → apri issue separata, non fixarlo ora
-- Niente "mentre ci sono, miglioro anche X"
+**Se l'agente supera le 5 iterazioni senza convergere:**
+→ Blocca e notifica Davide automaticamente
 
 ---
 
-## STEP 4 — Commit atomici
+## Regole per l'agente
 
-Un commit = un'unità logica coerente. Non aspettare la fine.
-
-```
-✅ "feat: aggiungi widget LiveTournamentBanner"
-✅ "test: aggiungi widget test per LiveTournamentBanner"
-✅ "fix: correggi overflow layout schermata Spese"
-
-❌ "vari fix e aggiornamenti"
-❌ maxi-commit con 20 file cambiati
-```
-
-Formato commit (convenzionale):
-```
-<type>(<scope>): <descrizione breve>
-
-- dettaglio 1
-- dettaglio 2
-```
-
-Tipi: `feat` · `fix` · `test` · `refactor` · `docs` · `chore`
+L'agente deve:
+- Riportare a ogni checkpoint **prima di procedere**
+- Non saltare checkpoint
+- Non modificare file fuori scope del piano approvato
+- Aggiornare `PROJECT.md` prima del push
+- Non committare file di debug, `.env`, config sensibili
 
 ---
 
-## STEP 5 — Quando fermarsi
+## Convenzioni codice
 
-**Stop quando:**
-- Tutti gli AC sono verdi nei test
-- Nessuna regressione
-- Zero warning dal linter
-
-**Non aggiungere scope** oltre gli AC anche se "è facile".  
-Quando hai finito → leggi la skill **`issue-done`**.
-
----
-
-## ⚠️ Migrazioni DB
-
-Se l'issue tocca il database → **leggi [references/migrations.md](references/migrations.md) prima di scrivere SQL**.  
-Errori nelle migration sono difficili da correggere in produzione.
+- Commit atomici con formato convenzionale (`feat:`, `fix:`, `improve:`)
+- Branch: `feature/issue-N-slug`, `fix/issue-N-slug`, `improve/issue-N-slug`
+- Niente commit diretti su `main`/`master`
+- Test prima di ogni push
