@@ -1,69 +1,65 @@
 # Skill: issue-deploy-prod
 
-**Trigger:** Davide scrive `/merge #N` dopo `/approva`  
-**Agente:** Ciccio  
+**Trigger:** Davide scrive `/approva #N` → Claudio verifica → notifica Ciccio per il merge  
+**Agente:** Claudio (verifica pre-merge) → Ciccio (merge + deploy)  
 **Versione:** 2.1.0
 
 ---
 
 ## Obiettivo
 
-Merge della PR su master, deploy in produzione se necessario, chiusura issue e card → Done.
+Merge della PR su master, deploy in produzione, chiusura issue e card → Done.
 
 ---
 
 ## Procedura
 
-### Step 0 — Pre-deploy check (obbligatorio — Claudio)
+### Step 0 — Pre-merge check (Claudio, dopo `/approva` di Davide)
 
-Prima di autorizzare il merge in produzione, Claudio verifica che tutto sia pronto.
+Alla ricezione di `/approva #N` da Davide, Claudio verifica che tutto sia pronto prima di passare il via a Ciccio.
 
 ```bash
 REPO="<repo>"
-PR_NUMBER="<N>"
+PR_NUMBER="<PR>"
 
-echo "=== CI verde? ==="
+# CI verde?
 gh pr checks $PR_NUMBER --repo ecologicaleaving/$REPO
 
-echo "=== PR testata su test? ==="
+# Issue testata su test?
 gh issue view <N> --repo ecologicaleaving/$REPO --json labels \
-  | jq -r '.labels[].name' | grep "deployed-test" && echo "✅ testata" || echo "⚠️ non risulta testata"
+  | jq -r '.labels[].name' | grep "deployed-test" && echo "✅ testata" || echo "⚠️ non testata"
+
+# Migrazioni DB nel branch?
+gh pr diff $PR_NUMBER --repo ecologicaleaving/$REPO --name-only \
+  | grep -E "migration|\.sql|supabase/migrations" && echo "⚠️ migrazioni presenti" || echo "✅ nessuna migrazione"
 ```
 
-**Controlla se la issue tocca il DB:**
+**Tabella decisione DB:**
 
 | Situazione | Azione |
 |-----------|--------|
-| Nessuna modifica DB | Procedi normalmente |
-| Migrazioni incluse nel branch | Verifica che siano state testate sull'ambiente test prima del merge |
-| Migrazioni non incluse | **Blocca** — le migrazioni vanno nel branch, non applicate a mano in prod |
-| Nuove variabili d'ambiente necessarie | Verifica che i secrets GitHub siano aggiornati prima del merge |
+| Nessuna modifica DB | Procedi — notifica Ciccio |
+| Migrazioni nel branch, testate su test | Segnala a Ciccio — le applica lui in prod dopo il merge |
+| Migrazioni nel branch, non testate | Blocca — notifica Davide |
+| Migrazioni non nel branch | Blocca — le migrazioni devono stare nel branch, mai a mano in prod |
 
-**Se ci sono migrazioni DB → notifica Ciccio con dettaglio:**
+**Se tutto ok → notifica Ciccio:**
 ```
-🗄️ [Issue #N/<repo>] Merge con migrazioni DB
-📋 File migrazioni: <lista file .sql o supabase/migrations/*>
-⚠️ Verifica che le migrazioni siano già state applicate su test prima di procedere
-```
-
-**Se tutto ok → notifica Ciccio per procedere con il merge:**
-```
-✅ [Issue #N/<repo>] Pre-deploy prod check ok
-🔧 CI: verde
-🧪 Testato su test: sì
-🗄️ Migrazioni: nessuna / presenti e testate
+✅ [Issue #N/<repo>] /approva ricevuto — procedi con merge
+🔧 CI: verde | Testato: sì | Migrazioni: nessuna / presenti in branch
+PR: #<PR>
 ```
 
 **Se qualcosa manca → blocca e notifica Davide:**
 ```
-⚠️ [Issue #N/<repo>] Pre-deploy prod check fallito
-📋 Problemi: <CI fallita / non testato / migrazioni mancanti>
+⚠️ [Issue #N/<repo>] Merge bloccato
+📋 Problemi: <CI fallita / non testato su test / migrazioni non nel branch>
 ❓ Come procedo?
 ```
 
 ---
 
-### Step 1 — Verifica CI
+### Step 1 — Verifica CI (Ciccio) (Ciccio)
 
 ```bash
 gh pr checks <PR_NUMBER> --repo ecologicaleaving/<repo>

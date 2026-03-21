@@ -1,6 +1,6 @@
 # Skill: issue-deploy-test
 
-**Trigger:** Davide autorizza il deploy in test (dopo PR in Test)  
+**Trigger:** Claudio notifica Ciccio che il push è avvenuto (CP4 superato)  
 **Agente:** Ciccio  
 **Versione:** 2.2.0
 
@@ -10,44 +10,14 @@
 
 Deployare il branch della issue sull'ambiente test e notificare Davide con il link per testare.
 
+> **Nota ruoli:** Claudio ha già verificato CI, secrets e sistema test al CP4 di `issue-implement`. Ciccio riceve il via da Claudio e procede direttamente con il deploy.
+
 Il deploy test segue **due modalità** in base al tipo di progetto:
 
 | Tipo progetto | Modalità deploy |
 |---------------|----------------|
 | Web (Next.js, React, Vite) | **CI pipeline** — GitHub Actions builda e deploya via rsync sul VPS |
 | Flutter APK | **Diretto** — Ciccio deploya l'APK dal branch |
-
----
-
-## Step 0 — Pre-deploy check (obbligatorio — Claudio)
-
-Prima di autorizzare il deploy test, Claudio verifica che l'infrastruttura sia pronta.
-
-```bash
-REPO="<repo>"
-
-echo "=== CI pipeline ==="
-gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
-  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ presente" || echo "❌ assente"
-
-echo "=== Secrets configurati ==="
-gh secret list --repo ecologicaleaving/$REPO
-
-echo "=== Sottodominio test ==="
-curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
-```
-
-**Controlla anche se la issue tocca il DB:**
-- Ci sono migrazioni SQL o modifiche schema? → Verifica che siano incluse nel branch
-- La issue menziona nuove tabelle, colonne, RLS, funzioni Supabase? → Segnalalo a Ciccio prima del deploy
-
-**Se tutto ok → procedi. Se qualcosa manca → notifica Davide:**
-```
-⚠️ [Issue #N/<repo>] Pre-deploy check fallito
-📋 Problemi rilevati:
-  - <secrets mancanti / sottodominio down / migrazioni mancanti>
-❓ Vuoi procedere comunque o risolviamo prima?
-```
 
 ---
 
