@@ -122,9 +122,9 @@ In caso di anomalia:
 
 ---
 
-## CP4 — Checklist completa "Pronto per push"
+## CP4 — Checklist completa "Pronto per PR"
 
-Prima di dare `✅ procedi` al push finale, Claudio verifica tutto:
+Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Claudio verifica tutto in una volta sola.
 
 **Codice:**
 - [ ] Tutti gli AC della issue sono soddisfatti
@@ -132,21 +132,29 @@ Prima di dare `✅ procedi` al push finale, Claudio verifica tutto:
 - [ ] Nessun file anomalo (`.env`, debug, config sensibili)
 - [ ] Lint ✅, Typecheck ✅, Test ✅
 
-**Sistema test:**
-- [ ] CI pipeline presente nel repo (`deploy.yml`)
-- [ ] Secrets GitHub configurati (`gh secret list --repo ecologicaleaving/<repo>`)
-- [ ] Sottodominio test raggiungibile (`https://test-<repo>.8020solutions.org`)
+**Sistema test (verificato ora, non dopo):**
+```bash
+REPO="<repo>"
+echo "=== CI pipeline ===" && \
+  gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ presente" || echo "❌ assente"
+echo "=== Secrets ===" && gh secret list --repo ecologicaleaving/$REPO
+echo "=== Sottodominio test ===" && \
+  curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
+```
 
 **DB (solo se la issue tocca schema/dati):**
 - [ ] Migrazioni incluse nel branch (non applicate a mano)
-- [ ] Migrazioni testate sull'ambiente di sviluppo
+- [ ] Migrazioni descritte nel commento PR
 
-Se sistema test o DB non sono pronti → **non dare il via al push**, notifica Davide:
+Se sistema test non è pronto (CI assente, secrets mancanti, sottodominio down) → **blocca, segnala a Ciccio** prima di procedere:
 ```
-⚠️ [Issue #N] CP4 — Push bloccato
-📋 Problema: <sistema test non pronto / migrazioni mancanti>
-❓ Come procedo?
+⚠️ [Issue #N] CP4 — Blocco pre-PR
+📋 Problema: <CI assente / secrets mancanti / sottodominio irraggiungibile>
+👉 @Ciccio: puoi sistemare prima che mergiamo?
 ```
+
+Solo quando tutto è verde → `✅ procedi` all'agente per il push e apertura PR.
 
 ---
 

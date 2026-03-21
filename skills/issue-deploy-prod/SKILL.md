@@ -14,9 +14,9 @@ Merge della PR su master, deploy in produzione, chiusura issue e card → Done.
 
 ## Procedura
 
-### Step 0 — Pre-merge check (Claudio, dopo `/approva` di Davide)
+### Step 0 — Verifica pre-merge (Claudio, dopo `/approva` di Davide)
 
-Alla ricezione di `/approva #N` da Davide, Claudio verifica che tutto sia pronto prima di passare il via a Ciccio.
+Il check sistema test e migrazioni è già stato fatto da Claudio al CP4. Qui si verifica solo che il deploy test sia andato a buon fine.
 
 ```bash
 REPO="<repo>"
@@ -25,35 +25,22 @@ PR_NUMBER="<PR>"
 # CI verde?
 gh pr checks $PR_NUMBER --repo ecologicaleaving/$REPO
 
-# Issue testata su test?
+# Issue testata su test (label deployed-test)?
 gh issue view <N> --repo ecologicaleaving/$REPO --json labels \
   | jq -r '.labels[].name' | grep "deployed-test" && echo "✅ testata" || echo "⚠️ non testata"
-
-# Migrazioni DB nel branch?
-gh pr diff $PR_NUMBER --repo ecologicaleaving/$REPO --name-only \
-  | grep -E "migration|\.sql|supabase/migrations" && echo "⚠️ migrazioni presenti" || echo "✅ nessuna migrazione"
 ```
 
-**Tabella decisione DB:**
-
-| Situazione | Azione |
-|-----------|--------|
-| Nessuna modifica DB | Procedi — notifica Ciccio |
-| Migrazioni nel branch, testate su test | Segnala a Ciccio — le applica lui in prod dopo il merge |
-| Migrazioni nel branch, non testate | Blocca — notifica Davide |
-| Migrazioni non nel branch | Blocca — le migrazioni devono stare nel branch, mai a mano in prod |
-
-**Se tutto ok → notifica Ciccio:**
+**Se CI verde e deployed-test presente → notifica Ciccio:**
 ```
 ✅ [Issue #N/<repo>] /approva ricevuto — procedi con merge
-🔧 CI: verde | Testato: sì | Migrazioni: nessuna / presenti in branch
+CI: verde | deployed-test: ✅
 PR: #<PR>
 ```
 
-**Se qualcosa manca → blocca e notifica Davide:**
+**Se CI fallita o non testata → blocca e notifica Davide:**
 ```
 ⚠️ [Issue #N/<repo>] Merge bloccato
-📋 Problemi: <CI fallita / non testato su test / migrazioni non nel branch>
+📋 Problema: <CI fallita / non ancora testato su test>
 ❓ Come procedo?
 ```
 
