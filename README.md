@@ -19,7 +19,23 @@ Davide (Telegram)
 
 ---
 
-## 🔄 Flusso Issue
+## 🆕 Flusso PRD → Issue (progetti/feature grandi)
+
+```
+Davide ha un'idea
+    ↓
+/create-prd → Conversazione strutturata → PRD.md + PROJECT.md
+    ↓
+(se repo nuova) /prepara-repo → Setup repo + labels + templates
+    ↓
+/prd-to-issues → Breakdown fasi → Issue batch su GitHub
+    ↓
+Workflow normale per ogni issue (vedi sotto)
+```
+
+---
+
+## 🔄 Flusso Issue (singola)
 
 ```
 Davide descrive → Claudio /create-issue → Backlog
@@ -43,7 +59,9 @@ Davide descrive → Claudio /create-issue → Backlog
 
 | Comando | Chi | Cosa fa |
 |---------|-----|---------|
-| `/create-issue` | Davide → Claudio | Avvia raccolta nuova issue |
+| `/create-prd` | Davide → Claudio | Crea PRD da idea/brief |
+| `/prd-to-issues` | Davide → Claudio | Genera issue batch da PRD |
+| `/create-issue` | Davide → Claudio | Avvia raccolta singola issue |
 | `/vai` | Davide → Claudio | Dà il via all'agente |
 | `/approva` | Davide → Claudio | Approva PR, card → Deploy |
 | `/reject <feedback>` | Davide → Claudio | Rework con feedback |
@@ -69,7 +87,9 @@ workflow/
 │   ├── pull_request_template.md   # Template PR
 │   └── reject.md                  # Template sezione rework
 └── skills/
-    ├── create-issue/SKILL.md      # Creazione issue strutturata
+    ├── create-prd/SKILL.md        # Conversazione → PRD + PROJECT.md
+    ├── prd-to-issues/SKILL.md     # PRD → issue batch su GitHub
+    ├── create-issue/SKILL.md      # Creazione issue singola strutturata
     ├── issue-start/SKILL.md       # Avvio piano e lavorazione
     ├── issue-implement/SKILL.md   # Supervisione implementazione
     ├── issue-done/SKILL.md        # PR + notifica test
