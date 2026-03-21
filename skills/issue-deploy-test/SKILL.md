@@ -1,14 +1,16 @@
 # Skill: issue-deploy-test
 
-**Trigger:** Davide autorizza il deploy in test (dopo PR in Test)  
+**Trigger:** Push del branch / PR aperta → CI parte automaticamente → Ciccio monitora e manda il link a Davide  
 **Agente:** Ciccio  
-**Versione:** 2.1.0
+**Versione:** 2.2.0
 
 ---
 
 ## Obiettivo
 
-Deployare il branch della issue sull'ambiente test e notificare Davide con il link per testare.
+Monitorare il deploy test automatico (CI pipeline) e notificare Davide con il link quando è pronto.
+
+> **Nota ruoli:** Claudio ha già verificato CI, secrets e sistema test al CP4 prima del push. Il deploy test è automatico — Ciccio non deve fare nulla di manuale se la CI è configurata. Il suo compito è monitorare il run e avvisare Davide.
 
 Il deploy test segue **due modalità** in base al tipo di progetto:
 

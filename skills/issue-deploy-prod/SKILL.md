@@ -1,20 +1,20 @@
 # Skill: issue-deploy-prod
 
-**Trigger:** Davide scrive `/merge #N` dopo `/approva`  
+**Trigger:** Davide scrive `/approva #N` dopo aver testato il link → Ciccio procede con merge e deploy prod  
 **Agente:** Ciccio  
-**Versione:** 2.0.0
+**Versione:** 2.1.0
 
 ---
 
 ## Obiettivo
 
-Merge della PR su master, deploy in produzione se necessario, chiusura issue e card → Done.
+Merge della PR su master, deploy in produzione, chiusura issue e card → Done.
+
+> **Nota flusso:** `/approva` arriva solo dopo che Davide ha testato il link su test — il deploy test è già avvenuto per forza. Non servono check ridondanti: Ciccio procede direttamente.
 
 ---
 
-## Procedura
-
-### Step 1 — Verifica CI
+### Step 1 — Verifica CI (Ciccio) (Ciccio)
 
 ```bash
 gh pr checks <PR_NUMBER> --repo ecologicaleaving/<repo>

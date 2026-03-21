@@ -14,48 +14,50 @@ Avviare la lavorazione di una issue: lanciare l'agente in modalità research-onl
 
 ## Procedura
 
-### Step 0 — Verifica sistema test/deploy-test (obbligatorio)
+### Step 0 — Verifica sistema deploy (obbligatorio prima di iniziare)
 
-Prima di avviare qualsiasi lavorazione, Claudio verifica che il progetto abbia il sistema test configurato correttamente.
+Prima di avviare qualsiasi lavorazione, Claudio verifica che il progetto abbia il sistema di deploy e deploy-test configurato. Meglio scoprirlo subito che alla fine.
 
 ```bash
 REPO="<repo>"
 
-echo "=== CI pipeline ==="
+echo "=== CI pipeline (deploy.yml) ==="
 gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
-  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ CI pipeline presente" || echo "❌ CI pipeline assente"
+  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ presente" || echo "❌ assente"
 
-echo "=== Secrets configurati ==="
+echo "=== Secrets GitHub ==="
 gh secret list --repo ecologicaleaving/$REPO
 
 echo "=== Sottodominio test ==="
-curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org" && echo " — ✅ raggiungibile" || echo " — ❌ non raggiungibile"
+curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
+
+echo "=== Sottodominio produzione ==="
+curl -s -o /dev/null -w "HTTP %{http_code}" "https://$REPO.8020solutions.org"
 ```
 
 **Valutazione:**
 
 | Stato | Azione |
 |-------|--------|
-| ✅ CI presente + secrets ok + sottodominio ok | Procedi con Step 1 |
-| ❌ CI assente ma sottodominio ok | Procedi — deploy sarà manuale |
-| ❌ Secrets mancanti (infra VPS) | Segnala a Ciccio per aggiunta prima di procedere |
-| ❌ Secrets mancanti (specifici progetto) | Notifica Davide — blocca finché non li fornisce |
-| ❌ Sottodominio non raggiungibile | Segnala a Ciccio — non bloccare la lavorazione ma avvisa |
+| ✅ CI + secrets + test + prod ok | Procedi con Step 1 |
+| ❌ CI pipeline assente | Blocca — segnala a Ciccio, non si può procedere senza deploy automatico |
+| ❌ Secrets infra VPS mancanti | Blocca — segnala a Ciccio per aggiungerli |
+| ❌ Secrets specifici progetto mancanti | Blocca — notifica Davide per fornirli |
+| ❌ Sottodominio test non raggiungibile | Blocca — segnala a Ciccio |
+| ❌ Sottodominio prod non raggiungibile | Segnala a Ciccio — non blocca la lavorazione ma va risolto prima del deploy prod |
 
-**Notifica a Davide se tutto ok:**
+**Se qualcosa manca → notifica Davide e aspetta risoluzione prima di procedere:**
 ```
-✅ [Issue #N/<repo>] Sistema test verificato
-🔧 CI pipeline: presente / assente
-🔑 Secrets: ok / mancanti: <lista>
-🌐 test-<repo>.8020solutions.org: raggiungibile / non raggiungibile
+⚠️ [Issue #N/<repo>] Sistema deploy non pronto — lavorazione sospesa
+📋 Problemi:
+  - CI pipeline: presente / ❌ assente
+  - Secrets: ok / ❌ mancanti: <lista>
+  - test-<repo>.8020solutions.org: ✅ ok / ❌ non raggiungibile
+  - <repo>.8020solutions.org: ✅ ok / ❌ non raggiungibile
+👉 Ciccio: puoi sistemare?
 ```
 
-**Notifica a Davide se bloccante:**
-```
-⚠️ [Issue #N/<repo>] Sistema test non pronto
-📋 Problema: <descrizione>
-❓ Come procedo?
-```
+**Solo quando tutto è verde → procedi con Step 1.**
 
 ---
 

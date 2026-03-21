@@ -66,7 +66,7 @@ Istruzioni: <cosa deve fare l'agente>
 | CP1 | Piano approvato | Piano copre tutti gli AC, file sensati, nessun rischio |
 | CP2 | Fine iterazione N | Cosa implementato, test result, niente regressioni |
 | CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
-| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
+| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
 
 ### Bug
 
@@ -75,7 +75,7 @@ Istruzioni: <cosa deve fare l'agente>
 | CP1 | Root cause identificata | Causa chiara, approccio fix sensato |
 | CP2 | Fix applicato | Fix mirato, test di regressione ok |
 | CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
-| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
+| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
 
 ---
 
@@ -119,6 +119,42 @@ In caso di anomalia:
 📌 <descrizione>
 ❓ <domanda / cosa serve da Davide>
 ```
+
+---
+
+## CP4 — Checklist completa "Pronto per PR"
+
+Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Claudio verifica tutto in una volta sola.
+
+**Codice:**
+- [ ] Tutti gli AC della issue sono soddisfatti
+- [ ] `PROJECT.md` aggiornato con le modifiche
+- [ ] Nessun file anomalo (`.env`, debug, config sensibili)
+- [ ] Lint ✅, Typecheck ✅, Test ✅
+
+**Sistema test (verificato ora, non dopo):**
+```bash
+REPO="<repo>"
+echo "=== CI pipeline ===" && \
+  gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ presente" || echo "❌ assente"
+echo "=== Secrets ===" && gh secret list --repo ecologicaleaving/$REPO
+echo "=== Sottodominio test ===" && \
+  curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
+```
+
+**DB (solo se la issue tocca schema/dati):**
+- [ ] Migrazioni incluse nel branch (non applicate a mano)
+- [ ] Migrazioni descritte nel commento PR
+
+Se sistema test non è pronto (CI assente, secrets mancanti, sottodominio down) → **blocca, segnala a Ciccio** prima di procedere:
+```
+⚠️ [Issue #N] CP4 — Blocco pre-PR
+📋 Problema: <CI assente / secrets mancanti / sottodominio irraggiungibile>
+👉 @Ciccio: puoi sistemare prima che mergiamo?
+```
+
+Solo quando tutto è verde → `✅ procedi` all'agente per il push e apertura PR.
 
 ---
 
