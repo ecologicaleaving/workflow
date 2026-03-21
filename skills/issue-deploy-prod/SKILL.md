@@ -1,7 +1,7 @@
 # Skill: issue-deploy-prod
 
-**Trigger:** Davide scrive `/approva #N` → Claudio verifica → notifica Ciccio per il merge  
-**Agente:** Claudio (verifica pre-merge) → Ciccio (merge + deploy)  
+**Trigger:** Davide scrive `/approva #N` dopo aver testato il link → Ciccio procede con merge e deploy prod  
+**Agente:** Ciccio  
 **Versione:** 2.1.0
 
 ---
@@ -10,39 +10,7 @@
 
 Merge della PR su master, deploy in produzione, chiusura issue e card → Done.
 
----
-
-## Procedura
-
-### Step 0 — Verifica pre-merge (Claudio, dopo `/approva` di Davide)
-
-Il check sistema test e migrazioni è già stato fatto da Claudio al CP4. Qui si verifica solo che il deploy test sia andato a buon fine.
-
-```bash
-REPO="<repo>"
-PR_NUMBER="<PR>"
-
-# CI verde?
-gh pr checks $PR_NUMBER --repo ecologicaleaving/$REPO
-
-# Issue testata su test (label deployed-test)?
-gh issue view <N> --repo ecologicaleaving/$REPO --json labels \
-  | jq -r '.labels[].name' | grep "deployed-test" && echo "✅ testata" || echo "⚠️ non testata"
-```
-
-**Se CI verde e deployed-test presente → notifica Ciccio:**
-```
-✅ [Issue #N/<repo>] /approva ricevuto — procedi con merge
-CI: verde | deployed-test: ✅
-PR: #<PR>
-```
-
-**Se CI fallita o non testata → blocca e notifica Davide:**
-```
-⚠️ [Issue #N/<repo>] Merge bloccato
-📋 Problema: <CI fallita / non ancora testato su test>
-❓ Come procedo?
-```
+> **Nota flusso:** `/approva` arriva solo dopo che Davide ha testato il link su test — il deploy test è già avvenuto per forza. Non servono check ridondanti: Ciccio procede direttamente.
 
 ---
 
