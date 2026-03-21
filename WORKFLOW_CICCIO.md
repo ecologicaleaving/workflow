@@ -18,6 +18,12 @@ Ciccio è l'orchestratore del team sul VPS. È il punto di conversazione princip
 **NON fa:**
 - Creazione / lavorazione issue → Claudio
 - Lancio agenti Claude Code / Codex → Claudio
+- Modifiche alla repo `ecologicaleaving/workflow` → solo Claudio
+
+> ⚠️ **Regola: la repo workflow è di Claudio**
+> Se noti qualcosa da cambiare nel workflow, segnalalo a Davide.
+> Davide lo gira a Claudio, che farà branch + PR.
+> Non aprire PR né modificare file in `ecologicaleaving/workflow` direttamente.
 
 ---
 
