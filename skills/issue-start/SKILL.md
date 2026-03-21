@@ -2,7 +2,7 @@
 
 **Trigger:** Claudio avvia la fase di piano su una issue  
 **Agente:** Claudio  
-**Versione:** 2.1.0
+**Versione:** 2.2.0
 
 ---
 
@@ -13,6 +13,51 @@ Avviare la lavorazione di una issue: lanciare l'agente in modalità research-onl
 ---
 
 ## Procedura
+
+### Step 0 — Verifica sistema test/deploy-test (obbligatorio)
+
+Prima di avviare qualsiasi lavorazione, Claudio verifica che il progetto abbia il sistema test configurato correttamente.
+
+```bash
+REPO="<repo>"
+
+echo "=== CI pipeline ==="
+gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ CI pipeline presente" || echo "❌ CI pipeline assente"
+
+echo "=== Secrets configurati ==="
+gh secret list --repo ecologicaleaving/$REPO
+
+echo "=== Sottodominio test ==="
+curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org" && echo " — ✅ raggiungibile" || echo " — ❌ non raggiungibile"
+```
+
+**Valutazione:**
+
+| Stato | Azione |
+|-------|--------|
+| ✅ CI presente + secrets ok + sottodominio ok | Procedi con Step 1 |
+| ❌ CI assente ma sottodominio ok | Procedi — deploy sarà manuale |
+| ❌ Secrets mancanti (infra VPS) | Segnala a Ciccio per aggiunta prima di procedere |
+| ❌ Secrets mancanti (specifici progetto) | Notifica Davide — blocca finché non li fornisce |
+| ❌ Sottodominio non raggiungibile | Segnala a Ciccio — non bloccare la lavorazione ma avvisa |
+
+**Notifica a Davide se tutto ok:**
+```
+✅ [Issue #N/<repo>] Sistema test verificato
+🔧 CI pipeline: presente / assente
+🔑 Secrets: ok / mancanti: <lista>
+🌐 test-<repo>.8020solutions.org: raggiungibile / non raggiungibile
+```
+
+**Notifica a Davide se bloccante:**
+```
+⚠️ [Issue #N/<repo>] Sistema test non pronto
+📋 Problema: <descrizione>
+❓ Come procedo?
+```
+
+---
 
 ### Step 1 — Sposta card → Todo
 
