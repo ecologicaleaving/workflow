@@ -190,6 +190,19 @@ Dopo ogni `exec background` su un agente (research o implementazione), avvia que
 - Solo su output rilevante → spawn Haiku per summary (micro-costo)
 - Si auto-termina quando il processo finisce
 
+### Avvio monitor (WSL / Linux / macOS)
+
+```bash
+# Avvia in background subito dopo aver lanciato l'agente
+# Lo script è in workflow/scripts/agent-monitor.sh
+
+# Solo monitoring commenti issue (per subagent / sessions_spawn):
+bash scripts/agent-monitor.sh ISSUE_N REPO &
+
+# Monitoring completo con exec session (per exec background):
+bash scripts/agent-monitor.sh ISSUE_N REPO SESSION_ID &
+```
+
 ### Avvio monitor (PowerShell — Windows)
 
 ```powershell
