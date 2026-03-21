@@ -1,8 +1,8 @@
-# Skill: issue-implement
+﻿# Skill: issue-implement
 
 **Trigger:** Piano approvato, agente in fase di implementazione  
 **Agente:** Claudio (supervisione) + Claude Code / Codex (esecuzione)  
-**Versione:** 2.0.0
+**Versione:** 2.2.0
 
 ---
 
@@ -18,18 +18,18 @@ Supervisionare la lavorazione dell'agente tramite il **protocollo checkpoint vin
 
 1. L'agente completa uno step e **posta un commento sulla issue** con formato fisso
 2. Claudio legge il commento e valuta
-3. **Se ok** → Claudio risponde sulla issue: `✅ procedi`
-4. **Se anomalia** → Claudio risponde: `🔴 bloccato — <motivo>` + notifica Davide
-5. L'agente **non procede** finché non riceve `✅ procedi`
+3. **Se ok** â†’ Claudio risponde sulla issue: `âœ… procedi`
+4. **Se anomalia** â†’ Claudio risponde: `ðŸ”´ bloccato â€” <motivo>` + notifica Davide
+5. L'agente **non procede** finchÃ© non riceve `âœ… procedi`
 
 ### Formato commento checkpoint (agente)
 
 ```
-## ✅ Checkpoint N — <titolo>
+## âœ… Checkpoint N â€” <titolo>
 
 **Stato:** completato
 
-**Cosa è stato fatto:**
+**Cosa Ã¨ stato fatto:**
 <descrizione dettagliata>
 
 **Risultati test (se applicabile):**
@@ -45,12 +45,12 @@ Supervisionare la lavorazione dell'agente tramite il **protocollo checkpoint vin
 
 **Via libera:**
 ```
-✅ procedi
+âœ… procedi
 ```
 
 **Blocco:**
 ```
-🔴 bloccato
+ðŸ”´ bloccato
 Motivo: <descrizione anomalia>
 Istruzioni: <cosa deve fare l'agente>
 ```
@@ -65,7 +65,7 @@ Istruzioni: <cosa deve fare l'agente>
 |----|--------|----------------------|
 | CP1 | Piano approvato | Piano copre tutti gli AC, file sensati, nessun rischio |
 | CP2 | Fine iterazione N | Cosa implementato, test result, niente regressioni |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP3 | Test suite completa | Lint âœ…, Typecheck âœ…, Unit âœ…, E2E âœ… |
 | CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
 
 ### Bug
@@ -74,7 +74,7 @@ Istruzioni: <cosa deve fare l'agente>
 |----|--------|----------------------|
 | CP1 | Root cause identificata | Causa chiara, approccio fix sensato |
 | CP2 | Fix applicato | Fix mirato, test di regressione ok |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP3 | Test suite completa | Lint âœ…, Typecheck âœ…, Unit âœ…, E2E âœ… |
 | CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo |
 
 ---
@@ -85,21 +85,21 @@ Istruzioni: <cosa deve fare l'agente>
 - Piano ignora degli AC
 - Test falliti non risolti
 - File modificati fuori scope
-- Più di 5 iterazioni senza convergenza
+- PiÃ¹ di 5 iterazioni senza convergenza
 - Comportamento inatteso o errori gravi
 
 **Procedura anomalia:**
-1. Claudio posta `🔴 bloccato` sulla issue con istruzioni
+1. Claudio posta `ðŸ”´ bloccato` sulla issue con istruzioni
 2. Notifica Davide:
    ```
-   ⚠️ [Issue #N] Anomalia al CP-N — <titolo>
-   📌 <descrizione problema>
-   🔧 <cosa ha fatto l'agente>
-   ❓ Come procedo?
+   âš ï¸ [Issue #N] Anomalia al CP-N â€” <titolo>
+   ðŸ“Œ <descrizione problema>
+   ðŸ”§ <cosa ha fatto l'agente>
+   â“ Come procedo?
    ```
 3. Aspetta istruzioni di Davide prima di sbloccare l'agente
 
-**Se l'agente supera 5 iterazioni senza convergere → blocco automatico + notifica Davide**
+**Se l'agente supera 5 iterazioni senza convergere â†’ blocco automatico + notifica Davide**
 
 ---
 
@@ -108,16 +108,16 @@ Istruzioni: <cosa deve fare l'agente>
 Ad ogni checkpoint Claudio notifica Davide su Telegram:
 
 ```
-✅ [Issue #N] CP-N — <titolo>
-📌 <summary in 1-2 righe>
-⏭️ Prossimo step: <cosa fa l'agente ora>
+âœ… [Issue #N] CP-N â€” <titolo>
+ðŸ“Œ <summary in 1-2 righe>
+â­ï¸ Prossimo step: <cosa fa l'agente ora>
 ```
 
 In caso di anomalia:
 ```
-⚠️ [Issue #N] Anomalia CP-N — <titolo>
-📌 <descrizione>
-❓ <domanda / cosa serve da Davide>
+âš ï¸ [Issue #N] Anomalia CP-N â€” <titolo>
+ðŸ“Œ <descrizione>
+â“ <domanda / cosa serve da Davide>
 ```
 
 ---
