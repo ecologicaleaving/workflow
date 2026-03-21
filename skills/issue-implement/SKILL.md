@@ -1,8 +1,8 @@
-# Skill: issue-implement
+﻿# Skill: issue-implement
 
 **Trigger:** Piano approvato, agente in fase di implementazione  
 **Agente:** Claudio (supervisione) + Claude Code / Codex (esecuzione)  
-**Versione:** 2.1.0
+**Versione:** 2.2.0
 
 ---
 
