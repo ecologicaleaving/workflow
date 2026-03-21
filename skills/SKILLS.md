@@ -120,6 +120,33 @@ Oppure rieseguire lo script di installazione, che sovrascrive le versioni preced
 
 ---
 
+### `create-prd`
+Skill per Claudio — conversazione strutturata per generare un PRD da un'idea o brief.
+
+**Cosa fa:**
+- Raccoglie informazioni da Davide con domande mirate (non 20 domande)
+- Genera un PRD completo usando il template `templates/prd.md`
+- Se progetto nuovo: genera anche PROJECT.md base
+- Salva in `docs/PRD.md` nella repo del progetto
+
+**Si attiva quando:** `/create-prd`, Davide descrive un progetto nuovo o una feature grande che richiede più issue
+
+---
+
+### `prd-to-issues`
+Skill per Claudio — breakdown di un PRD in issue GitHub strutturate.
+
+**Cosa fa:**
+- Legge il PRD e propone un breakdown in fasi logiche
+- Per ogni fase: propone issue singole con AC, dipendenze, ordine
+- Dopo approvazione: crea tutte le issue in batch sulla repo del progetto
+- Aggiunge cross-reference tra issue e le mette tutte in Backlog sul Kanban
+- Max ~15 issue per PRD
+
+**Si attiva quando:** `/prd-to-issues`, Davide chiede di generare le issue da un PRD
+
+---
+
 ### `issue-rework-fast`
 Skill per orchestratori (Claudio/Ciccio) — fix diretto di problemi CI/deploy senza coinvolgere l'agente dev.
 
