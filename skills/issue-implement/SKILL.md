@@ -183,6 +183,19 @@ Non aspettare — il monitor deve girare in parallelo all'agente per tutta la du
 - Solo su output rilevante → spawn Haiku per summary (micro-costo)
 - Si auto-termina quando il processo finisce
 
+### Avvio monitor (WSL / Linux / macOS)
+
+```bash
+# Avvia in background subito dopo aver lanciato l'agente
+# Lo script è in workflow/scripts/agent-monitor.sh
+
+# Solo monitoring commenti issue (per subagent / sessions_spawn):
+bash scripts/agent-monitor.sh ISSUE_N REPO &
+
+# Monitoring completo con exec session (per exec background):
+bash scripts/agent-monitor.sh ISSUE_N REPO SESSION_ID &
+```
+
 ### Avvio monitor (PowerShell — Windows)
 
 ```powershell
@@ -246,4 +259,5 @@ while ($true) {
 
 - Non usare modelli pesanti (Sonnet/Opus) per il monitor
 - Il monitor non interagisce mai con l'agente, solo osserva
-- Su Linux/VPS (Ciccio): sostituire la sintassi PowerShell con bash equivalente
+- Su Linux/WSL/VPS: usare `scripts/agent-monitor.sh` (bash)
+- Su Windows: usare il blocco PowerShell sopra
