@@ -33,18 +33,25 @@ curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.or
 
 echo "=== Sottodominio produzione ==="
 curl -s -o /dev/null -w "HTTP %{http_code}" "https://$REPO.8020solutions.org"
+
+echo "=== Notifiche deploy Telegram ==="
+gh secret list --repo ecologicaleaving/$REPO | grep -q "TELEGRAM_BOT_TOKEN" && echo "✅ TELEGRAM_BOT_TOKEN presente" || echo "❌ TELEGRAM_BOT_TOKEN assente"
+gh secret list --repo ecologicaleaving/$REPO | grep -q "TELEGRAM_CHAT_ID" && echo "✅ TELEGRAM_CHAT_ID presente" || echo "❌ TELEGRAM_CHAT_ID assente"
+gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | base64 -d 2>/dev/null | grep -q "deploy-notify" && echo "✅ notify job presente" || echo "❌ notify job assente nel workflow"
 ```
 
 **Valutazione:**
 
 | Stato | Azione |
 |-------|--------|
-| ✅ CI + secrets + test + prod ok | Procedi con Step 1 |
+| ✅ CI + secrets + test + prod + notifiche ok | Procedi con Step 1 |
 | ❌ CI pipeline assente | Blocca — segnala a Ciccio, non si può procedere senza deploy automatico |
 | ❌ Secrets infra VPS mancanti | Blocca — segnala a Ciccio per aggiungerli |
 | ❌ Secrets specifici progetto mancanti | Blocca — notifica Davide per fornirli |
 | ❌ Sottodominio test non raggiungibile | Blocca — segnala a Ciccio |
 | ❌ Sottodominio prod non raggiungibile | Segnala a Ciccio — non blocca la lavorazione ma va risolto prima del deploy prod |
+| ❌ Notifiche deploy assenti | Segnala a Ciccio — non blocca ma va configurato (vedi DEPLOY-NOTIFY-SETUP.md) |
 
 **Se qualcosa manca → notifica Davide e aspetta risoluzione prima di procedere:**
 ```
@@ -54,7 +61,8 @@ curl -s -o /dev/null -w "HTTP %{http_code}" "https://$REPO.8020solutions.org"
   - Secrets: ok / ❌ mancanti: <lista>
   - test-<repo>.8020solutions.org: ✅ ok / ❌ non raggiungibile
   - <repo>.8020solutions.org: ✅ ok / ❌ non raggiungibile
-👉 Ciccio: puoi sistemare?
+  - Notifiche deploy Telegram: ✅ ok / ❌ assenti (secrets + job)
+👉 Ciccio: puoi sistemare? (per notifiche vedi DEPLOY-NOTIFY-SETUP.md nel repo workflow)
 ```
 
 **Solo quando tutto è verde → procedi con Step 1.**

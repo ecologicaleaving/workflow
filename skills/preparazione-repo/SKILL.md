@@ -14,7 +14,8 @@ Porta una repo GitHub all'allineamento completo con il workflow 8020.
 3. **Controlla e crea labels** — confronta con lista standard, aggiungi le mancanti
 4. **Controlla CLAUDE.md** — crea se assente
 5. **Controlla issue templates** — crea se assenti
-6. **Report finale** — elenca ✅ OK / 🆕 Creato / ⚠️ Da verificare
+6. **Controlla notifiche deploy Telegram** — secrets + job nel workflow CI
+7. **Report finale** — elenca ✅ OK / 🆕 Creato / ⚠️ Da verificare
 
 ---
 
@@ -132,6 +133,11 @@ Issue Templates
 
 PROJECT.md
   ✅ Presente e completo
+
+Notifiche Deploy Telegram
+  ✅ Secrets presenti (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)
+  ✅ Job notify-deploy presente nel workflow CI
+  / ❌ Assenti → segnala a Ciccio (vedi DEPLOY-NOTIFY-SETUP.md)
 
 ✅ Repo pronta per il workflow!
 ```
