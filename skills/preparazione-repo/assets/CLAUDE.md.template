@@ -48,3 +48,8 @@ Non procedere con nessuna attività prima di aver completato questi 3 step.
 - **MAI inventare** credenziali, configurazioni o soluzioni incerte — chiedi a Davide
 - **Segui le skill** del workflow (issue-start, issue-done, 8020-commit-workflow)
 - Se serve infrastruttura VPS/DB → chiedi a Ciccio tramite Davide
+
+## Curl Test
+
+Se la issue tocca API, route o endpoint → **aggiungi test curl** a `tests/curl-tests.sh`.
+Se il file non esiste, crealo seguendo le istruzioni in `.workflow/CLAUDE.md` (sezione "Curl Test").

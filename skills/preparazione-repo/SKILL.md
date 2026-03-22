@@ -14,7 +14,8 @@ Porta una repo GitHub all'allineamento completo con il workflow 8020.
 3. **Controlla e crea labels** — confronta con lista standard, aggiungi le mancanti
 4. **Controlla CLAUDE.md** — crea se assente
 5. **Controlla issue templates** — crea se assenti
-6. **Report finale** — elenca ✅ OK / 🆕 Creato / ⚠️ Da verificare
+6. **Controlla notifiche deploy Telegram** — secrets + job nel workflow CI
+7. **Report finale** — elenca ✅ OK / 🆕 Creato / ⚠️ Da verificare
 
 ---
 
@@ -113,7 +114,73 @@ gh api repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE/{type}.md `
 
 ---
 
-## STEP 5 — Report Finale
+## STEP 5 — Curl Test Script
+
+### Verifica
+
+```bash
+gh api repos/{owner}/{repo}/contents/tests/curl-tests.sh 2>&1
+```
+
+Se 404 → crea `tests/curl-tests.sh` con l'header standard definito nel CLAUDE.md del workflow (sezione "Curl Test — Smoke test post-deploy"). Sostituisci `REPO` nel `BASE_URL` con il nome del repo.
+
+```bash
+# Crea il file via API GitHub
+CONTENT=$(base64 -w0 <<'SCRIPT'
+#!/bin/bash
+# Smoke tests — curl-based API verification
+# Uso: ./tests/curl-tests.sh [BASE_URL]
+# Default: https://test-{repo}.8020solutions.org
+
+BASE_URL="${1:-https://test-{repo}.8020solutions.org}"
+PASS=0
+FAIL=0
+
+check() {
+  local desc="$1" url="$2" expected="$3"
+  local status
+  status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+  if [ "$status" = "$expected" ]; then
+    echo "✅ $desc (HTTP $status)"
+    ((PASS++))
+  else
+    echo "❌ $desc — expected $expected, got $status"
+    ((FAIL++))
+  fi
+}
+
+# --- Test ---
+# I test vengono aggiunti dall'agente durante l'implementazione di ogni issue
+
+echo ""
+echo "=== Risultati: $PASS passed, $FAIL failed ==="
+[ "$FAIL" -gt 0 ] && exit 1 || exit 0
+SCRIPT
+)
+
+gh api repos/{owner}/{repo}/contents/tests/curl-tests.sh \
+  --method PUT \
+  --field message="chore: aggiungi script curl test" \
+  --field content="$CONTENT"
+```
+
+Se esiste → ✅ OK, nessuna azione.
+
+### Verifica step Smoke test nel deploy.yml
+
+```bash
+gh api repos/{owner}/{repo}/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "Smoke tests" && echo "✅ Step presente" || echo "❌ Step assente"
+```
+
+Se assente → aggiungere lo step `Smoke tests` al deploy.yml seguendo le istruzioni in CLAUDE.md (sezione "Step CI — Smoke test post-deploy"). Committare su main:
+```
+chore(ci): aggiungi step smoke test post-deploy
+```
+
+---
+
+## STEP 6 — Report Finale
 
 Stampa un riepilogo chiaro:
 
@@ -132,6 +199,17 @@ Issue Templates
 
 PROJECT.md
   ✅ Presente e completo
+
+Notifiche Deploy Telegram
+  ✅ Secrets presenti (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)
+  ✅ Job notify-deploy presente nel workflow CI
+  / ❌ Assenti → segnala a Ciccio (vedi DEPLOY-NOTIFY-SETUP.md)
+
+Curl Test
+  ✅ tests/curl-tests.sh presente
+  / 🆕 Creato
+  ✅ Step Smoke tests presente nel deploy.yml
+  / 🆕 Aggiunto
 
 ✅ Repo pronta per il workflow!
 ```

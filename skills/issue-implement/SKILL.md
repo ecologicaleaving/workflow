@@ -131,6 +131,7 @@ Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Cl
 - [ ] `PROJECT.md` aggiornato con le modifiche
 - [ ] Nessun file anomalo (`.env`, debug, config sensibili)
 - [ ] Lint ✅, Typecheck ✅, Test ✅
+- [ ] Curl test aggiunti a `tests/curl-tests.sh` (se la issue tocca API/route/endpoint)
 
 **Sistema test (verificato ora, non dopo):**
 ```bash
@@ -188,6 +189,43 @@ Quando Claudio notifica Davide che la PR è pronta, **deve sempre includere una 
 
 ---
 
+## 📨 Messaggio per Ciccio (obbligatorio dopo PR)
+
+Subito dopo aver notificato Davide della PR, Claudio **prepara anche il messaggio per Ciccio** con tutto il necessario per merge e deploy.
+
+### Formato messaggio Ciccio (template)
+
+```
+🔧 [<repo>] PR #N — <titolo>
+
+Ciao Ciccio, c'è la PR #N pronta per merge: <link PR>
+
+**Da fare:**
+1. Merge PR #N su main (deploy automatico su test)
+<eventuali step aggiuntivi: config, secrets, servizi esterni>
+
+**Prerequisiti / Config** (se ci sono):
+<env vars da aggiungere, servizi da configurare, migrazioni DB da applicare>
+
+Dopo il deploy, Davide testa su: https://test-<repo>.8020solutions.org
+
+Grazie! 🙌
+```
+
+### Regole
+
+1. **Sempre presente** — anche se è solo "merge e basta", scrivi comunque il messaggio
+2. **Prerequisiti espliciti** — se servono env vars, secrets, config Supabase, servizi esterni → elenca tutto
+3. **Migrazioni DB** — se ci sono, specifica come applicarle (file, ordine, comandi)
+4. **Non dare per scontato** — Ciccio non ha il contesto della issue, il messaggio deve essere autosufficiente
+
+### Flusso completo post-PR
+
+1. Claudio notifica **Davide** con: PR + istruzioni di test + cosa aspettarsi
+2. Claudio prepara **messaggio per Ciccio** con: PR + cosa fare per deploy + prerequisiti
+3. Davide decide se mandare il messaggio a Ciccio o se serve altro prima
+
+---
 ## Convenzioni Agente
 
 L'agente deve rispettare:
