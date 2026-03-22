@@ -11,7 +11,7 @@ Backlog → Todo → InProgress → Test → Deploy → Done
                                 ↓
                              Review (rework)
                                 ↓
-                           Test Review → loop
+                              Test → loop
 ```
 
 | Colonna | Descrizione | Chi la sposta |
@@ -36,7 +36,7 @@ Backlog → Todo → InProgress → Test → Deploy → Done
 5. Ciccio deploya in test, notifica Davide
 6. Davide testa:
    → /approva → Deploy → Ciccio /merge → Done
-   → /reject  → Review → rework → Test Review → loop
+   → /reject  → Review → rework → Test → loop
 ```
 
 ---
@@ -52,7 +52,7 @@ Card → Review
     ↓
 Agente rilavorazione con feedback come contesto
     ↓
-PR aggiornata → Card → Test Review
+PR aggiornata → Card → Test
     ↓
 Ciccio rideploya in test
     ↓

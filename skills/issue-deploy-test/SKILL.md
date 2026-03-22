@@ -1,16 +1,16 @@
 # Skill: issue-deploy-test
 
-**Trigger:** Push del branch / PR aperta → CI parte automaticamente → Ciccio monitora e manda il link a Davide  
-**Agente:** Ciccio  
-**Versione:** 2.2.0
+**Trigger:** Push del branch / PR aperta → CI parte automaticamente  
+**Agente:** Claudio (web) / Ciccio (APK)  
+**Versione:** 3.0.0
 
 ---
 
 ## Obiettivo
 
-Monitorare il deploy test automatico (CI pipeline) e notificare Davide con il link quando è pronto.
+Gestire il deploy test. Per i web project il deploy è **completamente automatico**: CI builda, deploya, e il bot Telegram notifica Davide con il link. Claudio gestisce label e Kanban. Ciccio interviene solo per Flutter APK o fallback senza CI.
 
-> **Nota ruoli:** Claudio ha già verificato CI, secrets e sistema test al CP4 prima del push. Il deploy test è automatico — Ciccio non deve fare nulla di manuale se la CI è configurata. Il suo compito è monitorare il run e avvisare Davide.
+> **Flusso web standard:** PR aperta → CI → deploy automatico → bot Telegram notifica Davide → Claudio aggiunge label `deployed-test`
 
 Il deploy test segue **due modalità** in base al tipo di progetto:
 
@@ -110,38 +110,16 @@ SLUG=$(echo "feature/issue-N-slug" | sed 's|/|-|g' | tr '[:upper:]' '[:lower:]' 
 curl -s -o /dev/null -w "%{http_code}" "https://test-<repo>.8020solutions.org/b/${SLUG}/"
 ```
 
-### Step 7 — Aggiorna label e Kanban
+### Step 7 — Aggiorna label
+
+La card è già in Test (spostata da Claudio in `issue-done`). Claudio aggiunge solo la label:
 
 ```bash
-# Label deployed-test (crea se non esiste)
 gh label create "deployed-test" --repo ecologicaleaving/<repo> --color "#0075ca" 2>/dev/null || true
 gh issue edit <N> --repo ecologicaleaving/<repo> --add-label "deployed-test"
-
-# Kanban → Test (singleSelectOptionId: "9c813e6b")
-ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json \
-  | jq -r '.items[] | select(.content.number == <N> and (.content.repository.name == "<repo>")) | .id')
-
-gh api graphql -f query='
-mutation {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHODSTPQM4BP1Xp"
-    itemId: "'$ITEM_ID'"
-    fieldId: "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
-    value: { singleSelectOptionId: "9c813e6b" }
-  }) { projectV2Item { id } }
-}'
 ```
 
-### Step 8 — Notifica Davide
-
-```
-🧪 [Issue #N] Deploy test ok
-🔗 https://test-<repo>.8020solutions.org/b/<branch-slug>/
-📋 Cosa testare:
-  - <AC 1 dalla issue>
-  - <AC 2 dalla issue>
-  - <AC 3 dalla issue>
-```
+> **Nota:** Il bot Telegram notifica Davide automaticamente con il link al deploy. Non serve notifica manuale per i web project.
 
 ---
 

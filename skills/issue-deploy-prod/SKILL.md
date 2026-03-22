@@ -31,16 +31,18 @@ gh pr merge <PR_NUMBER> \
   --delete-branch
 ```
 
-### Step 3 — Deploy produzione (se necessario)
+### Step 3 — Deploy produzione
 
 In base al tipo di progetto:
 
-**App web (VPS):**
+**App web con CI (standard):**
+Il merge su master triggera automaticamente la CI pipeline che builda e deploya in produzione. Il bot Telegram notifica a deploy avvenuto. Nessuna azione manuale richiesta.
+
+**App web senza CI (fallback):**
 ```bash
 cd /var/www/<repo>
 git pull origin master
 npm install && npm run build
-cp -r build/ /var/www/<repo>-prod/
 nginx -s reload
 ```
 

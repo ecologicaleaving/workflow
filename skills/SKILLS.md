@@ -14,6 +14,7 @@ Le skills sono moduli che estendono le capacita' di Claude Code con workflow spe
 | `8020-workflow` | Regole workflow per Ciccio (VPS) — Kanban, deploy, PR, APK |
 | `create-issue` | Raccolta info e creazione issue GitHub strutturate |
 | `create-prd` | Conversazione guidata per generare un PRD da brief/idea |
+| `issue-approve` | Gestione `/approva` — label, card Deploy, notifica Ciccio |
 | `issue-deploy-prod` | Merge PR e deploy in produzione (Ciccio) |
 | `issue-deploy-test` | Deploy su ambiente test e notifica Davide (Ciccio) |
 | `issue-done` | Checklist pre-PR, apertura PR, notifica |

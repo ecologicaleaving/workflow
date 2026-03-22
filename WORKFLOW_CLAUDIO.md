@@ -192,7 +192,7 @@ Davide /reject "feedback dettagliato + risultati test"
 → Card → Review
 → Claudio rilancia l'agente con il feedback come contesto
 → Agente rielabora → stesso flusso Fase 3/4
-→ Card → Test Review
+→ Card → Test
 → Loop fino ad /approva
 ```
 
