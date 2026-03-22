@@ -23,7 +23,10 @@
       "workflow":    "ecologicaleaving/workflow",
       "finn":        "ecologicaleaving/finn",
       "stageconnect": "ecologicaleaving/StageConnect",
-      "beachref":    "ecologicaleaving/BeachRef-app"
+      "beachref":    "ecologicaleaving/BeachRef-app",
+      "beachcrer":   "ecologicaleaving/BeachCRER",
+      "maestro":     "ecologicaleaving/maestro",
+      "autodrum":    "ecologicaleaving/AutoDrum"
     },
     "templates": {
       "build-apk": {

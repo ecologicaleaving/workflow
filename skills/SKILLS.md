@@ -8,18 +8,22 @@ Le skills sono moduli che estendono le capacita' di Claude Code con workflow spe
 
 ## Skills Disponibili
 
-### `8020-commit-workflow`
-Skill attivata automaticamente ad ogni richiesta di commit o push.
-
-**Cosa fa:**
-- Verifica che il branch corrente sia un feature/fix branch (mai master)
-- Controlla il formato del commit message (Conventional Commits obbligatorio)
-- Valida che `PROJECT.md` sia aggiornato con la versione corretta
-- Verifica che il commit automation sia installato nel progetto
-- Esegue il commit e push in modo corretto
-- Ricorda il protocollo post-push: notificare David -> Ciccio deploya su test
-
-**Si attiva quando:** si chiede un commit, push, git commit, git push
+| Skill | Descrizione |
+|-------|-------------|
+| `8020-commit-workflow` | Commit e push con convenzioni (Conventional Commits, branch check, PROJECT.md) |
+| `8020-workflow` | Regole workflow per Ciccio (VPS) — Kanban, deploy, PR, APK |
+| `create-issue` | Raccolta info e creazione issue GitHub strutturate |
+| `create-prd` | Conversazione guidata per generare un PRD da brief/idea |
+| `issue-deploy-prod` | Merge PR e deploy in produzione (Ciccio) |
+| `issue-deploy-test` | Deploy su ambiente test e notifica Davide (Ciccio) |
+| `issue-done` | Checklist pre-PR, apertura PR, notifica |
+| `issue-implement` | Supervisione agente con checkpoint vincolanti |
+| `issue-reject` | Gestione rework dopo reject di Davide |
+| `issue-research-rework` | Research approfondita per reject complessi |
+| `issue-start` | Avvio piano research-only su issue |
+| `prd-to-issues` | Breakdown PRD in issue GitHub (max ~15 per PRD) |
+| `preparazione-repo` | Setup repo per workflow 8020 |
+| `repo-maintenance` | Manutenzione file di progetto |
 
 ---
 
@@ -117,56 +121,3 @@ Oppure rieseguire lo script di installazione, che sovrascrive le versioni preced
 - [COMMIT_CONVENTIONS.md](../COMMIT_CONVENTIONS.md) - Standard commit messages
 - [BRANCH_STRATEGY.md](../BRANCH_STRATEGY.md) - Git branching strategy
 - [Claude Code Skills Documentation](https://github.com/anthropics/claude-code) - Docs ufficiali skills
-
----
-
-### `create-prd`
-Skill per Claudio — conversazione strutturata per generare un PRD da un'idea o brief.
-
-**Cosa fa:**
-- Raccoglie informazioni da Davide con domande mirate (non 20 domande)
-- Genera un PRD completo usando il template `templates/prd.md`
-- Se progetto nuovo: genera anche PROJECT.md base
-- Salva in `docs/PRD.md` nella repo del progetto
-
-**Si attiva quando:** `/create-prd`, Davide descrive un progetto nuovo o una feature grande che richiede più issue
-
----
-
-### `prd-to-issues`
-Skill per Claudio — breakdown di un PRD in issue GitHub strutturate.
-
-**Cosa fa:**
-- Legge il PRD e propone un breakdown in fasi logiche
-- Per ogni fase: propone issue singole con AC, dipendenze, ordine
-- Dopo approvazione: crea tutte le issue in batch sulla repo del progetto
-- Aggiunge cross-reference tra issue e le mette tutte in Backlog sul Kanban
-- Max ~15 issue per PRD
-
-**Si attiva quando:** `/prd-to-issues`, Davide chiede di generare le issue da un PRD
-
----
-
-### `issue-rework-fast`
-Skill per orchestratori (Claudio/Ciccio) — fix diretto di problemi CI/deploy senza coinvolgere l'agente dev.
-
-**Cosa fa:**
-- Valuta se il problema è un "fast fix" (CI rotta, dipendenza mancante, path errato, config)
-- Guida il clone del branch, applicazione del fix, commit e push
-- Commenta sull'issue con spiegazione del fix
-- Mantiene la card Kanban dove si trova (non la sposta)
-- Monitora CI e notifica Davide solo quando verde
-
-**Si attiva quando:** CI fallisce per motivi infrastrutturali/config, build rotta per poche righe mancanti, fix rapido senza logica di business
-
----
-
-### `8020-workflow`
-Skill per Ciccio (OpenClaw/VPS) — caricata automaticamente quando Ciccio gestisce issue, deploy, PR, APK, o qualsiasi task di workflow.
-
-**Cosa fa:**
-- Fornisce le regole del Kanban board a 5 colonne
-- Definisce il flusso `/reject` → card In Progress + routing agente
-- Riferimenti a WORKFLOW_CICCIO.md, BRANCH_STRATEGY.md, COMMIT_CONVENTIONS.md
-
-**Si attiva quando:** Ciccio gestisce issue GitHub, deploy, PR, APK, CI/CD, o coordinate con Claude Code
