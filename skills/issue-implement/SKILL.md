@@ -226,7 +226,6 @@ Grazie! 🙌
 3. Davide decide se mandare il messaggio a Ciccio o se serve altro prima
 
 ---
-
 ## Convenzioni Agente
 
 L'agente deve rispettare:
