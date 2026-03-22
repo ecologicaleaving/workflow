@@ -11,8 +11,12 @@ from datetime import datetime
 from typing import Dict, Optional
 
 # Configuration
-BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8563130383:AAHsxqttIKcCAPVTkCj5Cw-V79BHG-jS1Xg')
-CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '1634377998')
+BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+
+if not BOT_TOKEN or not CHAT_ID:
+    print("❌ TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID env vars are required")
+    sys.exit(1)
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # Status emojis

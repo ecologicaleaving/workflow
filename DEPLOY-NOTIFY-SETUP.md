@@ -14,8 +14,8 @@ Tutto centralizzato, niente token nei singoli repo.
 
 ### Step 1: Aggiungi i secrets al repo
 ```bash
-gh secret set TELEGRAM_BOT_TOKEN --body "8563130383:AAHsxqttIKcCAPVTkCj5Cw-V79BHG-jS1Xg" -R ecologicaleaving/nome-repo
-gh secret set TELEGRAM_CHAT_ID --body "1634377998" -R ecologicaleaving/nome-repo
+gh secret set TELEGRAM_BOT_TOKEN --body "<BOT_TOKEN>" -R ecologicaleaving/nome-repo
+gh secret set TELEGRAM_CHAT_ID --body "<CHAT_ID>" -R ecologicaleaving/nome-repo
 ```
 
 ### Step 2: Aggiungi il workflow dispatch

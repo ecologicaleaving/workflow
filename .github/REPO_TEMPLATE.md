@@ -7,8 +7,8 @@ Checklist per configurare una nuova repo con notifiche deploy automatiche.
 ```bash
 # Set secrets
 export REPO="ecologicaleaving/your-repo-name"
-export BOT_TOKEN="8563130383:AAHsxqttIKcCAPVTkCj5Cw-V79BHG-jS1Xg"
-export CHAT_ID="1634377998"
+export BOT_TOKEN="<BOT_TOKEN>"
+export CHAT_ID="<CHAT_ID>"
 
 gh secret set TELEGRAM_BOT_TOKEN --body "$BOT_TOKEN" -R "$REPO"
 gh secret set TELEGRAM_CHAT_ID --body "$CHAT_ID" -R "$REPO"
