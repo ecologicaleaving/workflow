@@ -158,6 +158,36 @@ Solo quando tutto è verde → `✅ procedi` all'agente per il push e apertura P
 
 ---
 
+## 📋 Istruzioni di Test per Davide (obbligatorie nella PR)
+
+Quando Claudio notifica Davide che la PR è pronta, **deve sempre includere una sezione "Come testare"** con istruzioni chiare e pratiche.
+
+### Formato notifica PR (template)
+
+```
+✅ [Issue #N] PR pronta → <link PR>
+📌 <summary 1-2 righe>
+
+🧪 **Come testare:**
+<lista passi concreti che Davide deve fare per verificare>
+
+⚠️ **Prerequisiti** (se ci sono):
+<env vars, dipendenze, setup necessario>
+
+💡 **Cosa aspettarsi:**
+<risultato atteso se tutto funziona>
+```
+
+### Regole
+
+1. **Sempre presente** — anche se "non c'è nulla da testare", scrivi comunque cosa verificare (es. "build ok, lint ok, struttura cartelle corretta")
+2. **Passi concreti** — comandi da copiare-incollare, URL da visitare, cose da cliccare
+3. **Setup-first** — se serve clonare, installare deps, configurare env → metti tutto prima
+4. **Risultato atteso** — Davide deve sapere cosa deve vedere se funziona
+5. **Se è solo infra/setup** — istruzioni di verifica build/struttura, non "non c'è niente da testare"
+
+---
+
 ## Convenzioni Agente
 
 L'agente deve rispettare:
@@ -182,6 +212,19 @@ Non aspettare — il monitor deve girare in parallelo all'agente per tutta la du
 - Keyword matching senza LLM (zero token per la maggior parte dei check)
 - Solo su output rilevante → spawn Haiku per summary (micro-costo)
 - Si auto-termina quando il processo finisce
+
+### Avvio monitor (WSL / Linux / macOS)
+
+```bash
+# Avvia in background subito dopo aver lanciato l'agente
+# Lo script è in workflow/scripts/agent-monitor.sh
+
+# Solo monitoring commenti issue (per subagent / sessions_spawn):
+bash scripts/agent-monitor.sh ISSUE_N REPO &
+
+# Monitoring completo con exec session (per exec background):
+bash scripts/agent-monitor.sh ISSUE_N REPO SESSION_ID &
+```
 
 ### Avvio monitor (PowerShell — Windows)
 
@@ -246,4 +289,5 @@ while ($true) {
 
 - Non usare modelli pesanti (Sonnet/Opus) per il monitor
 - Il monitor non interagisce mai con l'agente, solo osserva
-- Su Linux/VPS (Ciccio): sostituire la sintassi PowerShell con bash equivalente
+- Su Linux/WSL/VPS: usare `scripts/agent-monitor.sh` (bash)
+- Su Windows: usare il blocco PowerShell sopra

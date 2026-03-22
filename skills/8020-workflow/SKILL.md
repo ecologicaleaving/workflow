@@ -50,6 +50,33 @@ Dove `<SKILL_DIR>` è la directory locale di questa skill.
 | **Ciccio (VPS)** | Crea issue, Kanban, deploy, infra |
 | **Claude Code / Codex** | Sviluppo, commit, push |
 
+## 🚨 REGOLA CARDINALE — Nessuna fix/patch senza autorizzazione
+
+**Quando un agente (Claudio o Ciccio) identifica un problema, un bug, un errore di deploy, un workflow rotto, o qualsiasi anomalia:**
+
+1. **NON applicare fix, patch, o workaround autonomamente**
+2. **Segnalare il problema a Davide** con descrizione chiara e proposta di soluzione
+3. **Aspettare l'autorizzazione esplicita di Davide** prima di toccare qualsiasi cosa
+
+Questo vale per:
+- Fix di codice (bug, errori, regressioni)
+- Patch infrastrutturali (CI/CD, deploy, config VPS)
+- Correzioni workflow YAML
+- Modifiche database / migrazioni d'emergenza
+- Qualsiasi intervento non pianificato nella issue originale
+
+**Formato segnalazione:**
+```
+⚠️ Problema trovato: <descrizione>
+📌 Causa: <cosa sta succedendo>
+🔧 Proposta fix: <cosa farei>
+❓ Autorizzo a procedere?
+```
+
+**Nessuna eccezione.** Anche se la fix sembra banale, Davide decide.
+
+---
+
 ## 🏷️ Label agente (riferimento rapido)
 
 - `agent:claude-code` — Claude Code (PC)
