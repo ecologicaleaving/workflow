@@ -5,7 +5,19 @@
 
   "github": {
     "owner": "ecologicaleaving",
+    "labels": {
+      "automations": {
+        "pr_opened": { "add": ["review-ready"], "remove": [] },
+        "deploy_test_ok": { "add": ["deployed-test"], "remove": ["review-ready"] },
+        "deploy_prod_ok": { "add": ["deployed-prod"], "remove": ["deployed-test"] },
+        "deploy_failed": { "add": ["deploy-failed", "needs-fix"], "remove": [] }
+      }
+    },
     "kanban": {
+      "columnMappings": {
+        "pr_opened": "Test",
+        "pr_merged": "Done"
+      },
       "projectId": "PVT_kwHODSTPQM4BP1Xp",
       "projectNumber": 2,
       "statusFieldId": "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw",

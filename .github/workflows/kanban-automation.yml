@@ -1,0 +1,71 @@
+# Reusable workflow: Kanban Automation
+# Moves issues to the correct Kanban column based on event type.
+# Reads column mappings from config.json in the workflow repo.
+#
+# Usage (caller):
+#   jobs:
+#     kanban:
+#       uses: ecologicaleaving/workflow/.github/workflows/kanban-automation.yml@master
+#       with:
+#         issue_number: 42
+#         event_type: pr_opened
+#       secrets: inherit
+
+name: Kanban Automation
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        description: "Issue number to move on the board"
+        required: true
+        type: number
+      event_type:
+        description: "Event type: pr_opened | pr_merged"
+        required: true
+        type: string
+      config_repo:
+        description: "Repo containing config.json (owner/repo)"
+        required: false
+        type: string
+        default: "ecologicaleaving/workflow"
+
+jobs:
+  move-card:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.config_repo }}
+          sparse-checkout: |
+            config.json
+            scripts/gh-kanban-move.sh
+
+      - name: Resolve target column from config
+        id: resolve
+        run: |
+          # Read the column name for this event type from config.json
+          COLUMN=$(jq -r --arg evt "${{ inputs.event_type }}" \
+            '.github.kanban.columnMappings[$evt] // empty' config.json)
+
+          if [ -z "$COLUMN" ]; then
+            echo "❌ No column mapping found for event_type '${{ inputs.event_type }}'" >&2
+            echo "Available mappings:"
+            jq '.github.kanban.columnMappings' config.json >&2
+            exit 1
+          fi
+
+          echo "column=$COLUMN" >> "$GITHUB_OUTPUT"
+          echo "📌 Event '${{ inputs.event_type }}' → column '$COLUMN'"
+
+      - name: Move issue on Kanban board
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/gh-kanban-move.sh
+          scripts/gh-kanban-move.sh \
+            "${{ inputs.issue_number }}" \
+            "${{ github.repository }}" \
+            "${{ steps.resolve.outputs.column }}" \
+            --debug
