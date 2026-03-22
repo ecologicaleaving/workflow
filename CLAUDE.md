@@ -99,6 +99,26 @@ echo "=== Risultati: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -gt 0 ] && exit 1 || exit 0
 ```
 
+### Step CI — Smoke test post-deploy
+
+Il `deploy.yml` di ogni progetto **deve** includere uno step smoke test dopo il deploy. Aggiungerlo se assente:
+
+```yaml
+    - name: Smoke tests
+      if: success()
+      run: |
+        # Attendi che il deploy sia raggiungibile
+        sleep 10
+        # Esegui curl test
+        chmod +x tests/curl-tests.sh
+        ./tests/curl-tests.sh "https://test-${{ github.event.repository.name }}.8020solutions.org"
+```
+
+Questo step:
+- Gira solo se il deploy è andato a buon fine (`if: success()`)
+- Aspetta 10s per dare tempo al server di riavviarsi
+- Se un test fallisce → il run diventa rosso, con dettaglio visibile nei log
+
 ## Avvio sessione — Checklist obbligatoria
 
 All'inizio di ogni sessione, prima di fare qualsiasi cosa:

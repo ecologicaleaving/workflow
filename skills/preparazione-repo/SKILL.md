@@ -166,6 +166,18 @@ gh api repos/{owner}/{repo}/contents/tests/curl-tests.sh \
 
 Se esiste → ✅ OK, nessuna azione.
 
+### Verifica step Smoke test nel deploy.yml
+
+```bash
+gh api repos/{owner}/{repo}/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "Smoke tests" && echo "✅ Step presente" || echo "❌ Step assente"
+```
+
+Se assente → aggiungere lo step `Smoke tests` al deploy.yml seguendo le istruzioni in CLAUDE.md (sezione "Step CI — Smoke test post-deploy"). Committare su main:
+```
+chore(ci): aggiungi step smoke test post-deploy
+```
+
 ---
 
 ## STEP 6 — Report Finale
@@ -192,6 +204,12 @@ Notifiche Deploy Telegram
   ✅ Secrets presenti (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)
   ✅ Job notify-deploy presente nel workflow CI
   / ❌ Assenti → segnala a Ciccio (vedi DEPLOY-NOTIFY-SETUP.md)
+
+Curl Test
+  ✅ tests/curl-tests.sh presente
+  / 🆕 Creato
+  ✅ Step Smoke tests presente nel deploy.yml
+  / 🆕 Aggiunto
 
 ✅ Repo pronta per il workflow!
 ```
