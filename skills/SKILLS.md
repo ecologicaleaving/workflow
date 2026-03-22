@@ -19,6 +19,7 @@ Le skills sono moduli che estendono le capacita' di Claude Code con workflow spe
 | `issue-deploy-test` | Deploy su ambiente test e notifica Davide (Ciccio) |
 | `issue-done` | Checklist pre-PR, apertura PR, notifica |
 | `issue-implement` | Supervisione agente con checkpoint vincolanti |
+| `issue-pr-ready` | Unified post-implementation: pre-PR checklist, open PR, Kanban move, labels, notify Davide + prepare Ciccio message. Replaces issue-done → issue-deploy-test sequence |
 | `issue-reject` | Gestione rework dopo reject di Davide |
 | `issue-research-rework` | Research approfondita per reject complessi |
 | `issue-start` | Avvio piano research-only su issue |
