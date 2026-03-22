@@ -1,4 +1,4 @@
-## 📋 Risolve Issue #N: [Titolo]
+## 📋 Risolve Issue #{{ISSUE_NUMBER}}: {{ISSUE_TITLE}}
 
 ---
 
@@ -11,10 +11,7 @@
 
 ## ✅ Acceptance Criteria verificati
 
-<!-- Spunta gli AC della issue -->
-- [ ] 
-- [ ] 
-- [ ] 
+{{AC_LIST}}
 
 ---
 
@@ -30,9 +27,7 @@
 
 ## 📁 File modificati
 
-| File | Modifica |
-|------|---------|
-| | |
+{{FILES_CHANGED}}
 
 ---
 
