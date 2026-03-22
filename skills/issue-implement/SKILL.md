@@ -131,6 +131,7 @@ Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Cl
 - [ ] `PROJECT.md` aggiornato con le modifiche
 - [ ] Nessun file anomalo (`.env`, debug, config sensibili)
 - [ ] Lint ✅, Typecheck ✅, Test ✅
+- [ ] Curl test aggiunti a `tests/curl-tests.sh` (se la issue tocca API/route/endpoint)
 
 **Sistema test (verificato ora, non dopo):**
 ```bash
