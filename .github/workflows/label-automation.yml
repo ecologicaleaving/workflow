@@ -1,0 +1,121 @@
+# Reusable workflow: Label Automation
+# Adds/removes labels on issues based on event type.
+# Reads label rules from config.json in the workflow repo.
+# Creates labels automatically if they don't exist.
+#
+# Usage (caller):
+#   jobs:
+#     labels:
+#       uses: ecologicaleaving/workflow/.github/workflows/label-automation.yml@master
+#       with:
+#         issue_number: 42
+#         event_type: pr_opened
+#       secrets: inherit
+
+name: Label Automation
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        description: "Issue number to label"
+        required: true
+        type: number
+      event_type:
+        description: "Event type: pr_opened | deploy_test_ok | deploy_prod_ok | deploy_failed"
+        required: true
+        type: string
+      add_labels:
+        description: "Additional labels to add (CSV, optional)"
+        required: false
+        type: string
+        default: ""
+      remove_labels:
+        description: "Additional labels to remove (CSV, optional)"
+        required: false
+        type: string
+        default: ""
+      config_repo:
+        description: "Repo containing config.json (owner/repo)"
+        required: false
+        type: string
+        default: "ecologicaleaving/workflow"
+
+jobs:
+  manage-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.config_repo }}
+          sparse-checkout: config.json
+
+      - name: Resolve labels from config
+        id: resolve
+        run: |
+          EVENT_TYPE="${{ inputs.event_type }}"
+
+          # Read add/remove arrays from config for this event type
+          ADD_FROM_CONFIG=$(jq -r --arg evt "$EVENT_TYPE" \
+            '(.github.labels.automations[$evt].add // []) | join(",")' config.json)
+          REMOVE_FROM_CONFIG=$(jq -r --arg evt "$EVENT_TYPE" \
+            '(.github.labels.automations[$evt].remove // []) | join(",")' config.json)
+
+          # Merge with extra labels from inputs
+          ADD_LABELS="$ADD_FROM_CONFIG"
+          if [ -n "${{ inputs.add_labels }}" ]; then
+            ADD_LABELS="${ADD_LABELS:+$ADD_LABELS,}${{ inputs.add_labels }}"
+          fi
+
+          REMOVE_LABELS="$REMOVE_FROM_CONFIG"
+          if [ -n "${{ inputs.remove_labels }}" ]; then
+            REMOVE_LABELS="${REMOVE_LABELS:+$REMOVE_LABELS,}${{ inputs.remove_labels }}"
+          fi
+
+          echo "add_labels=$ADD_LABELS" >> "$GITHUB_OUTPUT"
+          echo "remove_labels=$REMOVE_LABELS" >> "$GITHUB_OUTPUT"
+          echo "📌 Event '$EVENT_TYPE' → add=[$ADD_LABELS] remove=[$REMOVE_LABELS]"
+
+      - name: Ensure labels exist and apply them
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          ISSUE="${{ inputs.issue_number }}"
+          ADD_LABELS="${{ steps.resolve.outputs.add_labels }}"
+          REMOVE_LABELS="${{ steps.resolve.outputs.remove_labels }}"
+
+          # Ensure each label exists, create if missing
+          ensure_label() {
+            local label="$1"
+            if ! gh label list --repo "$REPO" --search "$label" --json name -q '.[].name' | grep -qx "$label"; then
+              echo "🏷️  Creating label: $label"
+              gh label create "$label" --repo "$REPO" --color "ededed" --force || true
+            fi
+          }
+
+          # Add labels
+          if [ -n "$ADD_LABELS" ]; then
+            IFS=',' read -ra LABELS <<< "$ADD_LABELS"
+            for label in "${LABELS[@]}"; do
+              label=$(echo "$label" | xargs)  # trim whitespace
+              [ -z "$label" ] && continue
+              ensure_label "$label"
+            done
+            echo "➕ Adding labels: $ADD_LABELS"
+            gh issue edit "$ISSUE" --repo "$REPO" --add-label "$ADD_LABELS"
+          fi
+
+          # Remove labels
+          if [ -n "$REMOVE_LABELS" ]; then
+            IFS=',' read -ra LABELS <<< "$REMOVE_LABELS"
+            for label in "${LABELS[@]}"; do
+              label=$(echo "$label" | xargs)
+              [ -z "$label" ] && continue
+              echo "➖ Removing label: $label"
+              gh issue edit "$ISSUE" --repo "$REPO" --remove-label "$label" 2>/dev/null || true
+            done
+          fi
+
+          echo "✅ Labels updated for issue #$ISSUE"
