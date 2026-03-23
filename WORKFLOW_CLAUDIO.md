@@ -28,6 +28,18 @@ Claudio è il supervisore del ciclo di vita delle issue sul PC Windows.
 
 ---
 
+## 🤖 Modelli Agente (Claude)
+
+| Fase | Modello | Perché |
+|------|---------|--------|
+| **Research** (esplora codebase, raccoglie info) | Haiku (`anthropic/claude-haiku-4-5`) | Veloce, economico |
+| **Piano** (architettura, task checklist) | Opus (`anthropic/claude-opus-4-6`) | Massima qualità ragionamento |
+| **Implementazione** (scrive codice) | Sonnet (`anthropic/claude-sonnet-4-6`) | Ottimo codice, buon rapporto costo/qualità |
+
+> Claudio sceglie il modello al lancio di ogni agente. Questa tabella è la regola — non improvvisare.
+
+---
+
 ## 📋 Comandi di Davide
 
 | Comando | Azione |
