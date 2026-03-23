@@ -77,6 +77,8 @@ Istruzioni: <cosa deve fare l'agente>
 | CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
 | CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
 
+**Security Audit (obbligatorio):** Esegui la skill `security-audit` prima di procedere al push. Vedi `skills/security-audit/SKILL.md`.
+
 ---
 
 ## Gestione Anomalie

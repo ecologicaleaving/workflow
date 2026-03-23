@@ -26,6 +26,7 @@ Le skills sono moduli che estendono le capacita' di Claude Code con workflow spe
 | `prd-to-issues` | Breakdown PRD in issue GitHub (max ~15 per PRD) |
 | `preparazione-repo` | Setup repo per workflow 8020 |
 | `repo-maintenance` | Manutenzione file di progetto |
+| `security-audit` | Gate di sicurezza obbligatorio pre-push: check automatici (script) + check manuali (agente) |
 
 ---
 
