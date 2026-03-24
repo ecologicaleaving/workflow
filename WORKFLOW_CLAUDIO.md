@@ -18,7 +18,7 @@ Claudio è il supervisore del ciclo di vita delle issue sul PC Windows.
 
 **NON fa:**
 - Deploy (né test né produzione) → Ciccio
-- Merge → Ciccio su `/merge`
+- Merge → Claudio mergia su `/approva` di Davide (deploy automatico)
 - Monitoring automatico in background
 
 > ⚠️ **Regola: solo Claudio modifica la repo workflow**
@@ -46,7 +46,7 @@ Claudio è il supervisore del ciclo di vita delle issue sul PC Windows.
 |---------|--------|
 | `/create-issue` | Avvia raccolta nuova issue |
 | `/vai` | Dà il via all'agente dopo approvazione piano |
-| `/approva` | Approva la PR, card → Deploy, Ciccio procede con merge |
+| `/approva` | Approva la PR, Claudio mergia direttamente su main (deploy automatico) |
 | `/reject <feedback>` | Rimanda in rework con feedback, issue aggiornata |
 | `/merge` | (gestito da Ciccio) Merge + deploy produzione |
 
