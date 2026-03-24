@@ -111,7 +111,7 @@ Questa PR ha avuto <X> reject. Il problema principale: <descrizione sintetica>.
 ```
 
 **Parametri consigliati:**
-- `model`: sonnet (buon rapporto analisi/costo)
+- `model`: haiku (veloce, economico — research non richiede modelli pesanti)
 - `runTimeoutSeconds`: 600 (10 min)
 - `mode`: run
 
