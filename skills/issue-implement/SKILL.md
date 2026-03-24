@@ -216,6 +216,16 @@ Grazie! 🙌
 
 Se non servono azioni infra → nessun messaggio a Ciccio, il deploy è automatico.
 
+### Weekly Tracking (obbligatorio dopo merge/chiusura)
+
+Dopo ogni merge PR o chiusura issue, Claudio aggiunge una riga a `memory/weekly/current.md`:
+
+```markdown
+| YYYY-MM-DD | PR/Issue | <repo> | #N | <titolo> | ✅ merged/closed |
+```
+
+Non saltare mai questo step. Il file viene archiviato automaticamente ogni lunedì.
+
 ---
 ## Convenzioni Agente
 
