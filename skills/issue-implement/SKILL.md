@@ -68,7 +68,7 @@ Istruzioni: <cosa deve fare l'agente>
 |----|--------|----------------------|
 | CP1 | Piano approvato | Piano copre tutti gli AC, file sensati, nessun rischio |
 | CP2 | Fine iterazione N | Cosa implementato, test result, niente regressioni |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅, **Build ✅** |
 | CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
 
 ### Bug
@@ -77,7 +77,7 @@ Istruzioni: <cosa deve fare l'agente>
 |----|--------|----------------------|
 | CP1 | Root cause identificata | Causa chiara, approccio fix sensato |
 | CP2 | Fix applicato | Fix mirato, test di regressione ok |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅ |
+| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅, **Build ✅** |
 | CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
 
 **Security Audit (obbligatorio):** Esegui la skill `security-audit` prima di procedere al push. Vedi `skills/security-audit/SKILL.md`.
@@ -252,6 +252,27 @@ L'agente deve rispettare:
 - Niente commit su `main`/`master`
 - Niente `.env`, config sensibili, file di debug
 - `PROJECT.md` aggiornato prima del push
+
+### Build obbligatoria per app Flutter (CP3)
+
+**L'agente DEVE eseguire la build prima di dichiarare CP3 completato.**
+
+Se il repo contiene `pubspec.yaml`, l'agente esegue:
+```bash
+flutter analyze --no-fatal-infos
+flutter test --no-pub
+flutter build apk --debug --flavor dev --target-platform android-arm64
+```
+
+**Se la build fallisce → l'agente DEVE fixare prima di procedere al CP4.**
+Non si apre PR con build rotta. Mai.
+
+Per progetti Node.js:
+```bash
+npm ci
+npm run build  # se presente
+npm test       # se presente
+```
 
 ---
 
