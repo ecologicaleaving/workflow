@@ -1,8 +1,11 @@
 ﻿# Skill: issue-implement
 
 **Trigger:** Piano approvato, agente in fase di implementazione  
-**Agente:** Claudio (supervisione) + Claude Code / Codex (esecuzione)  
-**Versione:** 2.2.0
+**Agente:** Claudio (supervisione) + Sonnet `anthropic/claude-sonnet-4-6` (esecuzione)  
+**Versione:** 2.3.0
+
+> ⚠️ **Modello obbligatorio:** L'implementazione usa SEMPRE Sonnet (`anthropic/claude-sonnet-4-6`).  
+> Haiku = research, Opus = piano, Sonnet = codice. Vedi `issue-start/SKILL.md` per il dettaglio.
 
 ---
 

@@ -88,14 +88,44 @@ mutation {
 }'
 ```
 
-### Step 2 — Lancia agente in research-only
+### Step 2 — Lancia agenti: Research → Piano (due fasi separate)
 
-Istruzioni da passare all'agente (Claude Code o Codex):
+⚠️ **Modelli obbligatori per fase:**
+
+| Fase | Modello | Scopo |
+|------|---------|-------|
+| **Research** | Haiku (`anthropic/claude-haiku-4-5`) | Esplorazione codebase, raccolta info |
+| **Piano** | Opus (`anthropic/claude-opus-4-6`) | Piano dettagliato, architettura, task checklist |
+| **Implementazione** | Sonnet (`anthropic/claude-sonnet-4-6`) | Scrittura codice |
+
+**Fase 2a — Research (Haiku)**
+
+Lancia Haiku per esplorare il codebase:
 
 ```
 Leggi la issue #N su ecologicaleaving/<repo>.
 Clona o aggiorna il repo localmente.
 Esplora il codebase in modo approfondito.
+
+Riporta:
+- Struttura progetto e file rilevanti
+- Codice esistente collegato alla issue (funzioni, componenti, tipi)
+- Dipendenze e vincoli tecnici
+- Qualsiasi info utile per pianificare l'implementazione
+
+⚠️ NON modificare alcun file. Solo lettura e analisi.
+```
+
+**Fase 2b — Piano (Opus)**
+
+Quando Haiku restituisce la research, lancia Opus con il contesto raccolto:
+
+```
+Basandoti sulla seguente analisi del codebase:
+<output research Haiku>
+
+E sulla issue #N (ecologicaleaving/<repo>):
+<body issue>
 
 Produci un piano dettagliato che includa:
 1. Comprensione del problema / obiettivo
@@ -106,8 +136,9 @@ Produci un piano dettagliato che includa:
 6. Stima complessità
 
 ⚠️ NON modificare alcun file in questa fase.
-Riporta il piano completo e aspetta istruzioni prima di procedere.
 ```
+
+Claudio posta il piano come commento sulla issue.
 
 ### Step 3 — Valuta il piano (CP1)
 
