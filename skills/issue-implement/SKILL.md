@@ -138,6 +138,20 @@ Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Cl
 - [ ] Lint ✅, Typecheck ✅, Test ✅
 - [ ] Curl test aggiunti a `tests/curl-tests.sh` (se la issue tocca API/route/endpoint)
 
+**Build locale (OBBLIGATORIO per app Flutter):**
+- [ ] `flutter build apk --debug --flavor dev` (o flavor appropriato) passa senza errori
+- Se la build fallisce → **blocca PR**, fix obbligatorio prima di pushare
+- Non fidarsi solo dei test: la build completa cattura errori di tipo, import, codegen che i test non vedono
+
+```bash
+# Script pre-PR per app Flutter
+cd <repo_path>
+echo "=== Flutter Analyze ===" && flutter analyze --no-fatal-infos
+echo "=== Flutter Test ===" && flutter test --no-pub
+echo "=== Flutter Build (dev/debug) ===" && flutter build apk --debug --flavor dev --target-platform android-arm64
+echo "Build OK ✅" || echo "BUILD FAILED ❌ — fix prima di aprire PR"
+```
+
 **Sistema test (verificato ora, non dopo):**
 ```bash
 REPO="<repo>"
