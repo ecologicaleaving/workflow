@@ -161,6 +161,31 @@ Stesso Step 7 e Step 8 della procedura CI.
 
 ---
 
+## Notifiche Deploy Automatiche (ciccio-notify)
+
+Lo script `/usr/local/bin/ciccio-notify` sulla VPS gestisce le notifiche Telegram automatiche post-deploy:
+
+**Flusso:**
+1. GitHub Actions completa il deploy (success o failure)
+2. Webhook chiama `ciccio-notify` sulla VPS
+3. Lo script manda notifica Telegram con:
+   - Stato (✅ success / ❌ failure)
+   - Repo, branch, commit
+   - Link al deploy test
+   - **AC estratti automaticamente dalla issue** (se branch è `feature/issue-N-*`)
+
+**Estrazione AC:**
+- Lo script rileva il numero issue dal nome branch (`feature/issue-N-*`)
+- Chiama `gh issue view N` per recuperare il body
+- Cerca la sezione "Acceptance Criteria" e la appende al messaggio
+- Se non trova AC, manda il messaggio normale
+
+**Risultato:** Davide riceve il messaggio di deploy con gli AC già pronti da verificare, zero lavoro manuale.
+
+> Lo script è gestito da Ciccio sulla VPS. Se serve modificarlo: `/usr/local/bin/ciccio-notify`.
+
+---
+
 ## Note
 
 - Il deploy test **non modifica mai la produzione**
