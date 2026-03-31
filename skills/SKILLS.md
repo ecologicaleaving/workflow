@@ -12,7 +12,8 @@ Le skills sono moduli che estendono le capacita' di Claude Code con workflow spe
 |-------|-------------|
 | `8020-commit-workflow` | Commit e push con convenzioni (Conventional Commits, branch check, PROJECT.md) |
 | `8020-workflow` | Regole workflow per Ciccio (VPS) — Kanban, deploy, PR, APK |
-| `create-issue` | Raccolta info e creazione issue GitHub strutturate |
+| `create-issue` | Creazione issue leggera da report grezzo → Backlog |
+| `issue-validate` | Sessione interattiva per completare issue Backlog → research + piano → Todo |
 | `create-prd` | Conversazione guidata per generare un PRD da brief/idea |
 | `issue-approve` | Gestione `/approva` — label, card Deploy, notifica Ciccio |
 | `issue-deploy-prod` | Merge PR e deploy in produzione (Ciccio) |
