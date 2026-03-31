@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claudio (interattivo con Davide) + Haiku (research) + Opus (piano)
-**Versione:** 1.0.0
+**Versione:** 1.1.0
 
 ---
 
@@ -35,15 +35,29 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 
 2. **Edge case / comportamenti limite** — Ci sono casi particolari da gestire? (es. dati mancanti, utenti non autorizzati, file vuoti, ecc.)
 
-3. **Dipendenze** — Ci sono issue che devono essere chiuse prima? (oppure: questa issue blocca qualcosa?)
+3. **Dipendenze** — Ci sono issue che devono essere chiuse prima? Questa issue ne blocca altre? Verifica anche le issue future collegate (stessa epic, dipendenze tecniche) e segnala se serve aggiornarle per coerenza con quanto emerso nella validazione.
 
 4. **Note tecniche** — File specifici da toccare, librerie preferite, vincoli di architettura? (se non lo sai, skip)
 
-5. **Stima** — Quanto pensi che ci voglia? (2h, 4h, 8h, più giorni?)
-
-6. **Priorità** — Alta / Media / Bassa
+5. **Priorità** — Alta / Media / Bassa (le stime non interessano a Davide, skippa)
 
 Se una risposta è già chiara dal contesto, skippa la domanda.
+
+---
+
+### Step 1b — Verifica coerenza con issue future collegate (obbligatorio)
+
+Dopo aver raccolto le risposte, prima di aggiornare la issue:
+
+1. Identifica le issue future che dipendono da questa (stessa epic, stessa area funzionale)
+2. Verifica se le decisioni prese nella validazione impattano quelle issue (es. cambio architettura, nuovi campi DB, nuova logica)
+3. Se sì → proponi aggiornamento a Davide e aggiorna anche quelle issue
+
+```bash
+# Controlla issue aperte della stessa epic
+gh issue list --repo ecologicaleaving/<repo> --state open \
+  --label "<epic>" --json number,title,body | jq '.[]'
+```
 
 ---
 
@@ -53,7 +67,7 @@ Con le risposte di Davide, aggiorna la issue con il body completo:
 
 ```bash
 gh issue edit <N> --repo ecologicaleaving/<repo> \
-  --body "<body completo con: Descrizione, Acceptance Criteria, Edge case, Dipendenze, Note tecniche, Stima>"
+  --body "<body completo con: Descrizione, Acceptance Criteria, Edge case, Dipendenze, Note tecniche>"
 ```
 
 Aggiungi label priorità se non presente:
@@ -126,12 +140,13 @@ Modello: `anthropic/claude-opus-4-6`
 - File identificati sensati e in scope
 - Nessun approccio rischioso
 - Task checklist dettagliata e realistica
+- Coerente con le decisioni prese nella validazione (es. architettura DB, logica business)
 
 **⚠️ Anomalia se:**
 - Piano ignora degli AC
 - Vuole toccare file fuori scope
-- Approccio tecnico sbagliato
-- Stima irrealistica
+- Approccio tecnico sbagliato o incongruente con il codebase esistente
+- Propone soluzioni già escluse durante la validazione
 
 Se anomalia → blocca e notifica Davide prima di procedere.
 
@@ -149,8 +164,11 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 ### Step 8 — Sposta card → Todo
 
 ```bash
-ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json \
+ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
   | jq -r '.items[] | select(.content.number == <N> and (.content.repository | contains("<repo>"))) | .id')
+
+# Se la issue non è ancora nel project, aggiungila prima
+# gh project item-add 2 --owner ecologicaleaving --url https://github.com/ecologicaleaving/<repo>/issues/<N>
 
 gh api graphql -f query='
 mutation {
@@ -184,3 +202,10 @@ mutation {
 | Research | `anthropic/claude-haiku-4-5` |
 | Piano | `anthropic/claude-opus-4-6` |
 | Implementazione (dopo `/vai`) | `anthropic/claude-sonnet-4-6` |
+
+---
+
+## Changelog
+
+- **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate; rimossa domanda stima (non interessa a Davide); aggiornata valutazione piano con check coerenza codebase; aggiunto fallback item-add nel kanban
+- **v1.0.0** (2026-03-31): Prima versione
