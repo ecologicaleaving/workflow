@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claudio (interattivo con Davide) + Haiku (research) + Opus (piano)
-**Versione:** 1.1.0
+**Versione:** 1.2.0
 
 ---
 
@@ -45,7 +45,34 @@ Se una risposta è già chiara dal contesto, skippa la domanda.
 
 ---
 
-### Step 1b — Verifica coerenza con issue future collegate (obbligatorio)
+### Step 1b — Verifica versioni dipendenze (obbligatorio)
+
+Prima di aggiornare la issue, verifica le versioni dei tool e librerie coinvolti nell'implementazione:
+
+```bash
+cd /tmp/<repo>
+
+# Versioni principali framework
+cat package.json | jq '{
+  dependencies: .dependencies,
+  devDependencies: .devDependencies
+} | to_entries | .[] | select(.value | type == "object") | .value | to_entries | .[]' 2>/dev/null \
+  || cat package.json | grep -E '"(next|react|typescript|supabase|flutter|dart)" *:'
+
+# Versione Node
+node --version 2>/dev/null
+
+# Per Flutter
+flutter --version 2>/dev/null | head -3
+```
+
+**Perché:** le dipendenze esistenti determinano quale approccio tecnico è compatibile (es. Next.js 15 vs 14 ha API diverse, googleapis richiede versione specifica di Node, ecc.).
+
+Riporta le versioni rilevanti nel body aggiornato della issue nella sezione "Note tecniche".
+
+---
+
+### Step 1c — Verifica coerenza con issue future collegate (obbligatorio)
 
 Dopo aver raccolto le risposte, prima di aggiornare la issue:
 
@@ -97,7 +124,9 @@ Esplora il codebase in modo approfondito.
 Riporta:
 - Struttura progetto e file rilevanti
 - Codice esistente collegato alla issue
-- Dipendenze e vincoli tecnici
+- Versioni delle dipendenze rilevanti (framework, librerie coinvolte dalla issue)
+- Dipendenze mancanti da installare (con versione consigliata compatibile)
+- Vincoli tecnici imposti dalle versioni correnti
 - Qualsiasi info utile per pianificare l'implementazione
 
 ⚠️ NON modificare alcun file. Solo lettura e analisi.
@@ -207,5 +236,6 @@ mutation {
 
 ## Changelog
 
+- **v1.2.0** (2026-03-31): Aggiunto Step 1b — verifica versioni dipendenze (framework, librerie coinvolte); Step 1c rinominato da 1b; research prompt aggiornato per includere versioni e dipendenze mancanti
 - **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate; rimossa domanda stima (non interessa a Davide); aggiornata valutazione piano con check coerenza codebase; aggiunto fallback item-add nel kanban
 - **v1.0.0** (2026-03-31): Prima versione
