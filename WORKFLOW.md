@@ -22,13 +22,11 @@
 
 ---
 
-## 🤖 Modelli Agente
+## 🤖 Modello Agente
 
-| Fase | Modello | Motivo |
-|------|---------|--------|
-| Research | Haiku (`anthropic/claude-haiku-4-5`) | Veloce, economico |
-| Piano | Sonnet (`anthropic/claude-sonnet-4-6`) | Ottimo ragionamento, buon costo |
-| Implementazione | Sonnet (`anthropic/claude-sonnet-4-6`) | Ottimo codice |
+**Un solo agente Sonnet** (`anthropic/claude-sonnet-4-6`) per l'intero ciclo: research → piano → implementazione.
+
+L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi di informazione tra agenti diversi, zero context reload.
 
 ---
 
@@ -79,45 +77,45 @@ Issue leggera — i dettagli arrivano nella Fase 2.
 
 ## FASE 2 — Validazione + Piano
 
-**Chi:** Claudio (interattivo con Davide) → Haiku (research) → Sonnet (piano)
+**Chi:** Claudio (interattivo con Davide) → Sonnet (research + piano)
 **Skill:** `issue-validate`
 **Kanban:** Backlog → Todo
 
 1. **Domande a Davide** — AC, edge case, dipendenze, note tecniche (una alla volta)
 2. **Verifica deploy** — CI pipeline, secrets, sottodomini (una volta per repo, non ripetere se già verificato)
-3. **Research** (Haiku) — esplora codebase, riporta struttura e vincoli
-4. **Piano** (Sonnet) — file da toccare, approccio, task checklist, rischi
-5. **Valutazione Claudio** — check formale: AC coperti, scope ok, niente red flag
-6. **Notifica Davide** — piano pronto, aspetta `/vai`
+3. **Sonnet esplora + pianifica** — un solo agente fa research e piano in un colpo
+4. **Valutazione Claudio** — check formale: AC coperti, scope ok, niente red flag
+5. **Notifica Davide** — piano pronto, aspetta `/vai`
 
 > ⚠️ Claudio NON avvia mai l'implementazione senza `/vai` esplicito.
+> Dopo `/vai`, lo **stesso agente** prosegue con l'implementazione (nessun respawn).
 
 ---
 
 ## FASE 3 — Implementazione
 
-**Chi:** Claudio (supervisione) + Sonnet (esecuzione)
+**Chi:** Claudio (supervisione) + stesso Sonnet della Fase 2 (esecuzione)
 **Skill:** `issue-implement`
 **Kanban:** Todo → InProgress (dopo `/vai`)
 
-### Checkpoint obbligatori
+### Checkpoint
 
-L'agente posta checkpoint come commento sulla issue. Claudio valuta e risponde `✅ procedi` o `🔴 bloccato`.
+L'agente procede in autonomia e si ferma al **gate finale** (pronto per push).
+Se incontra anomalie, si auto-blocca e notifica Claudio.
 
-| CP | Cosa | Claudio verifica |
-|----|------|-----------------|
-| CP1 | Piano confermato | AC coperti, scope ok |
-| CP2 | Implementazione + test | Codice fatto, test passati, niente regressioni |
-| CP3 | Pronto per push | AC verificati, build ok, security audit, nessun file anomalo |
+| Momento | Cosa succede |
+|---------|-------------|
+| Dopo `/vai` | Agente implementa in autonomia (no checkpoint intermedi) |
+| Anomalia | Agente si blocca, notifica Claudio → Claudio notifica Davide |
+| **Gate finale** | Agente posta checkpoint: AC verificati, test passati, build ok, security audit ok |
+| Claudio valida | `✅ procedi` (push) oppure `🔴 bloccato` (fix) |
 
-> CP2 e CP3 possono essere unificati se l'implementazione è semplice.
-
-### Notifiche a Davide
+### Notifica a Davide (al gate finale)
 
 ```
-✅ [Issue #N] CP-X — <titolo>
-📌 <summary 1-2 righe>
-⏭️ Prossimo step: <cosa fa l'agente>
+✅ [Issue #N] Implementazione completata
+📌 <summary cosa è stato fatto>
+⏭️ Apro la PR dopo verifica finale
 ```
 
 Anomalia → blocca agente, notifica Davide, aspetta istruzioni.

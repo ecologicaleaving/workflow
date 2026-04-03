@@ -1,8 +1,8 @@
 # Skill: issue-validate
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
-**Agente:** Claudio (interattivo con Davide) + Haiku (research) + Sonnet (piano)
-**Versione:** 2.0.0
+**Agente:** Claudio (interattivo con Davide) + Sonnet (research + piano + implementazione)
+**Versione:** 3.0.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -126,51 +126,30 @@ Se qualcosa manca → blocca e notifica Davide + Ciccio.
 
 ---
 
-### Step 4 — Lancia Research (Haiku)
+### Step 4 — Lancia Sonnet (research + piano)
+
+Un solo agente fa esplorazione e piano. Questo agente verrà poi riutilizzato per l'implementazione dopo `/vai`.
 
 ```
 Leggi la issue #N su ecologicaleaving/<repo>.
 Clona o aggiorna il repo localmente.
 Esplora il codebase in modo approfondito.
 
-Riporta:
-- Struttura progetto e file rilevanti
-- Codice esistente collegato alla issue
-- Versioni delle dipendenze rilevanti (framework, librerie coinvolte dalla issue)
-- Dipendenze mancanti da installare (con versione consigliata compatibile)
-- Vincoli tecnici imposti dalle versioni correnti
-- Qualsiasi info utile per pianificare l'implementazione
+Poi produci un piano dettagliato:
+1. Struttura progetto e file rilevanti
+2. Codice esistente collegato alla issue + versioni dipendenze
+3. File da toccare (con motivazione)
+4. Approccio tecnico step-by-step
+5. Rischi e possibili problemi
+6. Task checklist (lista di step implementativi)
+7. Stima complessità
 
-⚠️ NON modificare alcun file. Solo lettura e analisi.
-```
-
-Modello: `anthropic/claude-haiku-4-5`
-
----
-
-### Step 5 — Lancia Piano (Sonnet)
-
-Quando Haiku restituisce la research, lancia Sonnet con il contesto:
-
-```
-Basandoti sulla seguente analisi del codebase:
-<output research Haiku>
-
-E sulla issue #N (ecologicaleaving/<repo>):
-<body issue aggiornato>
-
-Produci un piano dettagliato che includa:
-1. Comprensione del problema / obiettivo
-2. File da toccare (con motivazione)
-3. Approccio tecnico step-by-step
-4. Rischi e possibili problemi
-5. Task checklist (lista di step implementativi)
-6. Stima complessità
-
-⚠️ NON modificare alcun file in questa fase.
+⚠️ NON modificare alcun file in questa fase. Solo lettura, analisi e piano.
 ```
 
 Modello: `anthropic/claude-sonnet-4-6`
+
+> ⚠️ **Importante:** Lancia con `mode: "session"` (non `"run"`) così l'agente resta vivo per l'implementazione dopo `/vai`.
 
 ---
 
@@ -224,6 +203,7 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v3.0.0** (2026-04-03): Agente unico Sonnet per research+piano+implementazione, rimosso Haiku separato
 - **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli (vedi WORKFLOW.md), verifica deploy condizionale, assorbita issue-start
 - **v1.2.0** (2026-03-31): Aggiunto Step 1b — verifica versioni dipendenze
 - **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate
