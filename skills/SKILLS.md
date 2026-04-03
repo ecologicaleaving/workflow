@@ -30,6 +30,7 @@ Il flusso completo è in `WORKFLOW.md` nella root del repo.
 | `prd-to-issues` | Breakdown PRD in issue GitHub |
 | `preparazione-repo` | Setup iniziale repo per workflow 8020 |
 | `repo-maintenance` | Manutenzione file di progetto |
+| `pdf-to-md` | Converti PDF in Markdown prima di leggerli — obbligatoria per tutti gli agenti |
 
 ---
 

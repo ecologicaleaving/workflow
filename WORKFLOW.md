@@ -232,6 +232,7 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 | `create-prd` | Creazione PRD da brief |
 | `prd-to-issues` | Breakdown PRD in issue |
 | `preparazione-repo` | Setup iniziale repo per workflow 8020 |
+| `pdf-to-md` | Converti PDF in Markdown prima di leggerli (obbligatoria per tutti) |
 
 ---
 
