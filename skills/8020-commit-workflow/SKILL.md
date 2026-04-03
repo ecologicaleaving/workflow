@@ -91,27 +91,23 @@ If commit skin is active, it will automatically:
 
 After `git push`:
 
-1. **Notify David** that the feature is ready
-2. **Tell David to say to Ciccio**: "Deploy [project] su test" (David delegates to Ciccio)
-3. **Wait** for Ciccio to deploy to `test-*.8020solutions.org`
-4. **David reviews** the test environment
-5. If David says OK: Ciccio handles merge to master + production deploy
+1. CI deploys automatically to `test-*.8020solutions.org`
+2. Bot Telegram notifies Davide with test link + AC
+3. Claudio opens PR via skill `issue-pr-ready`
+4. Davide tests → `/approva` or `/reject`
 
-> IMPORTANT: Never push to master directly. Never merge without David's approval.
+> IMPORTANT: Never push to master directly. Never merge without Davide's approval.
 > Never push anything that is broken or untested.
+> See `WORKFLOW.md` for the full flow.
 
 ---
 
 ## Quick Reference
 
 | Action | Command |
-|--------|---------|
+|--------|--------|
 | Check branch | `git branch --show-current` |
 | Check status | `git status` |
-| Check skin | `ls .commit-skin/project-config.json` |
 | Stage files | `git add <files>` |
 | Commit | `git commit -m "type: description"` |
 | Push feature | `git push origin feature/nome-feature` |
-
-## After Push - What to Tell David
-> "Ho pushato la feature [nome]. Puoi dire a Ciccio di deployare su test."

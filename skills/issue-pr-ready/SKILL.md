@@ -23,18 +23,9 @@ and the branch is ready for pull request and review.
 
 ## Procedure
 
-### Step 1 — Pre-PR Checklist
+### Step 1 — Verify CP3 passed
 
-Before opening the PR, verify ALL of the following:
-
-- [ ] **All AC items implemented** — every acceptance criterion from the issue is done
-- [ ] **Lint / test pass** — run project linter and tests, fix any failures
-- [ ] **PROJECT.md updated** — if the project has a PROJECT.md, update it with changes
-- [ ] **No unrelated changes** — diff only contains changes for this issue
-- [ ] **Commits are clean** — atomic commits with `feat:` / `fix:` / `chore:` prefixes
-- [ ] **Branch naming** — follows pattern from `config.json` → `workflow.branchPattern`
-
-If any item fails, fix it before proceeding.
+All checks were done at CP3 (`issue-implement`). Verify the checkpoint was approved before proceeding.
 
 ### Step 2 — Push Branch and Open PR
 
@@ -61,16 +52,8 @@ gh pr create \
 
 ### Step 3 — Move Kanban Card → Test
 
-Move the issue card to the "Test" column on the project board:
-
 ```bash
-# Read Kanban config
-PROJECT_ID=$(jq -r '.github.kanban.projectId' config.json)
-STATUS_FIELD_ID=$(jq -r '.github.kanban.statusFieldId' config.json)
-TEST_COLUMN_ID=$(jq -r '.github.kanban.columns.Test.id' config.json)
-
-# Use the kanban-move script or direct gh API
-./scripts/kanban-move.sh "$ISSUE_NUMBER" "Test"
+./scripts/kanban-move.sh "$ISSUE_NUMBER" "$REPO" Test
 ```
 
 ### Step 4 — Add Label `review-ready`

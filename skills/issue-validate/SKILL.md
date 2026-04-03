@@ -197,7 +197,7 @@ Se anomalia → blocca e notifica Davide prima di procedere.
 
 ```bash
 gh issue comment <N> --repo ecologicaleaving/<repo> \
-  --body "## 📝 Piano (generato da Opus)\n\n<piano completo>"
+  --body "## 📝 Piano (generato da Sonnet)\n\n<piano completo>"
 ```
 
 ---
@@ -205,21 +205,7 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 ### Step 8 — Sposta card → Todo
 
 ```bash
-ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
-  | jq -r '.items[] | select(.content.number == <N> and (.content.repository | contains("<repo>"))) | .id')
-
-# Se la issue non è ancora nel project, aggiungila prima
-# gh project item-add 2 --owner ecologicaleaving --url https://github.com/ecologicaleaving/<repo>/issues/<N>
-
-gh api graphql -f query='
-mutation {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHODSTPQM4BP1Xp"
-    itemId: "'$ITEM_ID'"
-    fieldId: "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
-    value: { singleSelectOptionId: "f75ad846" }
-  }) { projectV2Item { id } }
-}'
+./scripts/kanban-move.sh <N> <repo> Todo
 ```
 
 ---
