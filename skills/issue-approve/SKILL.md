@@ -1,52 +1,62 @@
 # Skill: issue-approve
 
-**Trigger:** Davide scrive `/approva #N`  
+**Trigger:** Davide scrive `/approva`  
 **Agente:** Claudio  
-**Versione:** 1.0.0
+**Versione:** 2.0.0
+
+> Riferimento flusso: vedi `WORKFLOW.md` — Fase 5a
 
 ---
 
 ## Obiettivo
 
-Formalizzare l'approvazione di una issue dopo test positivo: aggiornare label, spostare card in Deploy, notificare Ciccio per il merge.
+Mergiare la PR, chiudere la issue, notificare. Ciccio coinvolto solo se servono azioni infra.
 
 ---
 
 ## Procedura
 
-### Step 1 — Aggiorna label
+### Step 1 — Merge PR
+
+```bash
+gh pr merge <PR_N> --repo ecologicaleaving/<repo> --merge --delete-branch
+```
+
+La CI deploya automaticamente in produzione.
+
+### Step 2 — Aggiorna label e chiudi issue
 
 ```bash
 gh issue edit <N> --repo ecologicaleaving/<repo> \
   --remove-label "review-ready,deployed-test,needs-fix" \
-  --add-label "approved"
+  --add-label "deployed-prod"
+gh issue close <N> --repo ecologicaleaving/<repo>
 ```
 
-### Step 2 — Sposta card → Deploy
+### Step 3 — Sposta card → Done
 
 ```bash
-./scripts/kanban-move.sh <N> <repo> Deploy
-```
-
-### Step 3 — Notifica Ciccio
-
-```
-🔀 [<repo>] Issue #N approvata da Davide
-
-Ciao Ciccio, puoi procedere con il merge:
-- PR: <link PR>
-- Repo: ecologicaleaving/<repo>
-
-Dopo il merge, la CI deploya in produzione automaticamente (se configurata).
-Se serve deploy manuale, vedi la PR per dettagli.
+./scripts/kanban-move.sh <N> <repo> Done
 ```
 
 ### Step 4 — Conferma a Davide
 
 ```
-✅ [Issue #N] Approvata
-📌 Card → Deploy, Ciccio notificato
-⏭️ Ciccio procede con merge e deploy prod
+✅ [Issue #N] Live in produzione
+📌 PR mergiata, issue chiusa, card → Done
+```
+
+### Step 5 — Azioni infra (solo se necessario)
+
+Se servono env vars, migrazioni DB, config VPS → prepara messaggio per Ciccio e proponilo a Davide prima di inviare.
+
+Se non servono azioni infra → nessun coinvolgimento di Ciccio.
+
+### Step 6 — Weekly tracking
+
+Aggiungi riga a `memory/weekly/current.md`:
+```
+| YYYY-MM-DD | PR | <repo> | #N | <titolo> | ✅ merged |
 ```
 
 ---
@@ -55,4 +65,3 @@ Se serve deploy manuale, vedi la PR per dettagli.
 
 - Mai eseguire senza `/approva` esplicito di Davide
 - Se la issue ha avuto reject precedenti, le label `needs-fix` vengono rimosse
-- Dopo il merge, Ciccio segue la skill `issue-deploy-prod`

@@ -1,37 +1,30 @@
-# APPROVE_DEPLOY.md — Procedura /approva → deploy produzione
+# APPROVE_DEPLOY.md — Procedura /approva
+
+> ⚠️ Questo file è un riferimento rapido. La procedura completa è nella skill `issue-approve`.
 
 ## Trigger
-Davide scrive: `/approva #<N>` oppure `/merge #<N>`
-
-## Regola d'oro
-L'approvazione esplicita di Davide è sufficiente. **Non verificare prerequisiti**, non bloccarsi su stati intermedi.
+Davide scrive: `/approva`
 
 ## Procedura
 
 1. **Merge PR su master**
 ```bash
-export PATH=$PATH:/root/go/bin
 gh pr merge <PR_N> --repo ecologicaleaving/<REPO> --merge --delete-branch
 ```
 
-2. **Sposta card: `Test` → `Deploy`**
-→ Vedi `KANBAN.md`
-
-3. **Deploy in produzione**
-→ Vedi `DEPLOY_PROD.md` per la procedura specifica per repo
-
-4. **Sposta card: `Deploy` → `Done`**
-→ Vedi `KANBAN.md`
-
-5. **Chiudi la issue**
+2. **Aggiorna label e chiudi issue**
 ```bash
+gh issue edit <N> --repo ecologicaleaving/<REPO> \
+  --remove-label "review-ready,deployed-test,needs-fix" \
+  --add-label "deployed-prod"
 gh issue close <N> --repo ecologicaleaving/<REPO>
 ```
 
-6. **Aggiorna PROJECT.md** nel repo con version bump + sezione DONE
+3. **Sposta card → Done**
+```bash
+./scripts/kanban-move.sh <N> <REPO> Done
+```
 
-7. **Notifica Davide**
-```
-🚀 #<N> live in produzione!
-🔗 <URL prod>
-```
+4. **Notifica Davide** con conferma
+
+5. **Se servono azioni infra** (env vars, DB, config) → prepara messaggio per Ciccio, proponi a Davide

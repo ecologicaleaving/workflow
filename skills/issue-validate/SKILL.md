@@ -1,8 +1,10 @@
 # Skill: issue-validate
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
-**Agente:** Claudio (interattivo con Davide) + Haiku (research) + Opus (piano)
-**Versione:** 1.2.0
+**Agente:** Claudio (interattivo con Davide) + Haiku (research) + Sonnet (piano)
+**Versione:** 2.0.0
+
+> Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
 ---
 
@@ -105,10 +107,20 @@ gh issue edit <N> --repo ecologicaleaving/<repo> --add-label "priorità:<alta|me
 
 ---
 
-### Step 3 — Verifica sistema deploy (obbligatorio)
+### Step 3 — Verifica sistema deploy (solo se primo lavoro su questa repo)
 
-Prima di avviare research e piano, verifica che il sistema deploy sia pronto.
-Usa la stessa procedura di `issue-start/SKILL.md` — Step 0.
+Verifica CI pipeline, secrets, sottodomini. Se già verificato per questa repo, salta.
+
+```bash
+REPO="<repo>"
+echo "=== CI pipeline ==="
+gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
+  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅" || echo "❌ assente"
+echo "=== Secrets ==="
+gh secret list --repo ecologicaleaving/$REPO
+echo "=== Test ==="
+curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
+```
 
 Se qualcosa manca → blocca e notifica Davide + Ciccio.
 
@@ -136,9 +148,9 @@ Modello: `anthropic/claude-haiku-4-5`
 
 ---
 
-### Step 5 — Lancia Piano (Opus)
+### Step 5 — Lancia Piano (Sonnet)
 
-Quando Haiku restituisce la research, lancia Opus con il contesto:
+Quando Haiku restituisce la research, lancia Sonnet con il contesto:
 
 ```
 Basandoti sulla seguente analisi del codebase:
@@ -158,7 +170,7 @@ Produci un piano dettagliato che includa:
 ⚠️ NON modificare alcun file in questa fase.
 ```
 
-Modello: `anthropic/claude-opus-4-6`
+Modello: `anthropic/claude-sonnet-4-6`
 
 ---
 
@@ -224,18 +236,9 @@ mutation {
 
 ---
 
-## Modelli
-
-| Fase | Modello |
-|------|---------|
-| Research | `anthropic/claude-haiku-4-5` |
-| Piano | `anthropic/claude-opus-4-6` |
-| Implementazione (dopo `/vai`) | `anthropic/claude-sonnet-4-6` |
-
----
-
 ## Changelog
 
-- **v1.2.0** (2026-03-31): Aggiunto Step 1b — verifica versioni dipendenze (framework, librerie coinvolte); Step 1c rinominato da 1b; research prompt aggiornato per includere versioni e dipendenze mancanti
-- **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate; rimossa domanda stima (non interessa a Davide); aggiornata valutazione piano con check coerenza codebase; aggiunto fallback item-add nel kanban
+- **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli (vedi WORKFLOW.md), verifica deploy condizionale, assorbita issue-start
+- **v1.2.0** (2026-03-31): Aggiunto Step 1b — verifica versioni dipendenze
+- **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate
 - **v1.0.0** (2026-03-31): Prima versione

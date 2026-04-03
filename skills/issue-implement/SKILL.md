@@ -1,11 +1,11 @@
 ﻿# Skill: issue-implement
 
-**Trigger:** Piano approvato, agente in fase di implementazione  
+**Trigger:** `/vai` di Davide — piano approvato, agente in fase di implementazione  
 **Agente:** Claudio (supervisione) + Sonnet `anthropic/claude-sonnet-4-6` (esecuzione)  
-**Versione:** 2.3.0
+**Versione:** 3.0.0
 
-> ⚠️ **Modello obbligatorio:** L'implementazione usa SEMPRE Sonnet (`anthropic/claude-sonnet-4-6`).  
-> Haiku = research, Opus = piano, Sonnet = codice. Vedi `issue-start/SKILL.md` per il dettaglio.
+> Riferimento flusso: vedi `WORKFLOW.md` — Fase 3  
+> Modelli agente: vedi `WORKFLOW.md` — tabella modelli
 
 ---
 
@@ -66,21 +66,21 @@ Istruzioni: <cosa deve fare l'agente>
 
 | CP | Titolo | Cosa verifica Claudio |
 |----|--------|----------------------|
-| CP1 | Piano approvato | Piano copre tutti gli AC, file sensati, nessun rischio |
-| CP2 | Fine iterazione N | Cosa implementato, test result, niente regressioni |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅, **Build ✅** |
-| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
+| CP1 | Piano confermato | Piano copre tutti gli AC, file sensati, nessun rischio |
+| CP2 | Implementazione + test | Codice fatto, lint/typecheck/test/build passati, niente regressioni |
+| CP3 | Pronto per push | AC verificati, security audit ok, PROJECT.md ok, nessun file anomalo |
 
 ### Bug
 
 | CP | Titolo | Cosa verifica Claudio |
 |----|--------|----------------------|
-| CP1 | Root cause identificata | Causa chiara, approccio fix sensato |
-| CP2 | Fix applicato | Fix mirato, test di regressione ok |
-| CP3 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, E2E ✅, **Build ✅** |
-| CP4 | Pronto per push | AC verificati, PROJECT.md ok, nessun file anomalo, sistema test pronto |
+| CP1 | Root cause + fix applicato | Causa chiara, fix mirato, test regressione ok |
+| CP2 | Test suite completa | Lint ✅, Typecheck ✅, Unit ✅, Build ✅ |
+| CP3 | Pronto per push | AC verificati, security audit ok, PROJECT.md ok, nessun file anomalo |
 
-**Security Audit (obbligatorio):** Esegui la skill `security-audit` prima di procedere al push. Vedi `skills/security-audit/SKILL.md`.
+> CP2 e CP3 possono essere unificati se l'implementazione è semplice.
+
+**Security Audit (obbligatorio al CP3):** Esegui la skill `security-audit` prima di procedere al push.
 
 ---
 
@@ -127,155 +127,49 @@ In caso di anomalia:
 
 ---
 
-## CP4 — Checklist completa "Pronto per PR"
+## CP3 — Checklist "Pronto per push"
 
-Al CP4 l'agente ha finito. Prima di dare `✅ procedi` al push e apertura PR, Claudio verifica tutto in una volta sola.
+Al CP3 l'agente ha finito. Claudio verifica tutto prima di dare `✅ procedi`.
 
 **Codice:**
 - [ ] Tutti gli AC della issue sono soddisfatti
-- [ ] `PROJECT.md` aggiornato con le modifiche
+- [ ] `PROJECT.md` aggiornato
 - [ ] Nessun file anomalo (`.env`, debug, config sensibili)
-- [ ] Lint ✅, Typecheck ✅, Test ✅
-- [ ] Curl test aggiunti a `tests/curl-tests.sh` (se la issue tocca API/route/endpoint)
+- [ ] Lint ✅, Typecheck ✅, Test ✅, Build ✅
+- [ ] Security audit passato (skill `security-audit`)
 
-**Build locale (OBBLIGATORIO per app Flutter):**
-- [ ] `flutter build apk --debug --flavor dev` (o flavor appropriato) passa senza errori
-- Se la build fallisce → **blocca PR**, fix obbligatorio prima di pushare
-- Non fidarsi solo dei test: la build completa cattura errori di tipo, import, codegen che i test non vedono
-
+**Build Flutter (se `pubspec.yaml` presente):**
 ```bash
-# Script pre-PR per app Flutter
-cd <repo_path>
-echo "=== Flutter Analyze ===" && flutter analyze --no-fatal-infos
-echo "=== Flutter Test ===" && flutter test --no-pub
-echo "=== Flutter Build (dev/debug) ===" && flutter build apk --debug --flavor dev --target-platform android-arm64
-echo "Build OK ✅" || echo "BUILD FAILED ❌ — fix prima di aprire PR"
-```
-
-**Sistema test (verificato ora, non dopo):**
-```bash
-REPO="<repo>"
-echo "=== CI pipeline ===" && \
-  gh api repos/ecologicaleaving/$REPO/contents/.github/workflows/deploy.yml 2>/dev/null \
-  | jq -r '.content' | base64 -d | grep -q "rsync\|ssh" && echo "✅ presente" || echo "❌ assente"
-echo "=== Secrets ===" && gh secret list --repo ecologicaleaving/$REPO
-echo "=== Sottodominio test ===" && \
-  curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
-```
-
-**DB (solo se la issue tocca schema/dati):**
-- [ ] Migrazioni incluse nel branch (non applicate a mano)
-- [ ] Migrazioni descritte nel commento PR
-
-Se sistema test non è pronto (CI assente, secrets mancanti, sottodominio down) → **blocca, segnala a Ciccio** prima di procedere:
-```
-⚠️ [Issue #N] CP4 — Blocco pre-PR
-📋 Problema: <CI assente / secrets mancanti / sottodominio irraggiungibile>
-👉 @Ciccio: puoi sistemare prima che mergiamo?
-```
-
-Solo quando tutto è verde → `✅ procedi` all'agente per il push e apertura PR.
-
----
-
-## 📋 Istruzioni di Test per Davide (obbligatorie nella PR)
-
-Quando Claudio notifica Davide che la PR è pronta, **deve sempre includere una sezione "Come testare"** con istruzioni chiare e pratiche.
-
-### Formato notifica PR (template)
-
-```
-✅ [Issue #N] PR pronta → <link PR>
-📌 <summary 1-2 righe>
-
-🧪 **Come testare:**
-<lista passi concreti che Davide deve fare per verificare>
-
-⚠️ **Prerequisiti** (se ci sono):
-<env vars, dipendenze, setup necessario>
-
-💡 **Cosa aspettarsi:**
-<risultato atteso se tutto funziona>
-```
-
-### Regole
-
-1. **Sempre presente** — anche se "non c'è nulla da testare", scrivi comunque cosa verificare (es. "build ok, lint ok, struttura cartelle corretta")
-2. **Passi concreti** — comandi da copiare-incollare, URL da visitare, cose da cliccare
-3. **Setup-first** — se serve clonare, installare deps, configurare env → metti tutto prima
-4. **Risultato atteso** — Davide deve sapere cosa deve vedere se funziona
-5. **Se è solo infra/setup** — istruzioni di verifica build/struttura, non "non c'è niente da testare"
-
----
-
-## 📨 Post-PR: Merge e notifica Ciccio
-
-### Flusso `/approva`
-
-Quando Davide scrive `/approva`:
-1. Claudio **mergia la PR direttamente** su main (`gh pr merge --merge --delete-branch`)
-2. Il deploy parte automaticamente (CI/CD)
-3. Claudio notifica Davide con conferma merge + URL produzione/test
-4. Se ci sono prerequisiti infra (env vars, migrazioni DB, config) → Claudio prepara messaggio per Ciccio e lo propone a Davide
-
-### Messaggio per Ciccio (solo se servono azioni infra)
-
-```
-🔧 [<repo>] PR #N mergiata — <titolo>
-
-Ciao Ciccio, la PR #N è stata mergiata: <link PR>
-
-**Azioni richieste:**
-<env vars da aggiungere, migrazioni DB, servizi da configurare>
-
-Grazie! 🙌
-```
-
-Se non servono azioni infra → nessun messaggio a Ciccio, il deploy è automatico.
-
-### Weekly Tracking (obbligatorio dopo merge/chiusura)
-
-Dopo ogni merge PR o chiusura issue, Claudio aggiunge una riga a `memory/weekly/current.md`:
-
-```markdown
-| YYYY-MM-DD | PR/Issue | <repo> | #N | <titolo> | ✅ merged/closed |
-```
-
-Non saltare mai questo step. Il file viene archiviato automaticamente ogni lunedì.
-
----
-## Convenzioni Agente
-
-L'agente deve rispettare:
-- Commit atomici: `feat:`, `fix:`, `improve:`, `docs:`, `chore:`
-- Branch: `feature/issue-N-slug`, `fix/issue-N-slug`, `improve/issue-N-slug`
-- Niente commit su `main`/`master`
-- Niente `.env`, config sensibili, file di debug
-- `PROJECT.md` aggiornato prima del push
-
-### Build obbligatoria per app Flutter (CP3)
-
-**L'agente DEVE eseguire la build prima di dichiarare CP3 completato.**
-
-Se il repo contiene `pubspec.yaml`, l'agente esegue:
-```bash
-flutter analyze --no-fatal-infos
-flutter test --no-pub
+flutter analyze --no-fatal-infos && flutter test --no-pub && \
 flutter build apk --debug --flavor dev --target-platform android-arm64
 ```
 
-**Se la build fallisce → l'agente DEVE fixare prima di procedere al CP4.**
-Non si apre PR con build rotta. Mai.
-
-Per progetti Node.js:
+**Build Node.js (se `package.json` presente):**
 ```bash
-npm ci
-npm run build  # se presente
-npm test       # se presente
+npm ci && npm run build && npm test
 ```
+
+**DB (solo se la issue tocca schema/dati):**
+- [ ] Migrazioni incluse nel branch
+- [ ] Migrazioni descritte nel commento PR
+
+Solo quando tutto è verde → `✅ procedi` per push e apertura PR (skill `issue-pr-ready`).
+
+---
+
+## Post-implementazione
+
+Dopo CP3 approvato, l'agente fa push. Claudio segue la skill `issue-pr-ready` per aprire la PR.
+Per `/approva` e `/reject` vedi `WORKFLOW.md` e le skill dedicate.
+
+---
+
+## Convenzioni Agente
+
+Vedi `WORKFLOW.md` per branch, commit, build. Vedi `COMMIT_CONVENTIONS.md` per dettagli commit.
 
 ---
 
 ## 🔍 Agent Monitor (obbligatorio)
 
-Vedi [agent-monitor.md](../references/agent-monitor.md) per istruzioni complete sull'avvio e configurazione del monitor.
+Vedi [agent-monitor.md](../references/agent-monitor.md) per istruzioni complete.

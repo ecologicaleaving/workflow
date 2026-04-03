@@ -1,16 +1,16 @@
 ---
 name: issue-pr-ready
 description: >
-  Unified post-implementation flow: pre-PR checklist, open PR, move Kanban card,
-  add labels, notify Davide and prepare message for Ciccio.
-  Replaces the manual sequence of issue-done → issue-deploy-test.
+  Post-implementation: pre-PR checklist, open PR, move Kanban card,
+  add labels, notify Davide.
   Use when: all acceptance criteria are implemented and the branch is ready for review.
 ---
 
-# Issue PR-Ready — Unified Post-Implementation Flow
+# Issue PR-Ready — Post-Implementation Flow
 
-This skill unifies the `issue-done` and `issue-deploy-test` flows into a single,
-streamlined procedure. Use it when all acceptance criteria for an issue are complete
+> Riferimento flusso: vedi `WORKFLOW.md` — Fase 4
+
+Use when all acceptance criteria for an issue are complete
 and the branch is ready for pull request and review.
 
 ## Prerequisites
@@ -108,41 +108,10 @@ Quando hai testato, usa:
 - `/reject <motivo>` se serve rework
 ```
 
-### Step 6 — Prepare Message for Ciccio
+## Note
 
-Prepare (but do NOT send yet) a deploy message for Ciccio. This will be sent only
-after Davide approves:
-
-```
-🚀 PR #<N> approvata da Davide — pronta per deploy
-
-**Repo:** <repo>
-**PR:** <pr-url>
-**Branch:** <branch> → <default-branch>
-
-**Azioni richieste:**
-1. Merge PR
-2. Deploy su test/staging
-3. Conferma deploy riuscito
-```
-
-## Config Dependencies
-
-All values come from `config.json`:
-
-| Value | Path |
-|-------|------|
-| Repo slug | `github.repos.<project>` |
-| Default branch | `workflow.defaultBranch` |
-| Project ID | `github.kanban.projectId` |
-| Status field ID | `github.kanban.statusFieldId` |
-| Test column ID | `github.kanban.columns.Test.id` |
-| Label for PR | `github.labels.automations.pr_opened.add` |
-
-## Replaces
-
-This skill replaces the following manual sequence:
-- `issue-done` — pre-PR checklist + open PR
-- `issue-deploy-test` — deploy notification to Ciccio
-
-Both old skills remain available for reference but this unified flow is preferred.
+- CI deploya automaticamente su test dopo il push del branch
+- Bot Telegram notifica Davide con link + AC
+- Dopo `/approva` di Davide → skill `issue-approve`
+- Dopo `/reject` di Davide → skill `issue-reject`
+- Valori config (project ID, field ID, column ID): vedi `config.json`

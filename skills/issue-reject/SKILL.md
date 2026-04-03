@@ -2,7 +2,9 @@
 
 **Trigger:** Davide scrive `/reject <feedback>`  
 **Agente:** Claudio  
-**Versione:** 2.0.0
+**Versione:** 2.1.0
+
+> Riferimento flusso: vedi `WORKFLOW.md` — Fase 5b
 
 ---
 
@@ -55,15 +57,7 @@ gh issue edit <N> --repo ecologicaleaving/<repo> \
 ### Step 4 — Sposta card → Review
 
 ```bash
-gh api graphql -f query='
-mutation {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHODSTPQM4BP1Xp"
-    itemId: "'$ITEM_ID'"
-    fieldId: "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
-    value: { singleSelectOptionId: "03f548ab" }
-  }) { projectV2Item { id } }
-}'
+./scripts/kanban-move.sh <N> <repo> Review
 ```
 
 ### Step 5 — Rilancia agente con contesto
@@ -85,15 +79,7 @@ Segui i checkpoint obbligatori come da issue.
 ### Step 6 — Sposta card → InProgress
 
 ```bash
-gh api graphql -f query='
-mutation {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHODSTPQM4BP1Xp"
-    itemId: "'$ITEM_ID'"
-    fieldId: "PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"
-    value: { singleSelectOptionId: "47fc9ee4" }
-  }) { projectV2Item { id } }
-}'
+./scripts/kanban-move.sh <N> <repo> InProgress
 ```
 
 ### Step 7 — Conferma a Davide
