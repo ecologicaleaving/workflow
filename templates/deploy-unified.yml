@@ -1,0 +1,486 @@
+# =============================================================================
+# deploy-unified.yml — Template unificato Build & Deploy
+# Supporta progetti Web (Node.js) e Flutter
+# Auto-detect: pubspec.yaml → flutter | package.json → web
+# =============================================================================
+
+name: Build & Deploy
+
+on:
+  push:
+    branches: ['**']
+  delete:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Evita run concorrenti sullo stesso branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ===========================================================================
+  # JOB: detect
+  # Determina il tipo di progetto controllando i file chiave nella root.
+  # Output: stack = 'web' | 'flutter' | 'unknown'
+  # ===========================================================================
+  detect:
+    name: 🔍 Detect Stack
+    runs-on: ubuntu-latest
+    outputs:
+      stack: ${{ steps.check.outputs.stack }}
+
+    steps:
+      - name: Checkout (shallow)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            pubspec.yaml
+            package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Check project type
+        id: check
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "stack=flutter" >> "$GITHUB_OUTPUT"
+            echo "✅ Detected: Flutter (pubspec.yaml found)"
+          elif [ -f "package.json" ]; then
+            echo "stack=web" >> "$GITHUB_OUTPUT"
+            echo "✅ Detected: Web/Node.js (package.json found)"
+          else
+            echo "stack=unknown" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Unknown stack: neither pubspec.yaml nor package.json found"
+          fi
+
+  # ===========================================================================
+  # JOB: build-web
+  # Eseguito solo per progetti Node.js/Web.
+  # - Build con npm
+  # - Deploy via rsync su VPS
+  # - Cloudflare cache purge
+  # - Health check
+  # ===========================================================================
+  build-web:
+    name: 🌐 Build & Deploy Web
+    needs: detect
+    if: needs.detect.outputs.stack == 'web' && github.event_name != 'delete'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Build ──────────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      # ── Deploy via rsync ───────────────────────────────────────────────────
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+
+          # Branch master/main va in prod, gli altri in test-REPO
+          if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+            DEPLOY_PATH="/var/www/${REPO}"
+          else
+            DEPLOY_PATH="/var/www/test-${REPO}"
+          fi
+
+          echo "📦 Deploying to ${DEPLOY_PATH}"
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            ./dist/ \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${DEPLOY_PATH}/"
+
+      # ── Cloudflare cache purge (solo prod) ─────────────────────────────────
+      - name: Purge Cloudflare cache
+        if: github.ref_name == 'master' || github.ref_name == 'main'
+        run: |
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' | jq .
+
+      # ── Health check ───────────────────────────────────────────────────────
+      - name: Health check
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+
+          if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+            URL="https://${REPO}.8020solutions.org"
+          else
+            URL="https://test-${REPO}.8020solutions.org"
+          fi
+
+          echo "🏥 Checking ${URL}"
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+            if [[ "$STATUS" == "200" || "$STATUS" == "301" || "$STATUS" == "302" ]]; then
+              echo "✅ Health check passed (HTTP ${STATUS})"
+              break
+            fi
+            echo "⏳ Attempt $i: HTTP ${STATUS}, retrying in 10s..."
+            sleep 10
+          done
+
+  # ===========================================================================
+  # JOB: build-flutter
+  # Eseguito solo per progetti Flutter.
+  # - Setup ambiente (Java + Flutter)
+  # - Genera .env con Supabase vars
+  # - flutter pub get + build_runner + build apk
+  #   * Flavor: dev (branch != master) | prod (master)
+  # - Deploy APK su app-hub VPS
+  # - Comment PR con link download APK
+  # - Create GitHub Release su master
+  # - Mark deployed-test + move card (via ciccio)
+  # ===========================================================================
+  build-flutter:
+    name: 📱 Build & Deploy Flutter
+    needs: detect
+    if: needs.detect.outputs.stack == 'flutter' && github.event_name != 'delete'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Setup Java (richiesto da Flutter/Android) ──────────────────────────
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ── Setup Flutter ──────────────────────────────────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      # ── Determina flavor ───────────────────────────────────────────────────
+      - name: Determine flavor
+        id: flavor
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+            echo "flavor=prod" >> "$GITHUB_OUTPUT"
+            echo "flavor_suffix=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "flavor=dev" >> "$GITHUB_OUTPUT"
+            echo "flavor_suffix=dev" >> "$GITHUB_OUTPUT"
+          fi
+          echo "🎨 Flavor: ${{ steps.flavor.outputs.flavor }}"
+
+      # ── Crea .env con variabili Supabase ───────────────────────────────────
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          EOF
+          echo "✅ .env created"
+
+      # ── Dipendenze ─────────────────────────────────────────────────────────
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      # ── Build APK ──────────────────────────────────────────────────────────
+      - name: Build APK
+        run: |
+          FLAVOR="${{ steps.flavor.outputs.flavor }}"
+          flutter build apk \
+            --flavor "$FLAVOR" \
+            --target "lib/main_${FLAVOR}.dart" \
+            --release
+          echo "✅ APK built for flavor: ${FLAVOR}"
+
+      # ── Rinomina APK con repo+branch+sha ───────────────────────────────────
+      - name: Rename APK
+        id: apk
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+          SHA="${{ github.sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          FLAVOR="${{ steps.flavor.outputs.flavor }}"
+
+          # Slug del branch (sostituisce / con -)
+          BRANCH_SLUG="${BRANCH//\//-}"
+
+          APK_NAME="${REPO}-${BRANCH_SLUG}-${SHORT_SHA}-${FLAVOR}.apk"
+          SRC="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
+
+          cp "$SRC" "$APK_NAME"
+          echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
+          echo "apk_path=$(pwd)/${APK_NAME}" >> "$GITHUB_OUTPUT"
+          echo "📦 APK: ${APK_NAME}"
+
+      # ── Deploy APK su app-hub VPS ──────────────────────────────────────────
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy APK to app-hub
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          APK_NAME="${{ steps.apk.outputs.apk_name }}"
+          APK_PATH="${{ steps.apk.outputs.apk_path }}"
+
+          # Struttura: /var/www/apps/{repo}/
+          REMOTE_DIR="/var/www/apps/${REPO}"
+
+          echo "📤 Uploading ${APK_NAME} to app-hub..."
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" "mkdir -p ${REMOTE_DIR}"
+          scp -i ~/.ssh/id_rsa "$APK_PATH" \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${REMOTE_DIR}/${APK_NAME}"
+          echo "✅ APK deployed to apps.8020solutions.org/${REPO}/${APK_NAME}"
+
+      # ── Costruisci URL APK ─────────────────────────────────────────────────
+      - name: Set APK URL
+        id: apk_url
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          APK_NAME="${{ steps.apk.outputs.apk_name }}"
+          URL="https://apps.8020solutions.org/${REPO}/${APK_NAME}"
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+          echo "🔗 APK URL: ${URL}"
+
+      # ── Comment PR con link APK ────────────────────────────────────────────
+      - name: Comment PR with APK link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const apkUrl = '${{ steps.apk_url.outputs.url }}';
+            const repo = '${{ github.event.repository.name }}';
+            const sha = '${{ github.sha }}'.substring(0, 7);
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📱 APK Build Ready\n\n` +
+                    `**Repo:** ${repo}\n` +
+                    `**Commit:** \`${sha}\`\n\n` +
+                    `📥 [Download APK](${apkUrl})\n\n` +
+                    `> Scansiona il QR o apri il link direttamente su Android.`
+            });
+
+      # ── GitHub Release (solo master) ───────────────────────────────────────
+      - name: Create GitHub Release
+        if: github.ref_name == 'master' || github.ref_name == 'main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = '${{ github.event.repository.name }}';
+            const sha = '${{ github.sha }}'.substring(0, 7);
+            const apkUrl = '${{ steps.apk_url.outputs.url }}';
+            const apkName = '${{ steps.apk.outputs.apk_name }}';
+            const tagName = `v${new Date().toISOString().split('T')[0].replace(/-/g,'.')}-${sha}`;
+
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `Release ${tagName}`,
+              body: `## 📱 ${repo} — ${tagName}\n\n📥 [Download APK](${apkUrl})\n\n**Commit:** \`${{ github.sha }}\``,
+              draft: false,
+              prerelease: false
+            });
+
+            // Upload APK come release asset
+            const fs = require('fs');
+            const apkData = fs.readFileSync('${{ steps.apk.outputs.apk_path }}');
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+              name: apkName,
+              data: apkData
+            });
+
+            console.log(`✅ Release created: ${release.data.html_url}`);
+
+      # ── Notifica Ciccio: mark deployed-test + move card ───────────────────
+      - name: Notify Ciccio (deployed-test)
+        if: github.ref_name != 'master' && github.ref_name != 'main'
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+          APK_URL="${{ steps.apk_url.outputs.url }}"
+
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "ciccio-notify mark-deployed-test --repo '${REPO}' --branch '${BRANCH}' --url '${APK_URL}'" || true
+
+  # ===========================================================================
+  # JOB: cleanup
+  # Eseguito quando un branch viene eliminato.
+  # Rimuove l'environment di test dal VPS (solo web per ora).
+  # ===========================================================================
+  cleanup:
+    name: 🧹 Cleanup Branch Environment
+    if: github.event_name == 'delete'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Remove test environment
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          # github.event.ref contiene il nome del branch eliminato
+          BRANCH="${{ github.event.ref }}"
+          BRANCH_SLUG="${BRANCH//\//-}"
+
+          echo "🗑️ Removing test env for branch: ${BRANCH}"
+
+          # Rimuovi cartella web di test
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "rm -rf /var/www/test-${REPO} || true"
+
+          echo "✅ Cleanup done for test-${REPO}"
+
+  # ===========================================================================
+  # JOB: notify
+  # Notifica unificata per web e flutter via ciccio-notify sulla VPS.
+  # Formato identico per entrambi i tipi di progetto:
+  #   EMOJI repo / branch (sha)
+  #   🔗 URL
+  #   Status: status
+  # ===========================================================================
+  notify:
+    name: 📣 Notify
+    needs: [detect, build-web, build-flutter]
+    # Gira sempre, anche se i job precedenti falliscono o vengono skippati
+    if: always() && github.event_name != 'delete'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      # ── Calcola stato e URL per la notifica ────────────────────────────────
+      - name: Prepare notification payload
+        id: notify_prep
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+          SHA="${{ github.sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          STACK="${{ needs.detect.outputs.stack }}"
+
+          # ── Determina URL in base allo stack ──────────────────────────────
+          if [[ "$STACK" == "flutter" ]]; then
+            BRANCH_SLUG="${BRANCH//\//-}"
+            # Flavour prod su master, dev altrove
+            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+              FLAVOR="prod"
+            else
+              FLAVOR="dev"
+            fi
+            URL="https://apps.8020solutions.org/${REPO}/${REPO}-${BRANCH_SLUG}-${SHORT_SHA}-${FLAVOR}.apk"
+            EMOJI="📱"
+          else
+            # Web: prod su master, test altrove
+            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+              URL="https://${REPO}.8020solutions.org"
+            else
+              URL="https://test-${REPO}.8020solutions.org"
+            fi
+            EMOJI="🌐"
+          fi
+
+          # ── Determina status complessivo ──────────────────────────────────
+          WEB_RESULT="${{ needs.build-web.result }}"
+          FLUTTER_RESULT="${{ needs.build-flutter.result }}"
+
+          # Il job rilevante è quello che non è "skipped"
+          if [[ "$WEB_RESULT" != "skipped" ]]; then
+            JOB_RESULT="$WEB_RESULT"
+          elif [[ "$FLUTTER_RESULT" != "skipped" ]]; then
+            JOB_RESULT="$FLUTTER_RESULT"
+          else
+            JOB_RESULT="skipped"
+          fi
+
+          # Converti in emoji
+          case "$JOB_RESULT" in
+            success)   STATUS_EMOJI="✅"; STATUS_TEXT="Success" ;;
+            failure)   STATUS_EMOJI="❌"; STATUS_TEXT="Failed" ;;
+            cancelled) STATUS_EMOJI="⚠️"; STATUS_TEXT="Cancelled" ;;
+            *)         STATUS_EMOJI="⏭️"; STATUS_TEXT="Skipped" ;;
+          esac
+
+          echo "emoji=${EMOJI}" >> "$GITHUB_OUTPUT"
+          echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+          echo "status_emoji=${STATUS_EMOJI}" >> "$GITHUB_OUTPUT"
+          echo "status_text=${STATUS_TEXT}" >> "$GITHUB_OUTPUT"
+          echo "stack=${STACK}" >> "$GITHUB_OUTPUT"
+
+      # ── Invia notifica via ciccio-notify ───────────────────────────────────
+      - name: Send notification
+        run: |
+          EMOJI="${{ steps.notify_prep.outputs.emoji }}"
+          REPO="${{ steps.notify_prep.outputs.repo }}"
+          BRANCH="${{ steps.notify_prep.outputs.branch }}"
+          SHORT_SHA="${{ steps.notify_prep.outputs.short_sha }}"
+          URL="${{ steps.notify_prep.outputs.url }}"
+          STATUS_EMOJI="${{ steps.notify_prep.outputs.status_emoji }}"
+          STATUS_TEXT="${{ steps.notify_prep.outputs.status_text }}"
+
+          # Formato unificato — stesso per web e flutter
+          MESSAGE="${EMOJI} ${REPO} / ${BRANCH} (${SHORT_SHA})
+          🔗 ${URL}
+          Status: ${STATUS_EMOJI} ${STATUS_TEXT}"
+
+          echo "📣 Sending notification:"
+          echo "$MESSAGE"
+
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "ciccio-notify send --message '$MESSAGE'" || true
