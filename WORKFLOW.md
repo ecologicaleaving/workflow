@@ -1,6 +1,6 @@
 # WORKFLOW.md — 80/20 Solutions Development Workflow
 
-**Versione:** 3.0.0 | **Aggiornato:** 2026-04-03
+**Versione:** 4.0.0 | **Aggiornato:** 2026-04-13
 
 > Fonte di verità unica per il flusso di sviluppo del team.
 > I valori strutturati (ID Kanban, repo, label) stanno in `config.json`.
@@ -12,21 +12,20 @@
 
 | Chi | Ruolo | Cosa fa | Cosa NON fa |
 |-----|-------|---------|-------------|
-| **Davide** | Product Owner | Decide, testa, approva/reject | Non implementa, non deploya |
-| **Claudio** (PC) | Supervisore | Crea issue, lancia agenti, supervisiona, mergia PR | Non scrive codice MAI, non gestisce infra |
-| **Ciccio** (VPS) | Infra & Deploy | Gestisce VPS, DB, domini, azioni infra su richiesta | Non modifica il workflow, non lancia agenti |
-| **Agente** (Sonnet) | Sviluppatore | Research, piano, implementazione, test | Non mergia, non deploya, non decide |
+| **Davide** | Product Owner | Decide, testa, approva/reject, dà i comandi | Non implementa, non deploya |
+| **Agente** (Claude Code) | Sviluppatore autonomo | Tutto il resto: issue, research, piano, implementazione, kanban, PR, merge | Non decide senza autorizzazione di Davide |
 
 > ⚠️ **Regola cardinale:** Nessun fix/patch senza autorizzazione esplicita di Davide.
-> ⚠️ **Repo workflow:** Solo Claudio modifica `ecologicaleaving/workflow`. Ciccio segnala → Davide decide → Claudio implementa.
+> ⚠️ **Repo workflow:** Solo l'agente modifica `ecologicaleaving/workflow` su indicazione di Davide.
 
 ---
 
 ## 🤖 Modello Agente
 
-**Un solo agente Sonnet** (`anthropic/claude-sonnet-4-6`) per l'intero ciclo: research → piano → implementazione.
+**Un solo agente** (`claude-sonnet-4-6` via Claude Code) gestisce l'intero ciclo:
+research → piano → implementazione → PR → merge.
 
-L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi di informazione tra agenti diversi, zero context reload.
+L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi tra agenti diversi.
 
 ---
 
@@ -34,11 +33,11 @@ L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi di i
 
 | Comando | Effetto |
 |---------|---------|
-| `/create-issue` | Claudio raccoglie info e crea issue → Backlog |
-| `/issue-validate #N` | Claudio completa la issue con AC, research, piano → Todo |
-| `/vai` | Claudio avvia implementazione agente |
-| `/approva` | Claudio mergia PR su main → CI deploya automaticamente |
-| `/reject <feedback>` | Claudio registra feedback, rilancia agente in rework |
+| `/create-issue` | Agente raccoglie info e crea issue → Backlog |
+| `/issue-validate #N` | Agente completa la issue con AC, research, piano → Todo |
+| `/vai` | Agente avvia implementazione |
+| `/approva` | Agente mergia PR su main → CI deploya automaticamente |
+| `/reject <feedback>` | Agente registra feedback e rilancia rework |
 
 ---
 
@@ -53,12 +52,12 @@ Davide descrive problema/feature
          ↓
     /vai (Davide)
          ↓
-    FASE 3 — Implementazione (checkpoint) → InProgress
+    FASE 3 — Implementazione (auto-gate) → InProgress
          ↓
     FASE 4 — PR + Deploy test automatico → Test
          ↓
     Davide testa
-    ├── /approva → Claudio mergia → CI deploya prod → Done
+    ├── /approva → Agente mergia → CI deploya prod → Done
     └── /reject  → Rework → loop da Fase 3
 ```
 
@@ -66,7 +65,7 @@ Davide descrive problema/feature
 
 ## FASE 1 — Creazione Issue
 
-**Chi:** Claudio
+**Chi:** Agente
 **Skill:** `create-issue`
 **Kanban:** → Backlog
 
@@ -77,48 +76,48 @@ Issue leggera — i dettagli arrivano nella Fase 2.
 
 ## FASE 2 — Validazione + Piano
 
-**Chi:** Claudio (interattivo con Davide) → Sonnet (research + piano)
+**Chi:** Agente (interattivo con Davide)
 **Skill:** `issue-validate`
 **Kanban:** Backlog → Todo
 
 1. **Domande a Davide** — AC, edge case, dipendenze, note tecniche (una alla volta)
-2. **Verifica deploy** — CI pipeline, secrets, sottodomini (una volta per repo, non ripetere se già verificato)
-3. **Sonnet esplora + pianifica** — un solo agente fa research e piano in un colpo
-4. **Valutazione Claudio** — check formale: AC coperti, scope ok, niente red flag
+2. **Verifica deploy** — CI pipeline, secrets, sottodomini (una volta per repo)
+3. **Esplora + pianifica** — research e piano in un colpo solo
+4. **Auto-validazione** — check formale: AC coperti, scope ok, niente red flag
 5. **Notifica Davide** — piano pronto, aspetta `/vai`
 
-> ⚠️ Claudio NON avvia mai l'implementazione senza `/vai` esplicito.
-> Dopo `/vai`, lo **stesso agente** prosegue con l'implementazione (nessun respawn).
+> ⚠️ L'agente NON avvia mai l'implementazione senza `/vai` esplicito di Davide.
 
 ---
 
 ## FASE 3 — Implementazione
 
-**Chi:** Claudio (supervisione) + stesso Sonnet della Fase 2 (esecuzione)
+**Chi:** Agente
 **Skill:** `issue-implement`
 **Kanban:** Todo → InProgress (dopo `/vai`)
 
-### Checkpoint
+### Auto-gate
 
-L'agente procede in autonomia e si ferma al **gate finale** (pronto per push).
-Se incontra anomalie, si auto-blocca e notifica Claudio.
+L'agente procede in autonomia e si auto-blocca solo su anomalie o al gate finale.
 
 | Momento | Cosa succede |
 |---------|-------------|
-| Dopo `/vai` | Agente implementa in autonomia (no checkpoint intermedi) |
-| Anomalia | Agente si blocca, notifica Claudio → Claudio notifica Davide |
-| **Gate finale** | Agente posta checkpoint: AC verificati, test passati, build ok, security audit ok |
-| Claudio valida | `✅ procedi` (push) oppure `🔴 bloccato` (fix) |
+| Dopo `/vai` | Agente implementa in autonomia |
+| Anomalia | Agente si blocca e notifica Davide |
+| **Gate finale** | Agente verifica: AC ok, test ok, build ok, security audit ok |
+| Gate superato | Agente procede a push + PR automaticamente |
+| Gate fallito | Agente fixa e ripete il gate |
 
-### Notifica a Davide (al gate finale)
+### Notifica a Davide (dopo push + PR)
 
 ```
-✅ [Issue #N] Implementazione completata
+✅ [Issue #N] Implementazione completata, PR aperta
 📌 <summary cosa è stato fatto>
-⏭️ Apro la PR dopo verifica finale
+🔗 <link PR>
+⏭️ Testa su test-<repo>.8020solutions.org
 ```
 
-Anomalia → blocca agente, notifica Davide, aspetta istruzioni.
+Anomalia non risolvibile → blocca, notifica Davide, aspetta istruzioni.
 Più di 5 iterazioni senza convergere → blocco automatico.
 
 ### Security Audit (obbligatorio pre-push)
@@ -130,17 +129,17 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 
 ## FASE 4 — PR + Deploy Test
 
-**Chi:** Claudio (PR) + CI (deploy automatico)
+**Chi:** Agente + CI (deploy automatico)
 **Skill:** `issue-pr-ready`
 **Kanban:** InProgress → Test
 
-1. Claudio verifica checklist pre-PR (AC, test, PROJECT.md, niente file anomali)
-2. Claudio apre PR con summary strutturato
+1. Agente verifica checklist pre-PR (AC, test, PROJECT.md, niente file anomali)
+2. Agente apre PR con summary strutturato
 3. CI deploya automaticamente su `test-<repo>.8020solutions.org`
-4. Bot Telegram notifica Davide con link + AC da verificare
-5. Claudio aggiunge label `review-ready`
+4. Agente aggiunge label `review-ready`
+5. Agente notifica Davide con link e istruzioni di test
 
-### Notifica Davide (con istruzioni di test)
+### Notifica Davide
 
 ```
 ✅ [Issue #N] PR pronta → <link PR>
@@ -159,29 +158,27 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 
 ## FASE 5a — Approvazione
 
-**Chi:** Claudio
+**Chi:** Agente
 **Skill:** `issue-approve`
 **Kanban:** Test → Done
 
-1. Claudio mergia la PR su main: `gh pr merge --merge --delete-branch`
+1. Agente mergia la PR su main: `gh pr merge --merge --delete-branch`
 2. CI deploya automaticamente in produzione
-3. Claudio chiude la issue e aggiunge label `deployed-prod`
-4. Claudio notifica Davide con conferma
-5. **Se servono azioni infra** (env vars, migrazioni DB) → Claudio prepara messaggio per Ciccio, lo propone a Davide prima di inviare
-
-> Se non servono azioni infra → nessun coinvolgimento di Ciccio.
+3. Agente chiude la issue e aggiunge label `deployed-prod`
+4. Agente notifica Davide con conferma
+5. **Se servono azioni infra** (env vars, migrazioni DB) → Agente elenca le azioni da eseguire manualmente e le comunica a Davide
 
 ---
 
 ## FASE 5b — Reject + Rework
 
-**Chi:** Claudio
+**Chi:** Agente
 **Skill:** `issue-reject` (per reject semplici) | `issue-research-rework` (per reject complessi ≥2)
 **Kanban:** Test → Review → InProgress → Test (loop)
 
-1. Claudio registra feedback + risultati test come commento sulla issue
+1. Agente registra feedback + risultati test come commento sulla issue
 2. Label: rimuove `review-ready`, aggiunge `needs-fix`
-3. Rilancia agente con feedback come contesto
+3. Agente rilancia rework con feedback come contesto
 4. Stesso flusso Fase 3 → Fase 4
 5. Loop fino a `/approva`
 
@@ -191,15 +188,12 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 
 | Colonna | Significato | Chi sposta |
 |---------|-------------|------------|
-| **Backlog** | Issue creata | Claudio (create-issue) |
-| **Todo** | Validata, piano pronto, aspetta /vai | Claudio (issue-validate) |
-| **InProgress** | Agente al lavoro | Claudio (dopo /vai) |
-| **Test** | PR aperta, CI ha deployato in test | Claudio (issue-pr-ready) |
-| **Review** | Reject, agente in rework | Claudio (issue-reject) |
-| **Done** | Mergiato, in produzione, chiuso | Claudio (issue-approve) |
-
-> La colonna **Deploy** nel project board non è più usata — Claudio mergia direttamente dopo `/approva`.
-> ID colonne e campo: vedi `config.json`.
+| **Backlog** | Issue creata | Agente (create-issue) |
+| **Todo** | Validata, piano pronto, aspetta /vai | Agente (issue-validate) |
+| **InProgress** | Agente al lavoro | Agente (dopo /vai) |
+| **Test** | PR aperta, CI ha deployato in test | Agente (issue-pr-ready) |
+| **Review** | Reject, rework in corso | Agente (issue-reject) |
+| **Done** | Mergiato, in produzione, chiuso | Agente (issue-approve) |
 
 ### Label
 
@@ -208,7 +202,7 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 | `agent:claude-code` | Agente Claude Code assegnato |
 | `in-progress` | Agente al lavoro |
 | `review-ready` | PR pronta per test Davide |
-| `deployed-test` | Live su test (aggiunta da CI/bot) |
+| `deployed-test` | Live su test (aggiunta da CI) |
 | `needs-fix` | Reject, rework in corso |
 | `deployed-prod` | Live in produzione |
 
@@ -220,13 +214,13 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 |-------|--------------|
 | `create-issue` | Fase 1 — creazione issue leggera |
 | `issue-validate` | Fase 2 — validazione completa + research + piano |
-| `issue-implement` | Fase 3 — supervisione implementazione con checkpoint |
+| `issue-implement` | Fase 3 — implementazione con auto-gate |
 | `issue-pr-ready` | Fase 4 — checklist pre-PR, apertura PR, notifiche |
 | `issue-approve` | Fase 5a — merge + chiusura dopo /approva |
 | `issue-reject` | Fase 5b — rework dopo reject semplice |
 | `issue-research-rework` | Fase 5b — research approfondita per reject complessi |
 | `security-audit` | Pre-push — gate di sicurezza obbligatorio |
-| `8020-commit-workflow` | Convenzioni commit per l'agente |
+| `8020-commit-workflow` | Convenzioni commit |
 | `create-prd` | Creazione PRD da brief |
 | `prd-to-issues` | Breakdown PRD in issue |
 | `preparazione-repo` | Setup iniziale repo per workflow 8020 |
@@ -249,7 +243,7 @@ Usa sempre gli script in `scripts/` invece di comandi inline:
 ## 📝 Convenzioni
 
 - **Branch:** `feature/issue-N-slug`, `fix/issue-N-slug`
-- **Commit:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`) — dettagli in `COMMIT_CONVENTIONS.md`
+- **Commit:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - **Niente commit su main/master**
 - **PROJECT.md** aggiornato prima di ogni PR
 - **Weekly tracking:** dopo ogni merge, riga in `memory/weekly/current.md`

@@ -39,15 +39,14 @@ Non procedere con nessuna attività prima di aver completato questi 3 step.
 ## Team
 
 - **Davide (Boss):** Decisore finale, approva/rifiuta il lavoro
-- **Claude Code (io):** Senior Dev — sviluppo, debug, test, code review
-- **Ciccio (VPS):** Orchestratore — merge, deploy, infrastruttura
+- **Agente (Claude Code):** Gestisce tutto il ciclo — sviluppo, kanban, PR, merge
 
 ## Regole Fondamentali
 
 - **MAI pushare su main/master** — sempre branch `feature/issue-{N}-{slug}`
 - **MAI inventare** credenziali, configurazioni o soluzioni incerte — chiedi a Davide
-- **Segui le skill** del workflow (issue-start, issue-done, 8020-commit-workflow)
-- Se serve infrastruttura VPS/DB → chiedi a Ciccio tramite Davide
+- **Segui le skill** del workflow (issue-validate, issue-implement, issue-pr-ready, issue-approve)
+- Se servono azioni infra VPS/DB → elenca i comandi e comunicali a Davide
 
 ## Curl Test
 

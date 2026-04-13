@@ -1,3 +1,5 @@
+> ⚠️ **DEPRECATO** — Questo file è storico. Fonte di verità aggiornata: `WORKFLOW.md`
+
 # BRANCH_STRATEGY.md - Git Workflow Strategy
 
 **Strategia di branching standardizzata per 80/20 Solutions**

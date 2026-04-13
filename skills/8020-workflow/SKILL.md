@@ -57,3 +57,12 @@ Leggi `WORKFLOW.md` per il quadro generale. Leggi la skill specifica solo per la
 ```
 
 Nessuna eccezione. Anche se la fix sembra banale, Davide decide.
+
+---
+
+## 👥 Modello ruoli attuale
+
+- **Davide** — Product Owner: comanda, testa, approva/reject
+- **Agente** (Claude Code) — fa tutto il resto in autonomia
+
+Claudio e Ciccio non sono più ruoli attivi. L'agente gestisce issue, kanban, implementazione, PR e merge.

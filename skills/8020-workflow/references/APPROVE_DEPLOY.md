@@ -27,4 +27,4 @@ gh issue close <N> --repo ecologicaleaving/<REPO>
 
 4. **Notifica Davide** con conferma
 
-5. **Se servono azioni infra** (env vars, DB, config) → prepara messaggio per Ciccio, proponi a Davide
+5. **Se servono azioni infra** (env vars, DB, config) → elenca le azioni da eseguire e comunicale a Davide

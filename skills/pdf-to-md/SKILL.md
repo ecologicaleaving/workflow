@@ -9,7 +9,7 @@ description: >
 # Skill: pdf-to-md
 
 **Trigger:** Prima di leggere qualsiasi file `.pdf`
-**Agente:** Tutti (Claudio, Claude Code, subagent)
+**Agente:** Tutti (Claude Code, subagent)
 **Versione:** 2.0.0
 
 ---
@@ -97,8 +97,7 @@ Leggi il `.md` appena creato per il task originale. Non toccare più il PDF.
 ## Dove si applica
 
 Questa skill è **obbligatoria** per tutti gli agenti del team:
-- Claudio (supervisore)
-- Agenti implementazione (Claude Code / Sonnet)
-- Subagent research (Haiku)
+- Agente (Claude Code / Sonnet)
+- Subagent research
 
 Va referenziata nel `CLAUDE.md` di ogni progetto che contiene PDF.

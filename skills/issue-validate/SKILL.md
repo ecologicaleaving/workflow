@@ -1,8 +1,8 @@
 # Skill: issue-validate
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
-**Agente:** Claudio (interattivo con Davide) + Sonnet (research + piano + implementazione)
-**Versione:** 3.0.0
+**Agente:** Claude Code
+**Versione:** 4.0.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -49,7 +49,7 @@ Se una risposta è già chiara dal contesto, skippa la domanda.
 
 ### Step 1b — Verifica versioni dipendenze (obbligatorio)
 
-Prima di aggiornare la issue, verifica le versioni dei tool e librerie coinvolti nell'implementazione:
+Prima di aggiornare la issue, verifica le versioni dei tool e librerie coinvolti:
 
 ```bash
 cd /tmp/<repo>
@@ -68,8 +68,6 @@ node --version 2>/dev/null
 flutter --version 2>/dev/null | head -3
 ```
 
-**Perché:** le dipendenze esistenti determinano quale approccio tecnico è compatibile (es. Next.js 15 vs 14 ha API diverse, googleapis richiede versione specifica di Node, ecc.).
-
 Riporta le versioni rilevanti nel body aggiornato della issue nella sezione "Note tecniche".
 
 ---
@@ -79,11 +77,10 @@ Riporta le versioni rilevanti nel body aggiornato della issue nella sezione "Not
 Dopo aver raccolto le risposte, prima di aggiornare la issue:
 
 1. Identifica le issue future che dipendono da questa (stessa epic, stessa area funzionale)
-2. Verifica se le decisioni prese nella validazione impattano quelle issue (es. cambio architettura, nuovi campi DB, nuova logica)
+2. Verifica se le decisioni prese nella validazione impattano quelle issue
 3. Se sì → proponi aggiornamento a Davide e aggiorna anche quelle issue
 
 ```bash
-# Controlla issue aperte della stessa epic
 gh issue list --repo ecologicaleaving/<repo> --state open \
   --label "<epic>" --json number,title,body | jq '.[]'
 ```
@@ -122,20 +119,14 @@ echo "=== Test ==="
 curl -s -o /dev/null -w "HTTP %{http_code}" "https://test-$REPO.8020solutions.org"
 ```
 
-Se qualcosa manca → blocca e notifica Davide + Ciccio.
+Se qualcosa manca → blocca e notifica Davide.
 
 ---
 
-### Step 4 — Lancia Sonnet (research + piano)
+### Step 4 — Research + piano
 
-Un solo agente fa esplorazione e piano. Questo agente verrà poi riutilizzato per l'implementazione dopo `/vai`.
+Esplora il codebase in modo approfondito, poi produci un piano dettagliato:
 
-```
-Leggi la issue #N su ecologicaleaving/<repo>.
-Clona o aggiorna il repo localmente.
-Esplora il codebase in modo approfondito.
-
-Poi produci un piano dettagliato:
 1. Struttura progetto e file rilevanti
 2. Codice esistente collegato alla issue + versioni dipendenze
 3. File da toccare (con motivazione)
@@ -145,43 +136,37 @@ Poi produci un piano dettagliato:
 7. Stima complessità
 
 ⚠️ NON modificare alcun file in questa fase. Solo lettura, analisi e piano.
-```
-
-Modello: `anthropic/claude-sonnet-4-6`
-
-> ⚠️ **Importante:** Lancia con `mode: "session"` (non `"run"`) così l'agente resta vivo per l'implementazione dopo `/vai`.
 
 ---
 
-### Step 6 — Valuta il piano
+### Step 5 — Auto-validazione piano
 
 **✅ Piano ok se:**
 - Copre tutti gli AC definiti con Davide
 - File identificati sensati e in scope
 - Nessun approccio rischioso
 - Task checklist dettagliata e realistica
-- Coerente con le decisioni prese nella validazione (es. architettura DB, logica business)
+- Coerente con le decisioni prese nella validazione
 
 **⚠️ Anomalia se:**
 - Piano ignora degli AC
 - Vuole toccare file fuori scope
 - Approccio tecnico sbagliato o incongruente con il codebase esistente
-- Propone soluzioni già escluse durante la validazione
 
 Se anomalia → blocca e notifica Davide prima di procedere.
 
 ---
 
-### Step 7 — Posta piano come commento sulla issue
+### Step 6 — Posta piano come commento sulla issue
 
 ```bash
 gh issue comment <N> --repo ecologicaleaving/<repo> \
-  --body "## 📝 Piano (generato da Sonnet)\n\n<piano completo>"
+  --body "## 📝 Piano\n\n<piano completo>"
 ```
 
 ---
 
-### Step 8 — Sposta card → Todo
+### Step 7 — Sposta card → Todo
 
 ```bash
 ./scripts/kanban-move.sh <N> <repo> Todo
@@ -189,7 +174,7 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ---
 
-### Step 9 — Notifica Davide e aspetta `/vai`
+### Step 8 — Notifica Davide e aspetta `/vai`
 
 ```
 ✅ [Issue #N] Piano pronto — <titolo>
@@ -197,14 +182,13 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 ⏭️ Scrivi /vai per avviare l'implementazione
 ```
 
-⚠️ **Claudio NON avvia mai l'implementazione senza `/vai` esplicito di Davide.**
+⚠️ **L'agente NON avvia mai l'implementazione senza `/vai` esplicito di Davide.**
 
 ---
 
 ## Changelog
 
+- **v4.0.0** (2026-04-13): Rimosso ruolo Claudio — agente unico gestisce tutto
 - **v3.0.0** (2026-04-03): Agente unico Sonnet per research+piano+implementazione, rimosso Haiku separato
-- **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli (vedi WORKFLOW.md), verifica deploy condizionale, assorbita issue-start
-- **v1.2.0** (2026-03-31): Aggiunto Step 1b — verifica versioni dipendenze
-- **v1.1.0** (2026-03-31): Aggiunto Step 1b — verifica coerenza issue future collegate
+- **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli
 - **v1.0.0** (2026-03-31): Prima versione

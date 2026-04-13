@@ -1,8 +1,8 @@
 # Skill: issue-approve
 
-**Trigger:** Davide scrive `/approva`  
-**Agente:** Claudio  
-**Versione:** 2.0.0
+**Trigger:** Davide scrive `/approva`
+**Agente:** Claude Code
+**Versione:** 3.0.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 5a
 
@@ -10,7 +10,7 @@
 
 ## Obiettivo
 
-Mergiare la PR, chiudere la issue, notificare. Ciccio coinvolto solo se servono azioni infra.
+Mergiare la PR, chiudere la issue, notificare Davide. Gestire eventuali azioni infra necessarie.
 
 ---
 
@@ -48,9 +48,17 @@ gh issue close <N> --repo ecologicaleaving/<repo>
 
 ### Step 5 — Azioni infra (solo se necessario)
 
-Se servono env vars, migrazioni DB, config VPS → prepara messaggio per Ciccio e proponilo a Davide prima di inviare.
+Se servono env vars, migrazioni DB, config VPS → elenca le azioni da eseguire e comunicale a Davide:
 
-Se non servono azioni infra → nessun coinvolgimento di Ciccio.
+```
+⚙️ Azioni infra richieste per questa issue:
+- [ ] <azione 1> (es. aggiungere env var XYZ al VPS)
+- [ ] <azione 2> (es. eseguire migrazione DB)
+
+Queste vanno eseguite manualmente sul VPS.
+```
+
+Se non servono azioni infra → skip questo step.
 
 ### Step 6 — Weekly tracking
 

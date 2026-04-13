@@ -1,7 +1,7 @@
 # Skill: create-prd
 
 **Trigger:** `/create-prd` o Davide descrive un'idea per un progetto/feature grande  
-**Agente:** Claudio  
+**Agente:** Claude Code  
 **Versione:** 1.0.0
 
 ---

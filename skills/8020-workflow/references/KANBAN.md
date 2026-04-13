@@ -6,12 +6,12 @@
 
 | Colonna | Chi sposta | Quando |
 |---------|-----------|--------|
-| **Backlog** | Claudio | Issue creata |
-| **Todo** | Claudio | Validata, piano pronto |
-| **InProgress** | Claudio | Dopo /vai, agente al lavoro |
-| **Test** | Claudio | PR aperta, CI deploya in test |
-| **Review** | Claudio | Dopo /reject, rework |
-| **Done** | Claudio | Dopo /approva, PR mergiata |
+| **Backlog** | Agente | Issue creata |
+| **Todo** | Agente | Validata, piano pronto |
+| **InProgress** | Agente | Dopo /vai, implementazione avviata |
+| **Test** | Agente | PR aperta, CI deploya in test |
+| **Review** | Agente | Dopo /reject, rework |
+| **Done** | Agente | Dopo /approva, PR mergiata |
 
 ## Spostare una card
 
@@ -20,6 +20,6 @@
 ```
 
 ## Regole
-- La colonna **Deploy** non è più usata — Claudio mergia direttamente dopo /approva
+- La colonna **Deploy** non è più usata — l'agente mergia direttamente dopo /approva
 - Lo stato è la colonna Kanban
 - Label agente NON si rimuove durante la lavorazione

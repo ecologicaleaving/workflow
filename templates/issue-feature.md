@@ -47,7 +47,7 @@
 
 ## 📌 Checkpoint Obbligatori
 
-<!-- Generati da Claudio e approvati da Davide -->
+<!-- Generati dall'agente e approvati da Davide -->
 - [ ] **CP1 — Piano** → Agente riporta piano + task checklist prima di scrivere codice
 - [ ] **CP2 — Implementazione** → Report dopo ogni iterazione con cosa è stato fatto e test result
 - [ ] **CP3 — Test Suite** → Risultati completi lint / typecheck / unit / e2e

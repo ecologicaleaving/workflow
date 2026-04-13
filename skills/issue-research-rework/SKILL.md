@@ -1,7 +1,7 @@
 # Skill: issue-research-rework
 
 **Trigger:** Rework complicato dopo reject — serve analisi approfondita prima di implementare  
-**Agente:** Claudio o Ciccio (chi supervisiona)  
+**Agente:** Claude Code  
 **Versione:** 1.1.0
 
 ---

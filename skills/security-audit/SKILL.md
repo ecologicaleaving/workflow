@@ -107,7 +107,7 @@ Se lo script trova problemi critici (exit code 1):
 ### Problemi dai check manuali
 Se i check manuali trovano problemi:
 - L'agente **segnala nel commento** sulla issue
-- **Aspetta conferma di Claudio** prima di procedere
+- **Notifica Davide** sulla issue e aspetta istruzioni
 
 ### Verdict
 - **✅ PASS** — solo se script passa E check manuali ok/N/A → l'agente può procedere al push
@@ -124,5 +124,5 @@ Se i check manuali trovano problemi:
 4. Valuta check manuali leggendo il codice
 5. Posta commento sulla issue con il report
 6. Se PASS → procedi al push
-7. Se BLOCKED → aspetta conferma di Claudio
+7. Se BLOCKED → fixa i problemi critici, notifica Davide per quelli non risolvibili
 ```

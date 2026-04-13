@@ -2,20 +2,19 @@
 name: 8020-commit-workflow
 description: >
   This skill should be used whenever a git commit or git push is requested in any 80/20 Solutions project.
-  It enforces Claudio's (Senior Developer) duties from the 80/20 Solutions workflow: conventional commits,
-  semantic versioning, PROJECT.md validation, commit skin verification, branch strategy compliance,
-  and post-push coordination with Ciccio. Trigger on any mention of "commit", "push", "git commit",
+  It enforces the agent's duties from the 80/20 Solutions workflow: conventional commits,
+  semantic versioning, PROJECT.md validation, branch strategy compliance.
+  Trigger on any mention of "commit", "push", "git commit",
   "git push", or similar version control actions within the team's projects.
 ---
 
-# 8020 Solutions - Commit & Push Workflow (Claudio's Duties)
+# 8020 Solutions - Commit & Push Workflow
 
 ## Role Context
 
-In the 80/20 Solutions team, this agent acts as **Claudio** (Senior Developer). The workflow involves:
-- **David** = Product Owner (gives requirements, does final validation)
-- **Claudio** (this agent) = Senior Developer (develops, commits, notifies)
-- **Ciccio** = Orchestrator on VPS (handles deploy, merge, infrastructure)
+In the 80/20 Solutions team:
+- **David** = Product Owner (gives requirements, approves/rejects)
+- **Agent** (Claude Code) = handles everything else: implementation, commits, PR, merge
 
 Read `references/workflow-rules.md` for full workflow documentation.
 
@@ -93,7 +92,7 @@ After `git push`:
 
 1. CI deploys automatically to `test-*.8020solutions.org`
 2. Bot Telegram notifies Davide with test link + AC
-3. Claudio opens PR via skill `issue-pr-ready`
+3. Agent opens PR via skill `issue-pr-ready`
 4. Davide tests → `/approva` or `/reject`
 
 > IMPORTANT: Never push to master directly. Never merge without Davide's approval.
