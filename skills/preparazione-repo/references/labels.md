@@ -6,9 +6,8 @@ Lista completa delle label che ogni repo del workflow deve avere.
 
 | Nome | Colore | Descrizione |
 |------|--------|-------------|
-| `claude-code` | `#0075ca` | Assegnata a Claude Code (PC locale) |
-| `ciccio` | `#e4e669` | Assegnata a Ciccio (VPS) |
-| `codex` | `#d876e3` | Assegnata a Codex |
+| `claude-code` | `#0075ca` | Assegnata a Claude Code |
+| `infra` | `#e4e669` | Task infrastrutturale (VPS, DB, domini) |
 
 ## Label Stato Workflow
 

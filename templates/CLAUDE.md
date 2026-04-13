@@ -10,7 +10,7 @@ git submodule update --init --remote .workflow
 ### 2. Leggi le regole operative
 `.workflow/skills/issue-implement/SKILL.md`
 
-Contiene il protocollo checkpoint obbligatori, convenzioni commit, branch strategy.
+Contiene il protocollo di implementazione, auto-gate, convenzioni commit, branch strategy.
 **Non improvvisare — tutto è documentato lì.**
 
 ### 3. Leggi il contesto del progetto
@@ -23,44 +23,44 @@ Contiene stack, URL, stato deploy, backlog attivo.
 gh issue view <N> --repo ecologicaleaving/<repo>
 ```
 
-Leggi tutto: obiettivo, contesto, AC, note tecniche, checkpoint obbligatori.
+Leggi tutto: obiettivo, contesto, AC, note tecniche.
 
 ---
 
 ## ⛔ REGOLE VINCOLANTI
 
-### Checkpoint obbligatori
+### Auto-gate obbligatorio
 
-Ad ogni checkpoint definito nella issue, devi:
+Prima di pushare, verifica autonomamente:
+1. Tutti gli AC soddisfatti
+2. Test e build passati
+3. Security audit passato (`scripts/security-audit.sh`)
+4. PROJECT.md aggiornato
+5. Nessun file anomalo nel commit
 
-1. **Postare un commento sulla issue** con questo formato esatto:
+Se tutto ok → procedi al push autonomamente.
+Se trovi problemi non risolvibili → **FERMATI e notifica Davide** sulla issue con questo formato:
 
 ```
-## ✅ Checkpoint N — <titolo>
+## ⚠️ Blocco — <titolo problema>
 
-**Stato:** completato
-
-**Cosa è stato fatto:**
+**Cosa è successo:**
 <descrizione>
 
-**Risultati test (se applicabile):**
-<risultati>
+**Causa:**
+<analisi>
 
-**Prossimo step pianificato:**
-<cosa farei dopo>
+**Opzioni:**
+<cosa potrei fare>
 
-**Aspetto conferma di Claudio prima di procedere.**
+**In attesa di indicazioni da Davide.**
 ```
-
-2. **Fermarti e aspettare** la risposta di Claudio sulla issue
-3. Procedere **solo** quando Claudio scrive "procedi" o "✅ procedi"
-4. Se Claudio scrive "bloccato" o chiede chiarimenti → aspetta istruzioni
 
 ### Branch
 
 - Lavora sempre su `feature/issue-N-slug` (o `fix/` o `improve/`)
 - MAI commit diretti su `main` o `master`
-- Branch già creato da Claudio all'avvio — usa quello
+- Crea il branch all'inizio: `git checkout -b feature/issue-N-slug`
 
 ### Commit
 
@@ -78,8 +78,7 @@ Ad ogni checkpoint definito nella issue, devi:
 
 Prima di fare push, verifica:
 - [ ] Tutti gli AC della issue soddisfatti
-- [ ] Tutti i checkpoint completati e confermati da Claudio
-- [ ] Test suite passata (lint, typecheck, unit, e2e)
+- [ ] Auto-gate superato (test, build, security audit)
 - [ ] PROJECT.md aggiornato
 - [ ] Nessun file anomalo nel commit
 - [ ] Branch corretto (non master/main)

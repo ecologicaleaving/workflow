@@ -1,7 +1,7 @@
 # Skill: prd-to-issues
 
 **Trigger:** `/prd-to-issues` o Davide chiede di creare le issue da un PRD  
-**Agente:** Claudio  
+**Agente:** Claude Code  
 **Versione:** 1.0.0  
 **Dipendenza:** PRD già creato (skill `create-prd`)
 
@@ -232,9 +232,9 @@ Dimmi quale issue vuoi avviare per prima!
 
 ### Issue infra/VPS
 Se dal PRD emergono task infrastrutturali (setup DB, DNS, certificati SSL, nginx config):
-- Creale come issue separate con label `agent:ciccio`
+- Creale come issue separate con label `infra`
 - Mettile in Fase 1 (setup) con priorità alta
-- Nota: queste le lavora Ciccio, non Claude Code
+- Nota: queste richiedono azioni manuali sul VPS — notifica Davide con la lista comandi
 
 ### Progetto nuovo senza repo
 Se la repo non esiste ancora:

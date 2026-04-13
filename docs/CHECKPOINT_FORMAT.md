@@ -22,7 +22,7 @@ Each checkpoint contains both a **human-readable** section and a **machine-reada
 **Prossimo step pianificato:**
 <description of next planned step>
 
-**Aspetto conferma di Claudio prima di procedere.**
+**Auto-gate: verifico autonomamente prima di procedere. In caso di blocco notifico Davide.**
 
 <!-- CHECKPOINT_DATA
 {"checkpoint":N,"status":"completed|in-progress|blocked","items_completed":2,"next_step":"description"}
@@ -41,7 +41,7 @@ Each checkpoint contains both a **human-readable** section and a **machine-reada
 | Cosa è stato fatto | Yes | Bullet list of completed items |
 | Risultati test | Yes | Test output, dry-run results, or "N/A" |
 | Prossimo step pianificato | Yes | What comes next |
-| Conferma line | Yes | Standard line requesting confirmation |
+| Auto-gate line | Yes | Standard line documenting auto-gate result |
 
 ### Machine-Readable Block (`CHECKPOINT_DATA`)
 
@@ -74,5 +74,5 @@ Use `scripts/parse-checkpoint.sh` to extract checkpoint data from issue comments
 1. Checkpoint numbers are sequential per issue (1, 2, 3, ...)
 2. Each checkpoint MUST contain the `<!-- CHECKPOINT_DATA ... -->` block
 3. The JSON block MUST be valid JSON on a single line
-4. Agents MUST wait for confirmation before proceeding past a checkpoint
+4. Agents proceed autonomously if gate passes; stop and notify Davide if blocked
 5. Only one checkpoint per comment

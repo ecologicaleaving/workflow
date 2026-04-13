@@ -1,8 +1,8 @@
 # Skill: create-issue
 
 **Trigger:** `/create-issue` o Davide descrive un bug/feature in modo grezzo
-**Agente:** Claudio
-**Versione:** 3.0.0
+**Agente:** Claude Code
+**Versione:** 4.0.0
 
 ---
 

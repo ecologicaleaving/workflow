@@ -1,20 +1,16 @@
-# 80/20 Solutions — Workflow v2.0
+# 80/20 Solutions — Workflow v4.0
 
-**Aggiornato:** 2026-03-20
+**Aggiornato:** 2026-04-13
 
 ---
 
-## 🏗️ Architettura Team
+## 🏗️ Team
 
 ```
-Davide (Telegram)
+Davide (Product Owner)
     │
-    ├──→ Ciccio (VPS) ────── conversazione principale, infra, deploy, /merge
-    │
-    └──→ Claudio (PC) ────── gestione issue, supervisione agenti, supporto sviluppo
-              │
-              ├── Claude Code  (dev agent)
-              └── Codex        (dev agent alternativo)
+    └──→ Agente (Claude Code) — gestisce tutto il ciclo
+              └── research → piano → implementazione → PR → merge
 ```
 
 ---
@@ -38,34 +34,34 @@ Workflow normale per ogni issue (vedi sotto)
 ## 🔄 Flusso Issue (singola)
 
 ```
-Davide descrive → Claudio /create-issue → Backlog
-                                ↓
-                           Claudio avvia piano → Todo
-                                ↓
-                        Piano approvato → InProgress
-                     (agente al lavoro, checkpoint obbligatori)
-                                ↓
-                          PR pronta → Test
-                       (Ciccio deploya in test)
-                                ↓
-                    Davide testa
-                    ├── /approva → Deploy → Ciccio /merge → Done
-                    └── /reject  → Review → rework → Test → loop
+Davide descrive → /create-issue → Backlog
+                        ↓
+               /issue-validate → research + piano → Todo
+                        ↓
+                    /vai → InProgress
+              (agente implementa autonomamente)
+                        ↓
+                 Auto-gate → push → PR → Test
+               (CI deploya su test-<repo>.8020solutions.org)
+                        ↓
+                  Davide testa
+                  ├── /approva → Agente mergia → CI deploya prod → Done
+                  └── /reject  → Review → rework → Test → loop
 ```
 
 ---
 
 ## 📋 Comandi
 
-| Comando | Chi | Cosa fa |
-|---------|-----|---------|
-| `/create-prd` | Davide → Claudio | Crea PRD da idea/brief |
-| `/prd-to-issues` | Davide → Claudio | Genera issue batch da PRD |
-| `/create-issue` | Davide → Claudio | Avvia raccolta singola issue |
-| `/vai` | Davide → Claudio | Dà il via all'agente |
-| `/approva` | Davide → Claudio | Approva PR, card → Deploy |
-| `/reject <feedback>` | Davide → Claudio | Rework con feedback |
-| `/merge #N` | Davide → Ciccio | Merge + deploy produzione |
+| Comando | Chi risponde | Cosa fa |
+|---------|-------------|---------|
+| `/create-prd` | Agente | Crea PRD da idea/brief |
+| `/prd-to-issues` | Agente | Genera issue batch da PRD |
+| `/create-issue` | Agente | Crea issue leggera in Backlog |
+| `/issue-validate #N` | Agente | Research + piano → Todo |
+| `/vai` | Agente | Avvia implementazione |
+| `/approva` | Agente | Mergia PR, deploya prod, chiude issue |
+| `/reject <feedback>` | Agente | Registra feedback, avvia rework |
 
 ---
 
@@ -73,29 +69,29 @@ Davide descrive → Claudio /create-issue → Backlog
 
 ```
 workflow/
-├── config.json                    # Fonte di verità ID Kanban, repos, agenti
-├── README.md                      # Questo file
-├── WORKFLOW_CLAUDIO.md            # Ruolo e workflow Claudio
-├── WORKFLOW_CICCIO.md             # Ruolo e workflow Ciccio
-├── KANBAN_WORKFLOW.md             # Flusso Kanban colonne
-├── BRANCH_STRATEGY.md             # Convenzioni branch (invariato)
-├── COMMIT_CONVENTIONS.md          # Convenzioni commit (invariato)
+├── config.json                       # Fonte di verità ID Kanban, repos
+├── README.md                         # Questo file
+├── WORKFLOW.md                       # Flusso completo, ruoli, fasi
+├── CLAUDE.md                         # Istruzioni agente
 ├── templates/
-│   ├── issue-feature.md           # Template issue feature
-│   ├── issue-bug.md               # Template issue bug
-│   ├── issue-improvement.md       # Template issue improvement
-│   ├── pull_request_template.md   # Template PR
-│   └── reject.md                  # Template sezione rework
+│   ├── CLAUDE.md                     # Template regole agente (da copiare nei repo)
+│   ├── AGENTS.md                     # Stessa cosa in inglese
+│   ├── issue-feature.md              # Template issue feature
+│   ├── issue-bug.md                  # Template issue bug
+│   ├── issue-improvement.md          # Template issue improvement
+│   └── pull_request_template.md      # Template PR
 └── skills/
-    ├── create-prd/SKILL.md        # Conversazione → PRD + PROJECT.md
-    ├── prd-to-issues/SKILL.md     # PRD → issue batch su GitHub
-    ├── create-issue/SKILL.md      # Creazione issue singola strutturata
-    ├── issue-start/SKILL.md       # Avvio piano e lavorazione
-    ├── issue-implement/SKILL.md   # Supervisione implementazione
-    ├── issue-done/SKILL.md        # PR + notifica test
-    ├── issue-reject/SKILL.md      # Gestione reject e rework
-    ├── issue-deploy-test/SKILL.md # Deploy ambiente test (Ciccio)
-    └── issue-deploy-prod/SKILL.md # Merge + deploy produzione (Ciccio)
+    ├── create-issue/SKILL.md         # Fase 1 — creazione issue
+    ├── issue-validate/SKILL.md       # Fase 2 — validazione + piano
+    ├── issue-implement/SKILL.md      # Fase 3 — implementazione
+    ├── issue-pr-ready/SKILL.md       # Fase 4 — PR + notifica
+    ├── issue-approve/SKILL.md        # Fase 5a — merge dopo /approva
+    ├── issue-reject/SKILL.md         # Fase 5b — rework dopo /reject
+    ├── issue-research-rework/SKILL.md # Fase 5b — rework complesso
+    ├── create-prd/SKILL.md           # Creazione PRD
+    ├── prd-to-issues/SKILL.md        # PRD → issue batch
+    ├── security-audit/SKILL.md       # Gate sicurezza pre-push
+    └── preparazione-repo/SKILL.md    # Setup iniziale repo
 ```
 
 ---
@@ -105,10 +101,8 @@ workflow/
 | Label | Significato |
 |-------|-------------|
 | `agent:claude-code` | Assegnata a Claude Code |
-| `agent:codex` | Assegnata a Codex |
-| `agent:ciccio` | Task infra per Ciccio |
 | `in-progress` | Agente al lavoro |
-| `review-ready` | PR pronta |
+| `review-ready` | PR pronta per test Davide |
 | `deployed-test` | Live su test |
 | `needs-fix` | Reject, rework in corso |
 | `deployed-prod` | Live in produzione |
@@ -117,16 +111,15 @@ workflow/
 
 ## 📊 Kanban
 
-**Project:** 80/20 Solutions - Development Hub (#2)  
-**Owner:** ecologicaleaving  
+**Project:** 80/20 Solutions - Development Hub (#2)
+**Owner:** ecologicaleaving
 **IDs:** vedi `config.json`
 
 | Colonna | Significato |
 |---------|-------------|
 | Backlog | Issue creata |
-| Todo | Pronta per piano |
+| Todo | Pronta per lavorazione |
 | InProgress | Agente al lavoro |
 | Test | PR aperta, in test |
 | Review | Rework dopo reject |
-| Deploy | Approvata, in deploy |
-| Done | Completata |
+| Done | Completata, in produzione |

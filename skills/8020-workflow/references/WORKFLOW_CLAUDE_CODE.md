@@ -1,3 +1,6 @@
+> ⚠️ **DEPRECATO** — Questo file è storico. Fonte di verità aggiornata: `WORKFLOW.md`
+> Ruoli attivi: solo **Davide** (Product Owner) e **Agente** (Claude Code). Non esiste più intermediario Claudio/Ciccio.
+
 # WORKFLOW_CLAUDE_CODE.md - Senior Developer  
 
 **Ruolo**: Senior Developer, Build Engineer, Implementation Lead  

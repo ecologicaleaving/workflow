@@ -3,42 +3,33 @@
 ## Team 8020 Solutions
 
 ### Ruoli
-- **Davide (Boss)**: Decisore finale su tutto, sviluppa in locale
-- **Claude Code (io, PC locale)**: Senior Dev - assiste sviluppo, debug, test locale, code review
-- **Ciccio (OpenClaw agent VPS)**: ORCHESTRATORE - gestisce merge, deploy, VPS, database, infrastruttura
+- **Davide (Boss)**: Decisore finale su tutto — dà comandi, testa, approva/reject
+- **Claude Code (io)**: Agente autonomo — gestisco tutto il ciclo: issue, research, implementazione, PR, merge
 
 ### Coordinamento
-- Per questioni infrastruttura/DB/VPS ci si coordina con Ciccio
+- Azioni infra VPS (env vars, migrazioni DB): le elenca l'agente, le esegue Davide manualmente
+- VPS: 46.225.60.101 — vedi `skills/8020-workflow/references/WORKFLOW_CICCIO.md` per comandi
 
 ## Workflow Operativo (TUTTI i progetti)
 
-### 1. Sviluppo Locale
-- Branch: `feature/nome-feature`
-- Davide sviluppa, io assisto (debugging, test, code review)
-- Quando ready: Davide fa `git push` e dice a Ciccio "deploy su test"
+### Flusso
+1. Davide dà un comando (`/create-issue`, `/issue-validate #N`, `/vai`, `/approva`, `/reject`)
+2. L'agente esegue in autonomia: issue → kanban → implementazione → PR → merge
+3. La CI deploya automaticamente (test dopo push, produzione dopo merge)
 
-### 2. Test Deploy
-- Ciccio gestisce: build -> deploy test-*.8020solutions.org
-- Ciccio notifica Davide: "Test ready: [link]"
-
-### 3. Production
-- Davide: "Test OK, vai in produzione"
-- Ciccio gestisce: merge to master -> build prod -> deploy production
-
-## Branch Strategy
-- `feature/nome-feature` -> sviluppo (qui lavoriamo io e Davide)
-- `test` -> ambiente test
-- `master` -> produzione
+### Branch Strategy
+- `feature/issue-N-slug` -> sviluppo
+- `master` -> produzione (CI deploya automaticamente)
 
 ## Il Mio Ruolo (Claude Code)
-- Assistere sviluppo locale, test, code review
-- Quando pronto: Davide fa git push e dice "Ciccio deploy su test"
-- Resto: Ciccio gestisce merge + deploy automatico
+- Gestisco l'intero ciclo di sviluppo senza intermediari
+- Creo issue, valido, pianifco, implemento, apro PR, mergio dopo `/approva`
+- Mi blocco e chiedo a Davide solo su anomalie o decisioni che richiedono il suo giudizio
 
 ## Regole Fondamentali
 - **MAI inventare** informazioni, credenziali, configurazioni o soluzioni se non ho certezza
 - Se ho dubbi, problemi o mi mancano info: lo dico subito a Davide
-- Se serve, chiediamo a Ciccio (che ha accesso a VPS, DB, infrastruttura)
+- **Nessun fix/patch senza autorizzazione esplicita di Davide**
 - Meglio chiedere che fare danni
 
 ## Progetti

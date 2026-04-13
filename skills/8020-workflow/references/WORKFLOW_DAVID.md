@@ -1,3 +1,6 @@
+> ⚠️ **DEPRECATO** — Questo file è storico. Fonte di verità aggiornata: `WORKFLOW.md`
+> Ruoli attivi: solo **Davide** (Product Owner) e **Agente** (Claude Code). Ciccio non è più attivo.
+
 # WORKFLOW_DAVID.md - Product Owner & Strategic Lead
 
 **Ruolo**: Product Owner, Strategic Decision Maker, Business Lead  

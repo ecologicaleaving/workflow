@@ -203,7 +203,7 @@ PROJECT.md
 Notifiche Deploy Telegram
   ✅ Secrets presenti (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)
   ✅ Job notify-deploy presente nel workflow CI
-  / ❌ Assenti → segnala a Ciccio (vedi DEPLOY-NOTIFY-SETUP.md)
+  / ❌ Assenti → aggiungi i secrets su GitHub e verifica DEPLOY-NOTIFY-SETUP.md
 
 Curl Test
   ✅ tests/curl-tests.sh presente

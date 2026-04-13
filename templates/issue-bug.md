@@ -57,7 +57,7 @@
 
 ## 📌 Checkpoint Obbligatori
 
-<!-- Generati da Claudio e approvati da Davide -->
+<!-- Generati dall'agente e approvati da Davide -->
 - [ ] **CP1 — Root Cause** → Agente identifica e riporta la causa del bug prima di toccare codice
 - [ ] **CP2 — Fix** → Report del fix applicato con test di regressione
 - [ ] **CP3 — Test Suite** → Risultati completi lint / typecheck / unit / e2e

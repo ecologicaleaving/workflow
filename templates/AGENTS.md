@@ -12,7 +12,7 @@ git submodule update --init --remote .workflow
 ### 2. Read the operational rules
 `.workflow/skills/issue-implement/SKILL.md`
 
-Contains the mandatory checkpoint protocol, commit conventions, branch strategy.
+Contains the implementation protocol, auto-gate, commit conventions, branch strategy.
 **Do not improvise — everything is documented there.**
 
 ### 3. Read the project context
@@ -25,44 +25,44 @@ Contains stack, URLs, deploy status, active backlog.
 gh issue view <N> --repo ecologicaleaving/<repo>
 ```
 
-Read everything: objective, context, AC, technical notes, mandatory checkpoints.
+Read everything: objective, context, AC, technical notes.
 
 ---
 
 ## ⛔ BINDING RULES
 
-### Mandatory Checkpoints
+### Mandatory Auto-Gate
 
-At every checkpoint defined in the issue, you must:
+Before pushing, verify autonomously:
+1. All AC satisfied
+2. Tests and build passed
+3. Security audit passed (`scripts/security-audit.sh`)
+4. PROJECT.md updated
+5. No anomalous files in commit
 
-1. **Post a comment on the issue** with this exact format:
+If all ok → proceed to push autonomously.
+If you find unresolvable problems → **STOP and notify Davide** on the issue:
 
 ```
-## ✅ Checkpoint N — <title>
+## ⚠️ Blocked — <problem title>
 
-**Status:** completed
-
-**What was done:**
+**What happened:**
 <description>
 
-**Test results (if applicable):**
-<results>
+**Cause:**
+<analysis>
 
-**Planned next step:**
-<what I would do next>
+**Options:**
+<what I could do>
 
-**Waiting for Claudio's confirmation before proceeding.**
+**Waiting for Davide's instructions.**
 ```
-
-2. **Stop and wait** for Claudio's reply on the issue
-3. Proceed **only** when Claudio writes "procedi" or "✅ procedi"
-4. If Claudio writes "bloccato" or asks for clarification → wait for instructions
 
 ### Branch
 
 - Always work on `feature/issue-N-slug` (or `fix/` or `improve/`)
 - NEVER commit directly to `main` or `master`
-- Branch already created by Claudio at start — use it
+- Create the branch at start: `git checkout -b feature/issue-N-slug`
 
 ### Commit
 
@@ -80,8 +80,7 @@ At every checkpoint defined in the issue, you must:
 
 Before pushing, verify:
 - [ ] All issue AC satisfied
-- [ ] All checkpoints completed and confirmed by Claudio
-- [ ] Test suite passed (lint, typecheck, unit, e2e)
+- [ ] Auto-gate passed (tests, build, security audit)
 - [ ] PROJECT.md updated
 - [ ] No anomalous files in commit
 - [ ] Correct branch (not master/main)

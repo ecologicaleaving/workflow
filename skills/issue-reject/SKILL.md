@@ -1,8 +1,8 @@
 # Skill: issue-reject
 
-**Trigger:** Davide scrive `/reject <feedback>`  
-**Agente:** Claudio  
-**Versione:** 2.1.0
+**Trigger:** Davide scrive `/reject <feedback>`
+**Agente:** Claude Code
+**Versione:** 3.0.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 5b
 
@@ -10,7 +10,7 @@
 
 ## Obiettivo
 
-Gestire il rework dopo un reject: aggiornare la issue con feedback e risultati test, rilanciare l'agente con il contesto necessario.
+Gestire il rework dopo un reject: registrare feedback e risultati test sulla issue, ripartire con l'implementazione.
 
 ---
 
@@ -18,7 +18,7 @@ Gestire il rework dopo un reject: aggiornare la issue con feedback e risultati t
 
 ### Step 1 — Raccolta feedback
 
-Se Davide non ha specificato risultati test nel reject, Claudio chiede:
+Se Davide non ha specificato risultati test nel reject, chiedi:
 ```
 Hai risultati dei test da allegare al reject? (log, screenshot, descrizione errore)
 ```
@@ -42,7 +42,7 @@ gh issue comment <N> --repo ecologicaleaving/<repo> --body "
 - <action item 2>
 
 ---
-*Reject ricevuto il $(date +%Y-%m-%d %H:%M) — Agente in rework*
+*Reject ricevuto il $(date +%Y-%m-%d %H:%M) — Rework in corso*
 "
 ```
 
@@ -60,21 +60,12 @@ gh issue edit <N> --repo ecologicaleaving/<repo> \
 ./scripts/kanban-move.sh <N> <repo> Review
 ```
 
-### Step 5 — Rilancia agente con contesto
+### Step 5 — Avvia rework
 
-Istruzioni da passare all'agente:
-
-```
-La issue #N è stata rifiutata. 
-Leggi l'ultimo commento di rework sulla issue per il feedback completo.
-
-Feedback: <feedback>
-Risultati test: <risultati>
-
-Parti dalla PR esistente (branch: feature/issue-N-slug).
-Analizza il problema, proponi il fix, implementa.
-Segui i checkpoint obbligatori come da issue.
-```
+Riprendi dal branch esistente (`feature/issue-N-slug`).
+Leggi l'ultimo commento sulla issue per il feedback completo.
+Analizza il problema, implementa il fix.
+Segui il flusso `issue-implement` (auto-gate, poi `issue-pr-ready`).
 
 ### Step 6 — Sposta card → InProgress
 
@@ -87,13 +78,13 @@ Segui i checkpoint obbligatori come da issue.
 ```
 🔄 [Issue #N] Rework avviato
 📌 Feedback registrato sulla issue
-🤖 Agente in lavorazione con il contesto del reject
-📬 Ti aggiornerò ai checkpoint
+🤖 In lavorazione — ti aggiorno al gate
 ```
 
 ---
 
 ## Nota
 
-Il loop reject → rework → test review continua fino a `/approva` di Davide.  
+Il loop reject → rework → test continua fino a `/approva` di Davide.
 Ogni reject viene numerato progressivamente nella issue (Rework 1, Rework 2, ecc.)
+Dopo 2+ reject usa la skill `issue-research-rework` per un'analisi più approfondita.

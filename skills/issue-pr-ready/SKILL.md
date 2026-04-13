@@ -15,22 +15,18 @@ and the branch is ready for pull request and review.
 
 ## Prerequisites
 
-- All acceptance criteria verified (code complete)
-- Branch is up to date with target branch
-- `config.json` is available in the workflow repo root
-- `gh` CLI authenticated and available
-- `scripts/generate-pr-body.sh` available in the workflow repo
+- Auto-gate finale superato (issue-implement Step 5)
+- Branch aggiornato rispetto al branch target
+- `config.json` disponibile nella root del workflow repo
+- `gh` CLI autenticato e disponibile
+- `scripts/generate-pr-body.sh` disponibile nel workflow repo
 
 ## Procedure
 
-### Step 1 — Verify CP3 passed
-
-All checks were done at CP3 (`issue-implement`). Verify the checkpoint was approved before proceeding.
-
-### Step 2 — Push Branch and Open PR
+### Step 1 — Push Branch e Apertura PR
 
 ```bash
-# Read config values
+# Leggi valori da config
 REPO=$(jq -r '.github.repos["<project>"]' config.json)
 DEFAULT_BRANCH=$(jq -r '.workflow.defaultBranch' config.json)
 BRANCH=$(git branch --show-current)
@@ -38,10 +34,10 @@ BRANCH=$(git branch --show-current)
 # Push branch
 git push origin "$BRANCH"
 
-# Generate PR body using the template script
+# Genera body PR dal template
 PR_BODY=$(./scripts/generate-pr-body.sh "$ISSUE_NUMBER")
 
-# Open PR
+# Apri PR
 gh pr create \
   --repo "$REPO" \
   --base "$DEFAULT_BRANCH" \
@@ -50,51 +46,41 @@ gh pr create \
   --body "$PR_BODY"
 ```
 
-### Step 3 — Move Kanban Card → Test
+### Step 2 — Sposta Card Kanban → Test
 
 ```bash
 ./scripts/kanban-move.sh "$ISSUE_NUMBER" "$REPO" Test
 ```
 
-### Step 4 — Add Label `review-ready`
+### Step 3 — Aggiungi Label `review-ready`
 
 ```bash
 gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "review-ready"
 ```
 
-### Step 5 — Notify Davide
-
-Send a structured notification to Davide with test instructions:
+### Step 4 — Notifica Davide
 
 ```
-📋 Issue #<N> — <Title> pronta per test
+✅ [Issue #N] PR pronta → <link PR>
+📌 <summary>
 
-**Branch:** <branch-name>
-**PR:** <pr-url>
-**Repo:** <repo>
+🧪 Come testare:
+1. <istruzione 1>
+2. <istruzione 2>
 
-**Cosa testare:**
-1. <test instruction 1>
-2. <test instruction 2>
+💡 Cosa aspettarsi:
+<risultato atteso>
 
-**Come testare:**
-- `git checkout <branch>`
-- <run instructions>
+**AC verificati:**
+- ✅ AC1 — <descrizione>
+- ✅ AC2 — <descrizione>
 
-**AC verificati dall'agente:**
-- ✅ AC1 — <description>
-- ✅ AC2 — <description>
-...
-
-Quando hai testato, usa:
-- `/approva` se tutto ok
-- `/reject <motivo>` se serve rework
+→ /approva se ok | /reject <motivo> se serve rework
 ```
 
 ## Note
 
 - CI deploya automaticamente su test dopo il push del branch
-- Bot Telegram notifica Davide con link + AC
 - Dopo `/approva` di Davide → skill `issue-approve`
 - Dopo `/reject` di Davide → skill `issue-reject`
 - Valori config (project ID, field ID, column ID): vedi `config.json`

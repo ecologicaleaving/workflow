@@ -15,13 +15,12 @@
 
 ---
 
-## 📌 Checkpoint completati
+## 📌 Auto-gate superato
 
-<!-- Tutti i checkpoint della issue devono essere confermati da Claudio -->
-- [ ] CP1 — confermato da Claudio
-- [ ] CP2 — confermato da Claudio
-- [ ] CP3 — confermato da Claudio
-- [ ] CP4 — confermato da Claudio
+- [ ] Tutti gli AC verificati dall'agente
+- [ ] Test e build passati
+- [ ] Security audit passato
+- [ ] PROJECT.md aggiornato
 
 ---
 
@@ -66,4 +65,4 @@
 
 ---
 
-*PR verificata da Claudio — Workflow 80/20 Solutions v2.0*
+*PR generata dall'agente — Workflow 80/20 Solutions v4.0*

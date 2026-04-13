@@ -50,7 +50,7 @@
 
 ## 📌 Checkpoint Obbligatori
 
-<!-- Generati da Claudio e approvati da Davide -->
+<!-- Generati dall'agente e approvati da Davide -->
 - [ ] **CP1 — Piano** → Agente riporta piano + approccio + impatto stimato
 - [ ] **CP2 — Implementazione** → Report dopo ogni iterazione con misurazione risultati
 - [ ] **CP3 — Test Suite** → Risultati completi lint / typecheck / unit / e2e
