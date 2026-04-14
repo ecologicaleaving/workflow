@@ -19,6 +19,17 @@ if not BOT_TOKEN or not CHAT_ID:
     sys.exit(1)
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+# Test URLs per repo
+TEST_URLS = {
+    'maestroweb':     'https://test-maestroweb.8020solutions.org',
+    'BeachCRER':      'https://test-beachcrer.8020solutions.org',
+    'StageConnect':   'https://apps.8020solutions.org/downloads/test/',
+    'BeachRef-app':   'https://apps.8020solutions.org/downloads/test/',
+    'finn':           'https://apps.8020solutions.org/downloads/test/',
+    'musicbuddy-app': 'https://apps.8020solutions.org/downloads/test/',
+    'musicbuddy-web': None,
+}
+
 # Status emojis
 STATUS_EMOJI = {
     'in_progress': '🔄',
@@ -40,11 +51,11 @@ def format_message(
     details: Optional[str] = None
 ) -> str:
     """Format deployment notification message"""
-    
+
     repo_name = repo.split('/')[-1]
     status_emoji = STATUS_EMOJI.get(status, '📌')
     type_emoji = STATUS_EMOJI.get(event_type, '⚙️')
-    
+
     # Status text
     if status == 'in_progress':
         status_text = "In progress..."
@@ -54,20 +65,26 @@ def format_message(
         status_text = "Failed ⚠️"
     else:
         status_text = status.capitalize()
-    
+
     # Build message
     msg = f"{status_emoji} **{repo_name}** {type_emoji}\n"
     msg += f"Branch: `{branch}`\n"
     msg += f"Status: {status_text}\n"
-    
+
     if link:
         msg += f"[View on GitHub]({link})\n"
-    
+
+    # Test URL (solo su success)
+    if status == 'success':
+        test_url = TEST_URLS.get(repo_name)
+        if test_url:
+            msg += f"[Testa qui]({test_url})\n"
+
     if details:
         msg += f"\n```\n{details}\n```"
-    
+
     msg += f"\n__{datetime.now().strftime('%H:%M UTC')}__"
-    
+
     return msg
 
 def send_notification(
