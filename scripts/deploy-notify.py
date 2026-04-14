@@ -81,8 +81,9 @@ def format_message(
         if resolved_url:
             msg += f"[Testa qui]({resolved_url})\n"
 
-    if details:
-        msg += f"\n```\n{details}\n```"
+    # AC dalla PR (solo su success, se presenti)
+    if status == 'success' and details and details.strip():
+        msg += f"\n🧪 *AC da verificare:*\n{details}\n"
 
     msg += f"\n__{datetime.now().strftime('%H:%M UTC')}__"
 
