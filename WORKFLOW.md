@@ -1,6 +1,6 @@
 # WORKFLOW.md — 80/20 Solutions Development Workflow
 
-**Versione:** 4.0.0 | **Aggiornato:** 2026-04-13
+**Versione:** 5.0.0 | **Aggiornato:** 2026-04-14
 
 > Fonte di verità unica per il flusso di sviluppo del team.
 > I valori strutturati (ID Kanban, repo, label) stanno in `config.json`.
@@ -13,19 +13,30 @@
 | Chi | Ruolo | Cosa fa | Cosa NON fa |
 |-----|-------|---------|-------------|
 | **Davide** | Product Owner | Decide, testa, approva/reject, dà i comandi | Non implementa, non deploya |
-| **Agente** (Claude Code) | Sviluppatore autonomo | Tutto il resto: issue, research, piano, implementazione, kanban, PR, merge | Non decide senza autorizzazione di Davide |
+| **Claudio** (Claude Code) | Orchestratore | Interfaccia con Davide, crea issue, coordina, spawna subagenti developer, gestisce deploy | Non implementa codice direttamente |
+| **Subagente developer** | Developer | Implementa, testa, commit, PR — spawna da Claudio via `Agent` tool | Non parla con Davide |
 
 > ⚠️ **Regola cardinale:** Nessun fix/patch senza autorizzazione esplicita di Davide.
-> ⚠️ **Repo workflow:** Solo l'agente modifica `ecologicaleaving/workflow` su indicazione di Davide.
+> ⚠️ **Repo workflow:** Solo Claudio modifica `ecologicaleaving/workflow` su indicazione di Davide.
 
 ---
 
-## 🤖 Modello Agente
+## 🤖 Architettura
 
-**Un solo agente** (`claude-sonnet-4-6` via Claude Code) gestisce l'intero ciclo:
-research → piano → implementazione → PR → merge.
+```
+Davide ←→ Claudio (questa sessione Claude Code)
+               ↓ Agent tool
+          Subagente developer (lavora in silenzio)
+               ↓
+          GitHub: branch → commit → PR
+               ↓
+          CI/CD → deploy test automatico
+               ↓
+          Claudio notifica Davide
+```
 
-L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi tra agenti diversi.
+**Claudio** = la chat aperta da Davide. Non un processo background, non un VPS.
+**Subagente** = spawna da Claudio con `Agent` tool, segue `issue-resolver`, ritorna al termine.
 
 ---
 
@@ -33,11 +44,12 @@ L'agente mantiene il contesto dall'esplorazione al codice — zero passaggi tra 
 
 | Comando | Effetto |
 |---------|---------|
-| `/create-issue` | Agente raccoglie info e crea issue → Backlog |
-| `/issue-validate #N` | Agente completa la issue con AC, research, piano → Todo |
-| `/vai` | Agente avvia implementazione |
-| `/approva` | Agente mergia PR su main → CI deploya automaticamente |
-| `/reject <feedback>` | Agente registra feedback e rilancia rework |
+| Descrizione libera | Claudio crea issue e spawna subagente |
+| `/vai #N` | Claudio spawna subagente per issue esistente |
+| `/approva #N` | Claudio mergia PR → CI deploya prod |
+| `/reject #N <feedback>` | Claudio registra feedback e rilancia rework |
+| `/stato` | Claudio mostra issue in corso |
+| `/create-issue` | Claudio crea issue leggera → Backlog |
 
 ---
 
