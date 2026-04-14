@@ -335,16 +335,20 @@ jobs:
 
             console.log(`✅ Release created: ${release.data.html_url}`);
 
-      # ── Notifica Ciccio: mark deployed-test + move card ───────────────────
-      - name: Notify Ciccio (deployed-test)
-        if: github.ref_name != 'master' && github.ref_name != 'main'
+      # ── Mark deployed-test + move card Kanban ─────────────────────────────
+      - name: Mark deployed-test
+        if: github.ref_name != 'master' && github.ref_name != 'main' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.event.repository.name }}"
-          BRANCH="${{ github.ref_name }}"
-          APK_URL="${{ steps.apk_url.outputs.url }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
 
-          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "ciccio-notify mark-deployed-test --repo '${REPO}' --branch '${BRANCH}' --url '${APK_URL}'" || true
+          # Aggiunge label deployed-test alla PR/issue
+          gh issue edit "$PR_NUMBER" \
+            --repo "ecologicaleaving/${REPO}" \
+            --add-label "deployed-test" \
+            --remove-label "review-ready" || true
 
   # ===========================================================================
   # JOB: cleanup
@@ -381,106 +385,112 @@ jobs:
 
   # ===========================================================================
   # JOB: notify
-  # Notifica unificata per web e flutter via ciccio-notify sulla VPS.
-  # Formato identico per entrambi i tipi di progetto:
-  #   EMOJI repo / branch (sha)
-  #   🔗 URL
-  #   Status: status
+  # Notifiche al termine di ogni build (success o failure):
+  #   1. Telegram → Davide (real-time)
+  #   2. repository_dispatch → ecologicaleaving/workflow → Claude Code
+  #
+  # Secrets richiesti:
+  #   TELEGRAM_BOT_TOKEN   — token bot Telegram
+  #   TELEGRAM_CHAT_ID     — chat ID Davide
+  #   GH_PAT               — PAT con scope repo (per repository_dispatch cross-repo)
   # ===========================================================================
   notify:
     name: 📣 Notify
     needs: [detect, build-web, build-flutter]
-    # Gira sempre, anche se i job precedenti falliscono o vengono skippati
     if: always() && github.event_name != 'delete'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+      # ── Checkout workflow repo (contiene deploy-notify.py) ─────────────────
+      - name: Checkout workflow repo
+        uses: actions/checkout@v4
+        with:
+          repository: ecologicaleaving/workflow
+          path: workflow
 
-      # ── Calcola stato e URL per la notifica ────────────────────────────────
+      # ── Calcola stato e URL ────────────────────────────────────────────────
       - name: Prepare notification payload
-        id: notify_prep
+        id: prep
         run: |
           REPO="${{ github.event.repository.name }}"
           BRANCH="${{ github.ref_name }}"
           SHA="${{ github.sha }}"
           SHORT_SHA="${SHA:0:7}"
           STACK="${{ needs.detect.outputs.stack }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          # ── Determina URL in base allo stack ──────────────────────────────
+          # URL artefatto
           if [[ "$STACK" == "flutter" ]]; then
             BRANCH_SLUG="${BRANCH//\//-}"
-            # Flavour prod su master, dev altrove
-            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
-              FLAVOR="prod"
-            else
-              FLAVOR="dev"
-            fi
-            URL="https://apps.8020solutions.org/${REPO}/${REPO}-${BRANCH_SLUG}-${SHORT_SHA}-${FLAVOR}.apk"
-            EMOJI="📱"
+            FLAVOR="dev"
+            [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]] && FLAVOR="prod"
+            ARTIFACT_URL="https://apps.8020solutions.org/${REPO}/${REPO}-${BRANCH_SLUG}-${SHORT_SHA}-${FLAVOR}.apk"
           else
-            # Web: prod su master, test altrove
             if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
-              URL="https://${REPO}.8020solutions.org"
+              ARTIFACT_URL="https://${REPO}.8020solutions.org"
             else
-              URL="https://test-${REPO}.8020solutions.org"
+              ARTIFACT_URL="https://test-${REPO}.8020solutions.org"
             fi
-            EMOJI="🌐"
           fi
 
-          # ── Determina status complessivo ──────────────────────────────────
+          # Status complessivo
           WEB_RESULT="${{ needs.build-web.result }}"
           FLUTTER_RESULT="${{ needs.build-flutter.result }}"
+          [[ "$WEB_RESULT" != "skipped" ]] && JOB_RESULT="$WEB_RESULT" || JOB_RESULT="$FLUTTER_RESULT"
 
-          # Il job rilevante è quello che non è "skipped"
-          if [[ "$WEB_RESULT" != "skipped" ]]; then
-            JOB_RESULT="$WEB_RESULT"
-          elif [[ "$FLUTTER_RESULT" != "skipped" ]]; then
-            JOB_RESULT="$FLUTTER_RESULT"
-          else
-            JOB_RESULT="skipped"
-          fi
-
-          # Converti in emoji
           case "$JOB_RESULT" in
-            success)   STATUS_EMOJI="✅"; STATUS_TEXT="Success" ;;
-            failure)   STATUS_EMOJI="❌"; STATUS_TEXT="Failed" ;;
-            cancelled) STATUS_EMOJI="⚠️"; STATUS_TEXT="Cancelled" ;;
-            *)         STATUS_EMOJI="⏭️"; STATUS_TEXT="Skipped" ;;
+            success)   STATUS="success" ;;
+            failure)   STATUS="failed"  ;;
+            cancelled) STATUS="failed"  ;;
+            *)         STATUS="skipped" ;;
           esac
 
-          echo "emoji=${EMOJI}" >> "$GITHUB_OUTPUT"
-          echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
-          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "url=${URL}" >> "$GITHUB_OUTPUT"
-          echo "status_emoji=${STATUS_EMOJI}" >> "$GITHUB_OUTPUT"
-          echo "status_text=${STATUS_TEXT}" >> "$GITHUB_OUTPUT"
-          echo "stack=${STACK}" >> "$GITHUB_OUTPUT"
+          echo "repo=${REPO}"                   >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}"               >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}"         >> "$GITHUB_OUTPUT"
+          echo "status=${STATUS}"               >> "$GITHUB_OUTPUT"
+          echo "artifact_url=${ARTIFACT_URL}"   >> "$GITHUB_OUTPUT"
+          echo "run_url=${RUN_URL}"             >> "$GITHUB_OUTPUT"
 
-      # ── Invia notifica via ciccio-notify ───────────────────────────────────
-      - name: Send notification
+      # ── 1. Telegram → Davide ───────────────────────────────────────────────
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Notify Telegram
+        if: env.TELEGRAM_BOT_TOKEN != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          EMOJI="${{ steps.notify_prep.outputs.emoji }}"
-          REPO="${{ steps.notify_prep.outputs.repo }}"
-          BRANCH="${{ steps.notify_prep.outputs.branch }}"
-          SHORT_SHA="${{ steps.notify_prep.outputs.short_sha }}"
-          URL="${{ steps.notify_prep.outputs.url }}"
-          STATUS_EMOJI="${{ steps.notify_prep.outputs.status_emoji }}"
-          STATUS_TEXT="${{ steps.notify_prep.outputs.status_text }}"
+          python workflow/scripts/deploy-notify.py \
+            "${{ steps.prep.outputs.repo }}" \
+            "build" \
+            "${{ steps.prep.outputs.status }}" \
+            "${{ steps.prep.outputs.branch }}" \
+            "${{ steps.prep.outputs.run_url }}"
 
-          # Formato unificato — stesso per web e flutter
-          MESSAGE="${EMOJI} ${REPO} / ${BRANCH} (${SHORT_SHA})
-          🔗 ${URL}
-          Status: ${STATUS_EMOJI} ${STATUS_TEXT}"
-
-          echo "📣 Sending notification:"
-          echo "$MESSAGE"
-
-          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "ciccio-notify send --message '$MESSAGE'" || true
+      # ── 2. repository_dispatch → Claude Code ──────────────────────────────
+      - name: Notify Claude Code
+        if: steps.prep.outputs.status != 'skipped' && env.GH_PAT != ''
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/ecologicaleaving/workflow/dispatches" \
+            -d '{
+              "event_type": "build_complete",
+              "client_payload": {
+                "repo":    "${{ steps.prep.outputs.repo }}",
+                "branch":  "${{ steps.prep.outputs.branch }}",
+                "status":  "${{ steps.prep.outputs.status }}",
+                "run_url": "${{ steps.prep.outputs.run_url }}",
+                "sha":     "${{ steps.prep.outputs.short_sha }}"
+              }
+            }'
