@@ -48,6 +48,7 @@ def format_message(
     status: str,
     branch: str,
     link: str,
+    test_url: str = "",
     details: Optional[str] = None
 ) -> str:
     """Format deployment notification message"""
@@ -74,11 +75,11 @@ def format_message(
     if link:
         msg += f"[View on GitHub]({link})\n"
 
-    # Test URL (solo su success)
+    # Test URL (solo su success) — usa URL diretto se passato, altrimenti fallback per repo
     if status == 'success':
-        test_url = TEST_URLS.get(repo_name)
-        if test_url:
-            msg += f"[Testa qui]({test_url})\n"
+        resolved_url = test_url or TEST_URLS.get(repo_name)
+        if resolved_url:
+            msg += f"[Testa qui]({resolved_url})\n"
 
     if details:
         msg += f"\n```\n{details}\n```"
@@ -93,12 +94,13 @@ def send_notification(
     status: str,
     branch: str = "main",
     link: str = "",
+    test_url: str = "",
     details: str = ""
 ) -> bool:
     """Send notification via Telegram"""
-    
+
     try:
-        message = format_message(repo, event_type, status, branch, link, details)
+        message = format_message(repo, event_type, status, branch, link, test_url, details)
         
         payload = {
             'chat_id': CHAT_ID,
@@ -135,7 +137,8 @@ if __name__ == '__main__':
     status = sys.argv[3]
     branch = sys.argv[4]
     link = sys.argv[5] if len(sys.argv) > 5 else ""
-    details = sys.argv[6] if len(sys.argv) > 6 else ""
-    
-    success = send_notification(repo, event_type, status, branch, link, details)
+    test_url = sys.argv[6] if len(sys.argv) > 6 else ""
+    details = sys.argv[7] if len(sys.argv) > 7 else ""
+
+    success = send_notification(repo, event_type, status, branch, link, test_url, details)
     sys.exit(0 if success else 1)
