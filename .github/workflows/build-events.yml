@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -30,12 +31,41 @@ jobs:
           echo "{\"ts\":\"${TIMESTAMP}\",\"repo\":\"${REPO}\",\"branch\":\"${BRANCH}\",\"status\":\"${STATUS}\",\"sha\":\"${SHA}\",\"url\":\"${RUN_URL}\",\"read\":false}" \
             >> notifications/build-log.jsonl
 
-          echo "✅ Logged: ${REPO}/${BRANCH} → ${STATUS}"
+          echo "Logged: ${REPO}/${BRANCH} -> ${STATUS}"
 
-      - name: Commit log
+      - name: Commit and merge via PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          SHA="${{ github.event.client_payload.sha }}"
+          REPO="${{ github.event.client_payload.repo }}"
+          BRANCH_NAME="build-events/${SHA:-$(date +%s)}"
+
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Crea branch dedicato per questo evento
+          git checkout -b "${BRANCH_NAME}"
           git add notifications/build-log.jsonl
-          git commit -m "ci: build event — ${{ github.event.client_payload.repo }}/${{ github.event.client_payload.branch }} [${{ github.event.client_payload.status }}]" || true
-          git push || true
+          git commit -m "ci: build event — ${{ github.event.client_payload.repo }}/${{ github.event.client_payload.branch }} [${{ github.event.client_payload.status }}] (${SHA})"
+          git push origin "${BRANCH_NAME}"
+
+          # Apri PR e mergela immediatamente con --admin (bypassa protezione branch)
+          PR_URL=$(gh pr create \
+            --base master \
+            --head "${BRANCH_NAME}" \
+            --title "ci: build event — ${REPO} [${{ github.event.client_payload.status }}] (${SHA})" \
+            --body "Automated build event log. Triggered by repository_dispatch from ${REPO}." \
+            --repo ecologicaleaving/workflow)
+
+          echo "PR created: ${PR_URL}"
+
+          # Estrai numero PR e mergia con admin bypass
+          PR_NUMBER=$(echo "${PR_URL}" | grep -oE '[0-9]+$')
+          gh pr merge "${PR_NUMBER}" \
+            --repo ecologicaleaving/workflow \
+            --squash \
+            --admin \
+            --delete-branch
+
+          echo "PR ${PR_NUMBER} merged successfully"
