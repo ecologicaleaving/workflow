@@ -6,9 +6,10 @@
 #      oppure automatico da CLAUDE.md
 # ================================================================
 
-$REPO_RAW   = "https://raw.githubusercontent.com/ecologicaleaving/workflow/master"
-$SKILLS_DIR = "$env:USERPROFILE\.claude\skills"
-$MONITOR    = "C:\claude-workspace\monitor\claude-monitor.ps1"
+$REPO_RAW     = "https://raw.githubusercontent.com/ecologicaleaving/workflow/master"
+$SKILLS_DIR   = "$env:USERPROFILE\.claude\skills"
+$COMMANDS_DIR = "$env:USERPROFILE\.claude\commands"
+$MONITOR      = "C:\claude-workspace\monitor\claude-monitor.ps1"
 
 function dl($url, $dest) {
     try {
@@ -31,6 +32,14 @@ $files = @{
 }
 foreach ($src in $files.Keys) {
     if (dl "$REPO_RAW/$src" $files[$src]) { $updated++ }
+}
+
+# Slash commands
+$commands = @(
+    "implementa-issue.md"
+)
+foreach ($c in $commands) {
+    if (dl "$REPO_RAW/commands/$c" "$COMMANDS_DIR\$c") { $updated++ }
 }
 
 # Monitor
