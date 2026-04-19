@@ -1,7 +1,16 @@
 #!/bin/bash
 # ================================================================
-# install-ciccio.sh — Setup Ciccio (OpenClaw VPS)
-# Installa script e skill per l'agente orchestratore.
+# install-ciccio.sh — DEPRECATO
+# Ciccio (OpenClaw VPS) non è più attivo nel workflow.
+# Ruolo assorbito da Claudio (Claude Code) che gestisce
+# direttamente deploy, VPS e infrastruttura via SSH.
+# ================================================================
+echo "⚠️  install-ciccio.sh è deprecato — Ciccio non è più attivo."
+exit 0
+
+# ================================================================
+# Codice originale (conservato per riferimento storico)
+# ================================================================
 #
 # Uso:
 #   curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-ciccio.sh | bash

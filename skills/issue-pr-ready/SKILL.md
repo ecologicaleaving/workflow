@@ -58,7 +58,29 @@ gh pr create \
 gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "review-ready"
 ```
 
-### Step 4 — Notifica Davide
+### Step 4 — Monitora CI deploy test
+
+Dopo il push, monitora il run CI:
+
+```bash
+# Attendi il run più recente
+gh run watch --repo "$REPO"
+
+# oppure polling manuale
+gh run list --repo "$REPO" --branch "$BRANCH" --limit 1
+```
+
+**Se il deploy fallisce:**
+1. Leggi i log: `gh run view <run_id> --repo "$REPO" --log-failed`
+2. Identifica l'errore, fixa nel codice
+3. Commit + push → torna a monitorare (ripeti finché CI verde)
+4. Massimo 3 iterazioni — se non si risolve blocca e notifica Davide
+
+**Se il deploy ha successo** → procedi con Step 5.
+
+---
+
+### Step 5 — Notifica Davide
 
 ```
 ✅ [Issue #N] PR pronta → <link PR>
@@ -71,9 +93,9 @@ gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "review-ready"
 💡 Cosa aspettarsi:
 <risultato atteso>
 
-**AC verificati:**
-- ✅ AC1 — <descrizione>
-- ✅ AC2 — <descrizione>
+**AC da verificare:**
+- [ ] AC1 — <descrizione>
+- [ ] AC2 — <descrizione>
 
 → /approva se ok | /reject <motivo> se serve rework
 ```
@@ -81,6 +103,7 @@ gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "review-ready"
 ## Note
 
 - CI deploya automaticamente su test dopo il push del branch
+- Claudio monitora il deploy e reitera in caso di failure — non notifica Davide finché CI non è verde
 - Dopo `/approva` di Davide → skill `issue-approve`
 - Dopo `/reject` di Davide → skill `issue-reject`
 - Valori config (project ID, field ID, column ID): vedi `config.json`

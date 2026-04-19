@@ -77,12 +77,36 @@ Vedi skill `security-audit` per i check manuali aggiuntivi.
 
 ---
 
+### Step 4b — Verifica AC nel browser (solo progetti web)
+
+**Si applica se:** il progetto ha frontend web (Next.js, React, ecc.) **e** il MCP Chrome DevTools è configurato nella sessione.
+
+Leggi skill `frontend-debug` per l'uso del MCP.
+
+1. Avvia il dev server locale (`npm run dev` o equivalente)
+2. Per ogni AC della issue, verifica direttamente nel browser:
+   - Esegui le azioni descritte nell'AC
+   - Comportamento corrispondente all'atteso → ✅
+   - Errori in console → ❌ torna allo Step 2
+3. Tutti gli AC verificati → procedi al gate finale
+
+**Se il MCP Chrome DevTools non è disponibile:** salta questo step e segnalalo nel commento PR:
+```
+⚠️ Verifica browser non eseguita — MCP Chrome DevTools non configurato nel progetto
+```
+
+> **Nota sul caricamento MCP:** gli MCP si configurano a livello di progetto in `.claude/settings.json`
+> così caricano solo quando si lavora su quel repo. Non aggiungere MCP pesanti al profilo globale.
+
+---
+
 ### Step 5 — Auto-gate finale
 
 Verifica autonomamente prima di pushare:
 
 - [ ] Tutti gli AC soddisfatti
 - [ ] Test e build passati
+- [ ] AC verificati nel browser (**o** MCP non disponibile — documentato)
 - [ ] Security audit passato
 - [ ] PROJECT.md aggiornato
 - [ ] Nessun file anomalo (.env, debug, config sensibili)

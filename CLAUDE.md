@@ -1,4 +1,17 @@
-- you should not push anything without my authorization especially if is not working
+## ⚖️ LEGGI ASSOLUTE (non derogabili)
+
+1. **MAI fare merge senza approvazione esplicita di Davide.**
+   Commit e push al termine dell'implementazione sono OK. Il merge avviene solo dopo che Davide ha testato e scritto `/approva`.
+
+2. **All'inizio di ogni sessione, prima di toccare qualsiasi codice:**
+   ```powershell
+   cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+   git pull origin master
+   powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
+   ```
+   Questo aggiorna skills e monitor all'ultima versione. Nessuna eccezione.
+
+---
 
 ## Team 8020 Solutions
 

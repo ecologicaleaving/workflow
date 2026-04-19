@@ -16,7 +16,9 @@
 | **Claudio** (Claude Code) | Orchestratore | Interfaccia con Davide, crea issue, coordina, spawna subagenti developer, gestisce deploy | Non implementa codice direttamente |
 | **Subagente developer** | Developer | Implementa, testa, commit, PR — spawna da Claudio via `Agent` tool | Non parla con Davide |
 
-> ⚠️ **Regola cardinale:** Nessun fix/patch senza autorizzazione esplicita di Davide.
+> ⚖️ **LEGGE 1 — Merge:** MAI fare merge senza `/approva` esplicito di Davide. Commit e push OK, merge NO.
+> ⚖️ **LEGGE 2 — Sync:** All'inizio di ogni sessione: `git pull` workflow repo + `sync.ps1` prima di qualsiasi operazione.
+> ⚠️ **Regola:** Nessun fix/patch senza autorizzazione esplicita di Davide.
 > ⚠️ **Repo workflow:** Solo Claudio modifica `ecologicaleaving/workflow` su indicazione di Davide.
 
 ---
@@ -148,8 +150,9 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 1. Agente verifica checklist pre-PR (AC, test, PROJECT.md, niente file anomali)
 2. Agente apre PR con summary strutturato
 3. CI deploya automaticamente su `test-<repo>.8020solutions.org`
-4. Agente aggiunge label `review-ready`
-5. Agente notifica Davide con link e istruzioni di test
+4. **Agente monitora il deploy** — se fallisce: legge i log, fixa, re-push, reitera (max 3 volte)
+5. Agente aggiunge label `review-ready` solo quando CI è verde
+6. Agente notifica Davide con link, istruzioni di test e AC da verificare
 
 ### Notifica Davide
 
@@ -176,9 +179,10 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 
 1. Agente mergia la PR su main: `gh pr merge --merge --delete-branch`
 2. CI deploya automaticamente in produzione
-3. Agente chiude la issue e aggiunge label `deployed-prod`
-4. Agente notifica Davide con conferma
-5. **Se servono azioni infra** (env vars, migrazioni DB) → Agente elenca le azioni da eseguire manualmente e le comunica a Davide
+3. **Agente monitora il deploy prod** — se fallisce: legge i log, fixa, reitera (max 3 volte)
+4. Agente chiude la issue e aggiunge label `deployed-prod`
+5. Agente notifica Davide con conferma
+6. **Se servono azioni infra** (env vars, migrazioni DB) → Agente le esegue direttamente via SSH sul VPS
 
 ---
 

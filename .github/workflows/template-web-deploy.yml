@@ -107,12 +107,40 @@ jobs:
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.target.outputs.url }}" || echo "000")
           echo "→ HTTP ${STATUS} — ${{ steps.target.outputs.url }}"
 
-      - name: Notify Ciccio
+      - name: Fetch issue AC
+        id: ac
+        if: github.ref_name != 'master' && github.ref_name != 'main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_N=$(echo "${{ github.ref_name }}" | grep -oP '(?<=issue-)\d+' || true)
+          if [ -n "$ISSUE_N" ]; then
+            BODY=$(gh issue view "$ISSUE_N" --repo "${{ github.repository }}" --json body -q '.body' 2>/dev/null || echo "")
+            # Estrae righe AC, converte checkbox in emoji, unisce con \n letterale per Telegram
+            AC=$(echo "$BODY" | \
+              awk '/## Acceptance Criteria/{f=1;next} f&&/^##/{exit} f&&/- \[/{print}' | \
+              head -10 | \
+              sed 's/- \[x\]/☑/g' | sed 's/- \[ \]/☐/g' | \
+              tr '\n' '|' | sed 's/|$//')
+            echo "issue_n=$ISSUE_N" >> $GITHUB_OUTPUT
+            echo "ac=$AC"          >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify
         if: always()
         run: |
           EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
           SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          MSG="${EMOJI} maestroweb / ${{ github.ref_name }} (${SHORT})\n🔗 ${{ steps.target.outputs.url }}\nStatus: ${{ job.status }}"
+
+          ISSUE_N="${{ steps.ac.outputs.issue_n }}"
+          AC_RAW="${{ steps.ac.outputs.ac }}"
+          if [ "${{ job.status }}" = "success" ] && [ -n "$ISSUE_N" ] && [ -n "$AC_RAW" ]; then
+            AC_FMT=$(echo "$AC_RAW" | tr '|' '\n' | sed 's/^/  /' | tr '\n' '|' | sed 's/|/\\n/g' | sed 's/\\n$//')
+            MSG="${MSG}\n\n🧪 AC da testare (Issue #${ISSUE_N}):\n${AC_FMT}"
+          fi
+
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "ciccio-notify '${EMOJI} maestroweb / ${{ github.ref_name }} (${SHORT})\n🔗 ${{ steps.target.outputs.url }}\nStatus: ${{ job.status }}'" \
+            "ciccio-notify '${MSG}'" \
             || true

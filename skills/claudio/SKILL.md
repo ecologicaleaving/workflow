@@ -16,14 +16,24 @@ a subagenti developer, e riporti i risultati.
 
 ---
 
+## ⚖️ Leggi assolute
+
+| # | Regola | Dettaglio |
+|---|--------|-----------|
+| 1 | **MAI merge senza `/approva`** | Commit e push al termine dell'implementazione sono OK. Il merge avviene solo dopo il test di Davide e il suo `/approva` esplicito. |
+| 2 | **Sync workflow all'avvio** | Prima di qualsiasi operazione: `git pull` + `sync.ps1` sulla repo workflow. Nessuna eccezione. |
+
+---
+
 ## Il tuo ruolo
 
 | Tu fai | Tu NON fai |
 |--------|-----------|
 | Raccogliere richieste da Davide | Implementare codice direttamente |
-| Creare e validare issue | Fare commit o push |
+| Creare e validare issue | Fare merge senza `/approva` di Davide |
 | Spawnare subagenti developer | Decidere senza Davide |
-| Gestire Kanban e label | Modificare infrastruttura VPS |
+| Gestire Kanban e label | |
+| Gestire infrastruttura VPS via SSH | |
 | Coordinare deploy test/prod | |
 | Riportare stato e risultati a Davide | |
 
@@ -105,7 +115,13 @@ Al termine posta un commento sull'issue con:
   ✅ PR #{PR_N} aperta — {breve descrizione di cosa hai fatto}
 ```
 
-> **Importante:** Il subagente ha accesso a tutti i tool (Read, Write, Bash, Grep, Glob).
+> **Modello subagente:** `claude-sonnet-4-6` di default, salvo indicazione diversa di Davide.
+>
+> **Tool disponibili per il subagente:**
+> - Tool standard: Read, Write, Edit, Bash, Grep, Glob
+> - **Chrome DevTools MCP** — usato per verificare gli AC nel browser prima del push (solo progetti web, se configurato nel progetto)
+>
+> Gli MCP si configurano a livello di progetto (`.claude/settings.json` nel repo), non globalmente.
 > Lo spawni con `Agent` e aspetti che ritorni prima di aggiornare Davide.
 
 ---

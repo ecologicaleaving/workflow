@@ -135,13 +135,36 @@ jobs:
           name: v${{ steps.info.outputs.version }}
           files: ${{ steps.apk.outputs.name }}
 
-      - name: Notify Ciccio
+      - name: Fetch issue AC
+        id: ac
+        if: success() && steps.info.outputs.issue_num != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_N="${{ steps.info.outputs.issue_num }}"
+          BODY=$(gh issue view "$ISSUE_N" --repo "${{ github.repository }}" --json body -q '.body' 2>/dev/null || echo "")
+          AC=$(echo "$BODY" | \
+            awk '/## Acceptance Criteria/{f=1;next} f&&/^##/{exit} f&&/- \[/{print}' | \
+            head -10 | \
+            sed 's/- \[x\]/☑/g' | sed 's/- \[ \]/☐/g' | \
+            tr '\n' '|' | sed 's/|$//')
+          echo "ac=$AC" >> $GITHUB_OUTPUT
+
+      - name: Notify
         if: always()
         run: |
           EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
           APK="${{ steps.apk.outputs.name }}"
           URL="https://apps.8020solutions.org/downloads/test/${APK}"
           MSG="${EMOJI} ${{ github.event.repository.name }} build ${{ job.status }}\nBranch: ${{ steps.info.outputs.branch }}\n🔗 ${URL}"
+
+          AC_RAW="${{ steps.ac.outputs.ac }}"
+          ISSUE_N="${{ steps.info.outputs.issue_num }}"
+          if [ "${{ job.status }}" = "success" ] && [ -n "$ISSUE_N" ] && [ -n "$AC_RAW" ]; then
+            AC_FMT=$(echo "$AC_RAW" | tr '|' '\n' | sed 's/^/  /' | tr '\n' '|' | sed 's/|/\\n/g' | sed 's/\\n$//')
+            MSG="${MSG}\n\n🧪 AC da testare (Issue #${ISSUE_N}):\n${AC_FMT}"
+          fi
+
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "ciccio-notify '${MSG}'" || true

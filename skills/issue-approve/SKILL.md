@@ -24,6 +24,20 @@ gh pr merge <PR_N> --repo ecologicaleaving/<repo> --merge --delete-branch
 
 La CI deploya automaticamente in produzione.
 
+### Step 1b — Monitora CI deploy produzione
+
+```bash
+gh run watch --repo ecologicaleaving/<repo>
+```
+
+**Se il deploy fallisce:**
+1. Leggi i log: `gh run view <run_id> --repo ecologicaleaving/<repo> --log-failed`
+2. Identifica l'errore e fixa (hotfix direttamente su master o nuovo branch)
+3. Push → monitora nuovamente
+4. Massimo 3 iterazioni — se non si risolve notifica subito Davide con dettaglio errore
+
+**Se il deploy ha successo** → procedi con Step 2.
+
 ### Step 2 — Aggiorna label e chiudi issue
 
 ```bash
@@ -48,14 +62,24 @@ gh issue close <N> --repo ecologicaleaving/<repo>
 
 ### Step 5 — Azioni infra (solo se necessario)
 
-Se servono env vars, migrazioni DB, config VPS → elenca le azioni da eseguire e comunicale a Davide:
+Se servono env vars, migrazioni DB, riavvii servizi → Claudio le esegue direttamente via SSH:
 
+```bash
+# Env var
+ssh root@46.225.60.101 "cd /opt/<repo> && echo 'VAR=valore' >> .env && docker compose restart <service>"
+
+# Migrazione DB
+ssh root@46.225.60.101 "cd /opt/<repo> && docker compose exec app <migration-command>"
+
+# Riavvio
+ssh root@46.225.60.101 "cd /opt/<repo> && docker compose pull && docker compose up -d"
 ```
-⚙️ Azioni infra richieste per questa issue:
-- [ ] <azione 1> (es. aggiungere env var XYZ al VPS)
-- [ ] <azione 2> (es. eseguire migrazione DB)
 
-Queste vanno eseguite manualmente sul VPS.
+Dopo ogni azione infra, conferma a Davide:
+```
+⚙️ Azioni infra completate:
+- ✅ <azione 1>
+- ✅ <azione 2>
 ```
 
 Se non servono azioni infra → skip questo step.

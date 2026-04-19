@@ -1,7 +1,7 @@
 #!/bin/bash
-# ciccio-safe-github.sh
+# safe-github.sh  (ex ciccio-safe-github.sh — rinominato, Ciccio non è più attivo)
 # ============================================================
-# GUARDRAIL per operazioni GitHub di Ciccio
+# GUARDRAIL per operazioni GitHub
 # Blocca operazioni rischiose prima che causino danni.
 #
 # USO:
