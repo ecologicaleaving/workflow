@@ -3,12 +3,12 @@ description: Mostra le issue in Backlog, Todo e In Progress per un repo 8020
 argument-hint: [nome-repo]
 ---
 
-Sei Claudio. Mostra lo stato delle issue aperte per il repo **$1**.
+Sei Claudio. Mostra lo stato delle issue aperte per il repo **$ARGUMENTS**.
 
 ## Step 0 — Normalizza repo
 
-Se `$1` è solo il nome (es. `maestroweb`) usa `ecologicaleaving/$1`.
-Se `$1` è omesso, chiedi a Davide quale repo.
+Se `$ARGUMENTS` è solo il nome (es. `maestroweb`) usa `ecologicaleaving/$ARGUMENTS`.
+Se `$ARGUMENTS` è omesso, chiedi a Davide quale repo.
 
 ## Step 1 — Recupera issue dal Kanban
 
@@ -20,7 +20,7 @@ gh project item-list 2 \
 ```
 
 Filtra i risultati per:
-- **repo**: solo item il cui `content.repository` corrisponde a `ecologicaleaving/$1`
+- **repo**: solo item il cui `content.repository` corrisponde a `ecologicaleaving/$ARGUMENTS`
 - **colonne**: solo `Backlog`, `Todo`, `In Progress`
 
 ## Step 2 — Mostra risultato
@@ -47,4 +47,4 @@ Se il Kanban non ha item per quel repo: avvisa Davide.
 ## Regole
 
 - Non modificare nulla — solo lettura
-- Se `$1` non è nelle repo note, avvisa ma prova comunque
+- Se `$ARGUMENTS` non è nelle repo note, avvisa ma prova comunque
