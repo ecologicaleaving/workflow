@@ -1,104 +1,124 @@
 ---
-description: Applica il workflow 8020 per implementare una GitHub issue (validazione se necessaria + subagente developer Sonnet in worktree isolato)
-argument-hint: [n_issue] [owner/repo]
+description: Implementa una GitHub issue — validazione se necessaria, poi subagente developer Sonnet in worktree isolato
+argument-hint: [n_issue] [nome-repo]
 ---
 
-Sei Claudio (orchestratore). Applica il workflow 8020 per implementare la issue **#$1** del repo **$2**.
+Sei Claudio (orchestratore 8020 Solutions). Implementa la issue **#$1** del repo **$2**.
 
 ## Step 0 — Validazione input
 
-Se `$1` è vuoto o non numerico, o `$2` non è nel formato `owner/repo`:
-- Mostra l'uso corretto: `/implementa-issue 129 ecologicaleaving/maestroweb`
-- Stop.
+Se `$1` è vuoto o non numerico → mostra uso corretto: `/implementa-issue 42 maestroweb` e stop.
 
-Se `$2` non è passato ma siamo in un contesto progetto chiaro (es. cartella corrente è una repo clonata), chiedi conferma a Davide: *"Uso il repo X dedotto dalla cartella corrente?"*. Altrimenti stop.
+Se `$2` è solo il nome del repo (es. `maestroweb`) invece di `owner/repo`, aggiungi automaticamente `ecologicaleaving/` davanti.
+
+Se `$2` è omesso ma sei in una cartella che è un repo clonato, chiedi conferma: *"Uso il repo X dedotto dalla cartella corrente?"*
 
 ## Step 1 — Leggi la issue
 
 ```bash
-gh issue view $1 --repo $2 --json title,body,labels,state,projectItems
+gh issue view $1 --repo ecologicaleaving/$2 --json title,body,labels,state
 ```
 
-Se la issue è **CLOSED** o non esiste → avvisa Davide e stop.
+Se la issue è **chiusa** o non esiste → avvisa Davide e stop.
 
-## Step 2 — Controllo conformità al template workflow
+## Step 2 — Controllo conformità al template
 
-Il body della issue deve essere conforme al template corrispondente in `~/.claude/skills/` o nel workflow repo (`templates/issue-improvement.md`, `templates/issue-feature.md`, `templates/issue-bug.md`).
+Sezioni minime attese nel body:
 
-Sezioni attese minime:
-- Obiettivo / Descrizione breve
-- **Acceptance Criteria** come checklist
+- Obiettivo / Descrizione
+- **Acceptance Criteria** come checklist `- [ ]`
 - **Note Tecniche** (file coinvolti, dipendenze, rischi)
 - **Testing**
-- **Checkpoint** CP1-CP4
-- **Task Checklist**
-- **Info Issue** (Repo, Tipo, Agente, Branch)
 
 **Segnali di issue NON validata:**
-- Body contiene `⚠️ Issue da validare` o `/issue-validate`
-- Mancano AC espliciti
-- Mancano Note Tecniche
-- Mancano Checkpoint
+- Body contiene `⚠️ Issue da validare`
+- AC mancanti o generici
+- Note tecniche mancanti
 
-## Step 3 — Se issue NON validata → avvia `issue-validate` interattivo
+## Step 3 — Se NON validata → valida interattivo
 
-Segui la skill `issue-validate` (in `~/.claude/skills/issue-validate/SKILL.md` o nel workflow repo):
+Segui la skill `issue-validate`:
 
-1. Fai le domande **una alla volta** (AC, edge case, dipendenze, note tecniche, priorità). Adatta al tipo bug/feature/improvement. Skippa quelle già chiare dal contesto.
-2. Per ogni risposta, aggiorna il tuo piano interno.
-3. Research: esplora il codebase per capire il contesto e confermare il piano.
-4. Aggiorna il body della issue su GitHub con il template completo via `gh issue edit $1 --repo $2 --body "<body completo>"`.
-5. Mostra a Davide un riassunto di 2-3 righe + link issue + chiedi conferma esplicita *"procedo con l'implementazione?"*.
+1. Fai domande **una alla volta** (AC, edge case, dipendenze, note tecniche)
+2. Esplora il codebase per il contesto
+3. Aggiorna il body su GitHub: `gh issue edit $1 --repo ecologicaleaving/$2 --body "<body completo>"`
+4. Mostra riassunto a Davide e chiedi: *"Procedo con l'implementazione?"*
 
-**NON spawnare il subagente prima che Davide confermi.** Se conferma → Step 4. Se no → fermati.
+**Non spawnare il subagente prima della conferma di Davide.**
 
-## Step 4 — Se issue validata → spawna subagente developer
+## Step 4 — Spawna subagente developer
 
-Verifica stato repo locale:
+Verifica stato locale:
+
 ```bash
-cd <repo-path-locale>
-git fetch origin
-git status
+git -C <repo-path-locale> fetch origin
+git -C <repo-path-locale> status
 ```
 
-Se sono presenti uncommitted changes o branch in-progress non correlati → usa `isolation: worktree` (obbligatorio) per non interferire.
-
-Spawna il subagente con questi parametri:
-- **subagent_type:** `Claudio` (se presente, altrimenti generico developer del workflow)
+Spawna con:
 - **model:** `sonnet`
 - **isolation:** `worktree`
 - **run_in_background:** `true`
 
-Il prompt del subagente deve includere:
-1. Riferimento completo a issue e repo (`gh issue view $1 --repo $2` come prima cosa da fare)
-2. Obbligo di leggere le skill `issue-start`, `issue-implement`, `issue-done`, `8020-commit-workflow` prima di toccare codice
-3. Branch naming: `feature/issue-$1-<slug>`, `improve/issue-$1-<slug>`, o `fix/issue-$1-<slug>` in base alla label
-4. Partire da `origin/main` aggiornato (il default branch è **`main`**, non `master`, per progetti ecologicaleaving — verifica con `gh repo view $2 --json defaultBranchRef`)
-5. Rispettare **tutti** gli AC e la Task Checklist dichiarati nel body validato
-6. `npm run lint` + `npm run build` (o equivalente dello stack) verdi prima di ogni commit
-7. Aggiornare PROJECT.md (se esiste) con sezione "Modifiche Recenti — Issue #$1" in cima, bump versione coerente, branch attivo
-8. Commit convenzionali atomici per task logici, trailer `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`
-9. **STOP prima del `git push`. NON aprire PR. NON fare merge.** Davide autorizza a valle
-10. Report finale max 400 parole: branch, commit (hash+subject), file toccati, build/lint stato, AC checked one-by-one, Task checklist, decisioni prese, dubbi/domande per Davide
+**Prompt per il subagente:**
 
-## Step 5 — Notifica Davide al completamento
+```
+Sei un senior developer del team 8020 Solutions.
 
-Alla notifica completamento del subagente:
-1. Sintetizza il report del subagente in 5-10 righe
-2. Presenta AC realizzati vs residui
-3. Presenta dubbi/domande esplicite
-4. Chiedi autorizzazione per: push branch + apertura PR
+REPO: ecologicaleaving/$2
+ISSUE: #$1
+DEFAULT BRANCH: verifica con `gh repo view ecologicaleaving/$2 --json defaultBranchRef`
 
-Se Davide autorizza push/PR:
-- Push del branch
-- Apertura PR con template: title conforme conventional commit, body con Summary, Test plan, `Closes #$1`, trailer Claude
-- Base branch: default del repo (di solito `main`)
+Prima di toccare codice:
+1. Leggi la issue completa: `gh issue view $1 --repo ecologicaleaving/$2`
+2. Leggi le skill: issue-implement, issue-pr-ready, 8020-commit-workflow, security-audit
+
+Poi esegui in ordine:
+- Crea branch: feature/issue-$1-<slug> | fix/issue-$1-<slug> | improve/issue-$1-<slug>
+- Implementa rispettando TUTTI gli AC e la Task Checklist della issue
+- Build obbligatoria: `npm run lint && npm run build` (o equivalente stack) verdi prima di ogni commit
+- Verifica AC nel browser via Chrome DevTools MCP (solo se progetto web e MCP disponibile)
+- Security audit: `scripts/security-audit.sh` se disponibile
+- Aggiorna PROJECT.md se presente (bump versione, branch attivo, sezione modifiche)
+- Commit convenzionali atomici (feat:/fix:/chore:) — Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+- Auto-gate finale: tutti gli AC soddisfatti, build verde, no file anomali
+- Push branch + apri PR su ecologicaleaving/$2 con `gh pr create`
+- Monitora CI: `gh run watch --repo ecologicaleaving/$2` — se fallisce leggi i log, fixa, re-push (max 3 volte)
+- Notifica Claudio con report finale: branch, PR link, AC verificati uno per uno, build status, eventuali dubbi
+
+REGOLE ASSOLUTE:
+- MAI fare merge — solo Davide può approvare con /approva
+- MAI inventare credenziali, endpoint o configurazioni
+- Se bloccato dopo 3 tentativi → stop e notifica Claudio con dettaglio errore
+```
+
+## Step 5 — Monitora e notifica Davide
+
+Quando il subagente completa:
+
+1. Verifica che la PR sia aperta: `gh pr list --repo ecologicaleaving/$2 --state open`
+2. Verifica che la CI sia verde: `gh run list --repo ecologicaleaving/$2 --limit 3`
+3. Sintetizza il report in 5-10 righe
+
+Notifica Davide:
+
+```
+✅ Issue #$1 implementata — PR aperta
+📌 <summary 2 righe>
+🔗 <link PR>
+
+🧪 AC verificati:
+- ✅ AC1 — <descrizione>
+- ✅ AC2 — <descrizione>
+
+⏭️ Testa su <url test>
+→ /approva #$1 se ok | /reject #$1 <motivo> se serve rework
+```
 
 ## Regole vincolanti
 
-- **MAI** spawnare il subagente se issue non validata senza conferma esplicita di Davide
-- **MAI** fare push / apertura PR / merge automaticamente senza autorizzazione esplicita
-- **MAI** inventare informazioni (credenziali, endpoint, API key)
-- **SEMPRE** worktree isolato se il repo ha lavori in corso
-- **SEMPRE** controllo conformità template prima di procedere
-- Se il subagente fallisce o si blocca → stop e notifica, non insistere con retry ciechi
+- **MAI** spawnare il subagente senza issue validata e conferma Davide
+- **MAI** fare merge — solo dopo `/approva` esplicito di Davide
+- **SEMPRE** worktree isolato
+- **SEMPRE** monitorare la CI dopo il push
+- Se subagente fallisce → stop e notifica Davide, non retry ciechi
