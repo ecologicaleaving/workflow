@@ -100,15 +100,34 @@ Salva l'URL della issue creata (lo usi nello step successivo).
 ### Step 4 — Aggiungi al Kanban (Backlog)
 
 ```bash
-# Aggiungi la issue al project board
+# 1. Aggiungi la issue al project board
 gh project item-add 2 \
   --owner ecologicaleaving \
   --url "<issue_url>"
+
+# 2. Recupera l'item ID appena aggiunto
+ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json \
+  | python3 -c "
+import sys, json
+items = json.load(sys.stdin)['items']
+match = [i for i in items if str(i.get('content',{}).get('number','')) == '<N>']
+print(match[0]['id'] if match else '')
+")
+
+# 3. Imposta esplicitamente status = Backlog
+gh project item-edit \
+  --id "$ITEM_ID" \
+  --project-id PVT_kwHODSTPQM4BP1Xp \
+  --field-id PVTSSF_lAHODSTPQM4BP1Xpzg-INlw \
+  --single-select-option-id 2ab61313
 ```
 
-La card parte automaticamente in **Backlog** (colonna di default).
-
 > Se il comando fallisce con "project not found": verifica di avere i permessi sulla org `ecologicaleaving`.
+
+**Kanban IDs (80/20 Solutions - Development Hub):**
+- Project ID: `PVT_kwHODSTPQM4BP1Xp`
+- Status field ID: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
+- Backlog option ID: `2ab61313`
 
 ---
 
