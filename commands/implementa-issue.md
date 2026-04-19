@@ -3,20 +3,26 @@ description: Implementa una GitHub issue — validazione se necessaria, poi suba
 argument-hint: [n_issue] [nome-repo]
 ---
 
-Sei Claudio (orchestratore 8020 Solutions). Implementa la issue **#$1** del repo **$2**.
+Sei Claudio (orchestratore 8020 Solutions).
 
-## Step 0 — Validazione input
+Argomenti ricevuti: `$ARGUMENTS`
 
-Se `$1` è vuoto o non numerico → mostra uso corretto: `/implementa-issue 42 maestroweb` e stop.
+## Step 0 — Parsing argomenti
 
-Se `$2` è solo il nome del repo (es. `maestroweb`) invece di `owner/repo`, aggiungi automaticamente `ecologicaleaving/` davanti.
+Estrai da `$ARGUMENTS` (formato atteso: `158 maestroweb` oppure `#158 maestroweb`):
+- **ISSUE_N**: primo token, rimuovi `#` se presente → numero intero
+- **REPO**: secondo token → se non contiene `/` aggiungi `ecologicaleaving/` davanti
 
-Se `$2` è omesso ma sei in una cartella che è un repo clonato, chiedi conferma: *"Uso il repo X dedotto dalla cartella corrente?"*
+Se `$ARGUMENTS` è vuoto o ISSUE_N non è numerico → mostra uso corretto:
+```
+Uso: /implementa-issue 158 maestroweb
+```
+e stop.
 
 ## Step 1 — Leggi la issue
 
 ```bash
-gh issue view $1 --repo ecologicaleaving/$2 --json title,body,labels,state
+gh issue view <ISSUE_N> --repo ecologicaleaving/<REPO> --json title,body,labels,state
 ```
 
 Se la issue è **chiusa** o non esiste → avvisa Davide e stop.
@@ -41,7 +47,7 @@ Segui la skill `issue-validate`:
 
 1. Fai domande **una alla volta** (AC, edge case, dipendenze, note tecniche)
 2. Esplora il codebase per il contesto
-3. Aggiorna il body su GitHub: `gh issue edit $1 --repo ecologicaleaving/$2 --body "<body completo>"`
+3. Aggiorna il body su GitHub: `gh issue edit <ISSUE_N> --repo ecologicaleaving/<REPO> --body "<body completo>"`
 4. Mostra riassunto a Davide e chiedi: *"Procedo con l'implementazione?"*
 
 **Non spawnare il subagente prima della conferma di Davide.**
@@ -65,16 +71,16 @@ Spawna con:
 ```
 Sei un senior developer del team 8020 Solutions.
 
-REPO: ecologicaleaving/$2
-ISSUE: #$1
-DEFAULT BRANCH: verifica con `gh repo view ecologicaleaving/$2 --json defaultBranchRef`
+REPO: ecologicaleaving/<REPO>
+ISSUE: #<ISSUE_N>
+DEFAULT BRANCH: verifica con `gh repo view ecologicaleaving/<REPO> --json defaultBranchRef`
 
 Prima di toccare codice:
-1. Leggi la issue completa: `gh issue view $1 --repo ecologicaleaving/$2`
+1. Leggi la issue completa: `gh issue view <ISSUE_N> --repo ecologicaleaving/<REPO>`
 2. Leggi le skill: issue-implement, issue-pr-ready, 8020-commit-workflow, security-audit
 
 Poi esegui in ordine:
-- Crea branch: feature/issue-$1-<slug> | fix/issue-$1-<slug> | improve/issue-$1-<slug>
+- Crea branch: feature/issue-<ISSUE_N>-<slug> | fix/issue-<ISSUE_N>-<slug> | improve/issue-<ISSUE_N>-<slug>
 - Implementa rispettando TUTTI gli AC e la Task Checklist della issue
 - Build obbligatoria: `npm run lint && npm run build` (o equivalente stack) verdi prima di ogni commit
 - Verifica AC nel browser via Chrome DevTools MCP (solo se progetto web e MCP disponibile)
@@ -82,8 +88,8 @@ Poi esegui in ordine:
 - Aggiorna PROJECT.md se presente (bump versione, branch attivo, sezione modifiche)
 - Commit convenzionali atomici (feat:/fix:/chore:) — Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - Auto-gate finale: tutti gli AC soddisfatti, build verde, no file anomali
-- Push branch + apri PR su ecologicaleaving/$2 con `gh pr create`
-- Monitora CI: `gh run watch --repo ecologicaleaving/$2` — se fallisce leggi i log, fixa, re-push (max 3 volte)
+- Push branch + apri PR su ecologicaleaving/<REPO> con `gh pr create`
+- Monitora CI: `gh run watch --repo ecologicaleaving/<REPO>` — se fallisce leggi i log, fixa, re-push (max 3 volte)
 - Notifica Claudio con report finale: branch, PR link, AC verificati uno per uno, build status, eventuali dubbi
 
 REGOLE ASSOLUTE:
@@ -96,14 +102,14 @@ REGOLE ASSOLUTE:
 
 Quando il subagente completa:
 
-1. Verifica che la PR sia aperta: `gh pr list --repo ecologicaleaving/$2 --state open`
-2. Verifica che la CI sia verde: `gh run list --repo ecologicaleaving/$2 --limit 3`
+1. Verifica che la PR sia aperta: `gh pr list --repo ecologicaleaving/<REPO> --state open`
+2. Verifica che la CI sia verde: `gh run list --repo ecologicaleaving/<REPO> --limit 3`
 3. Sintetizza il report in 5-10 righe
 
 Notifica Davide:
 
 ```
-✅ Issue #$1 implementata — PR aperta
+✅ Issue #<ISSUE_N> implementata — PR aperta
 📌 <summary 2 righe>
 🔗 <link PR>
 
@@ -112,7 +118,7 @@ Notifica Davide:
 - ✅ AC2 — <descrizione>
 
 ⏭️ Testa su <url test>
-→ /approva #$1 se ok | /reject #$1 <motivo> se serve rework
+→ /approva #<ISSUE_N> se ok | /reject #<ISSUE_N> <motivo> se serve rework
 ```
 
 ## Regole vincolanti
