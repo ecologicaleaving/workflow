@@ -67,15 +67,15 @@ def format_message(
     else:
         status_text = status.capitalize()
 
-    # Build message
-    msg = f"{status_emoji} **{repo_name}** {type_emoji}\n"
+    # Build message (Markdown v1: *bold*, _italic_, `code`)
+    msg = f"{status_emoji} *{repo_name}* {type_emoji}\n"
     msg += f"Branch: `{branch}`\n"
     msg += f"Status: {status_text}\n"
 
     if link:
         msg += f"[View on GitHub]({link})\n"
 
-    # Test URL (solo su success) — usa URL diretto se passato, altrimenti fallback per repo
+    # Test URL (solo su success)
     if status == 'success':
         resolved_url = test_url or TEST_URLS.get(repo_name)
         if resolved_url:
@@ -85,7 +85,7 @@ def format_message(
     if status == 'success' and details and details.strip():
         msg += f"\n🧪 *AC da verificare:*\n{details}\n"
 
-    msg += f"\n__{datetime.now().strftime('%H:%M UTC')}__"
+    msg += f"\n_{datetime.now().strftime('%H:%M UTC')}_"
 
     return msg
 
@@ -115,12 +115,13 @@ def send_notification(
             json=payload,
             timeout=10
         )
-        
-        if response.status_code == 200:
+
+        data = response.json()
+        if response.status_code == 200 and data.get('ok'):
             print(f"✅ Notification sent for {repo} ({status})")
             return True
         else:
-            print(f"❌ Failed to send notification: {response.text}")
+            print(f"❌ Failed to send notification: {data}")
             return False
             
     except Exception as e:
@@ -129,8 +130,8 @@ def send_notification(
 
 if __name__ == '__main__':
     if len(sys.argv) < 5:
-        print("Usage: deploy-notify.py <repo> <type> <status> <branch> [link] [details]")
-        print("Example: deploy-notify.py ecologicaleaving/beachcrer deploy success main https://github.com/... 'Optional details'")
+        print("Usage: deploy-notify.py <repo> <type> <status> <branch> [link] [test_url] [details]")
+        print("Example: deploy-notify.py ecologicaleaving/beachcrer deploy success main https://github.com/... '' 'Optional details'")
         sys.exit(1)
     
     repo = sys.argv[1]
