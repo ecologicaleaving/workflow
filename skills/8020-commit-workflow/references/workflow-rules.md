@@ -7,13 +7,11 @@
 
 | Role | Person | Responsibilities |
 |------|--------|-----------------|
-| Product Owner | David (Davide) | Vision, requirements, final validation, business decisions |
-| Senior Developer | Claudio (this agent) | Development, commits, builds, code quality |
-| Orchestrator | Ciccio (OpenClaw VPS) | Deploy, merge, infrastructure, DB, monitoring |
+| Product Owner | Davide | Vision, requirements, final validation, business decisions |
+| Agente | Claude Code (this agent) | Development, commits, builds, code quality, deploy, merge, infrastructure |
 
 **Communication channels:**
-- David <-> Ciccio: Telegram (@dadecresce) for task delegation
-- Ciccio <-> Claudio: sessions_send HTTP + GitHub activity
+- Davide <-> Agente: Claude Code sessions, GitHub activity
 - Team group: Telegram 8020dev
 
 ---
@@ -21,19 +19,16 @@
 ## Full Workflow Process
 
 ```
-1.  David         -> Telegram a Ciccio: richiesta feature/fix
-2.  Ciccio        -> Delega a Claudio via sessions_send
-3.  Claudio       -> Crea feature branch: git checkout -b feature/nome
-4.  Claudio       -> Sviluppa + commit con conventional commits
-5.  Claudio       -> Push: git push origin feature/nome
-6.  Claudio       -> Notifica (via David): "Pronto per deploy su test"
-7.  David         -> Dice a Ciccio: "Deploy [progetto] su test"
-8.  Ciccio        -> Build + deploy su test-*.8020solutions.org
-9.  Ciccio        -> Notifica David: "Test ready: [URL]"
-10. David         -> Review sul test environment
-11. David (OK)    -> "Vai in produzione"
-12. Ciccio        -> Merge to master -> build prod -> deploy production
-13. Ciccio        -> Report a David con URL live
+1.  Davide        -> Descrive feature/fix all'Agente
+2.  Agente        -> Crea issue, crea feature branch: git checkout -b feature/issue-N-slug
+3.  Agente        -> Sviluppa + commit con conventional commits
+4.  Agente        -> Push: git push origin feature/issue-N-slug
+5.  Agente        -> Apre PR, monitora CI su test-*.8020solutions.org
+6.  Agente        -> Notifica Davide: "PR pronta per review — CI verde"
+7.  Davide        -> Review sul test environment
+8.  Davide (OK)   -> "/approva #N"
+9.  Agente        -> Merge to master -> CI deploya in produzione
+10. Agente        -> Monitora deploy prod, notifica Davide con URL live
 ```
 
 ---
@@ -180,7 +175,7 @@ cat .commit-skin/project-config.json  # check configuration
 
 ---
 
-## Claudio's Quality Standards
+## Quality Standards
 
 Before every commit/push, verify:
 - [ ] Conventional commit format used
@@ -199,20 +194,13 @@ Before every commit/push, verify:
 
 ---
 
-## Infrastructure Reference (Ciccio manages)
+## Infrastructure Reference
 
-- **VPS**: Hetzner CiccioHouse 46.225.60.101, Ubuntu 22.04 LTS
+- **VPS**: 46.225.60.101, Ubuntu 22.04 LTS
 - **Database**: PostgreSQL Docker (porta 5433 local), Neon/Supabase cloud
 - **Deploy targets**: VPS nginx + SSL, Netlify (static), GitHub APK distribution
 - **Test environments**: test-*.8020solutions.org
 - **Production**: app.8020solutions.org (and project-specific)
-
-### Ciccio's Cron Jobs
-```
-*/30 * * * * project-sync-cron.sh     # Status dashboard sync
-0 */2 * * * openclaw cron emergency   # Emergency checks
-0 */3 * * * openclaw cron ci-monitor  # CI monitoring
-```
 
 ### KPI Targets
 - Deploy success rate: >95%

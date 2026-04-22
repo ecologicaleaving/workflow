@@ -103,7 +103,7 @@ gh run list --repo "$REPO" --branch "$BRANCH" --limit 1
 ## Note
 
 - CI deploya automaticamente su test dopo il push del branch
-- Claudio monitora il deploy e reitera in caso di failure — non notifica Davide finché CI non è verde
+- L'agente monitora il deploy e reitera in caso di failure — non notifica Davide finché CI non è verde
 - Dopo `/approva` di Davide → skill `issue-approve`
 - Dopo `/reject` di Davide → skill `issue-reject`
 - Valori config (project ID, field ID, column ID): vedi `config.json`

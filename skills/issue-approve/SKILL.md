@@ -62,7 +62,7 @@ gh issue close <N> --repo ecologicaleaving/<repo>
 
 ### Step 5 — Azioni infra (solo se necessario)
 
-Se servono env vars, migrazioni DB, riavvii servizi → Claudio le esegue direttamente via SSH:
+Se servono env vars, migrazioni DB, riavvii servizi → L'agente le esegue direttamente via SSH:
 
 ```bash
 # Env var

@@ -15,7 +15,7 @@
 - **Gestisce stakeholder** e client requirements
 
 ### 2. 📋 **Requirements & Coordination**  
-- **Delega task** a Ciccio (orchestratore)
+- **Delega task** all'Agente (Claude Code)
 - **Review deliverable** e approva releases
 - **Feedback cycle** su feature implementations
 - **Business validation** delle soluzioni
@@ -33,7 +33,7 @@
 graph LR
     A[Business Need] --> B[Analyze Requirements] 
     B --> C[Define Scope]
-    C --> D[Delegate to Ciccio]
+    C --> D[Delegate to Agente]
     D --> E[Monitor Progress]
     E --> F[Review & Approve]
 ```
@@ -41,10 +41,10 @@ graph LR
 ### **🎯 Task Delegation Process**
 1. **💭 Identifica business need** o opportunity
 2. **📋 Definisce requirements** e acceptance criteria
-3. **🎯 Assegna issue** con label `agent:claude-code` / `agent:ciccio` / `agent:codex`
+3. **🎯 Assegna issue** con label `agent:claude-code`
 4. **📋 Metti card in Backlog** sul [board kanban](https://github.com/users/ecologicaleaving/projects/2)
 5. **📊 Monitor progress** — board mostra colonna attuale di ogni issue
-6. **✅ Ricevi notifica** da Ciccio quando card è in `👀 Needs Review`
+6. **✅ Ricevi notifica** dall'Agente quando card è in `👀 Needs Review`
 7. **🔍 Testa su** test-*.8020solutions.org
 8. **🚀 Decidi**: `/approve #N` oppure `/reject #N "feedback dettagliato"`
 
@@ -52,19 +52,19 @@ graph LR
 
 | Comando | Effetto |
 |---------|---------|
-| `/approve #123` | Ciccio mergia in master, deploya in prod, chiude issue, card → ✔️ Done |
-| `/reject #123 "feedback"` | Ciccio aggiunge commento, card → 🔧 Needs Fix, rework all'agente originale |
+| `/approve #123` | Agente mergia in master, deploya in prod, chiude issue, card → ✔️ Done |
+| `/reject #123 "feedback"` | Agente aggiunge commento, card → 🔧 Needs Fix, rework |
 
 ### **📈 Project Review Cycle**
 - **Daily**: Check [board kanban](https://github.com/users/ecologicaleaving/projects/2) per stato issue
-- **Weekly**: Review progress con Ciccio se progetti attivi
+- **Weekly**: Review progress con l'Agente se progetti attivi
 - **Monthly**: Strategic review e roadmap adjustments
 - **Quarterly**: Business metrics e team performance review
 
 ## 🛠️ Tools & Interfaces
 
 ### **Primary Communication**
-- **Ciccio**: Telegram direct (@dadecresce) per task delegation
+- **Agente**: Claude Code sessions per task delegation
 - **Team**: Telegram group 8020dev per discussioni
 - **External**: Email, calls, meetings per client/business
 
@@ -87,7 +87,7 @@ graph LR
 2. **🔍 Market research** e feasibility analysis
 3. **📊 Scope definition** e resource requirements
 4. **📋 Create GitHub Issue** nel team-tasks repo
-5. **🎯 Delegate to Ciccio** con detailed brief
+5. **🎯 Delegate to Agente** con detailed brief
 6. **📅 Set milestones** e review points
 7. **📊 Monitor via dashboard** e regular check-ins
 
@@ -96,15 +96,15 @@ graph LR
 2. **💰 Valuta business value** vs development effort
 3. **📊 Prioritize** nel backlog complessivo  
 4. **📝 Define acceptance criteria** dettagliati
-5. **🎯 Assign to Ciccio** per implementation planning
+5. **🎯 Assign to Agente** per implementation planning
 6. **⏰ Set timeline** e budget constraints
 7. **✅ Review implementation** pre-release
 
 ### **SOP-003: Crisis Management**
-1. **🚨 Issue escalation** da Ciccio o esterni
+1. **🚨 Issue escalation** da Agente o esterni
 2. **🔍 Rapid assessment** di impact e urgency
 3. **📞 Client communication** se necessario
-4. **🎯 Direct Ciccio** per immediate action
+4. **🎯 Direct Agente** per immediate action
 5. **📊 Monitor resolution** progress
 6. **📋 Post-mortem** e process improvement
 7. **📢 Stakeholder update** su resolution
@@ -114,7 +114,7 @@ graph LR
 ### **Priority Matrix**
 | Urgency | Business Value High | Business Value Low |
 |---------|---------------------|-------------------|
-| **High** | 🔴 Immediate (Ciccio direct) | 🟡 Schedule next sprint |
+| **High** | 🔴 Immediate (Agente direct) | 🟡 Schedule next sprint |
 | **Low**  | 🟢 Plan current sprint | ⚫ Backlog for later |
 
 ### **Resource Allocation**
@@ -139,12 +139,11 @@ graph LR
 
 ## 📞 Communication Protocols
 
-### **Con Ciccio (Primary)**
-- **Formato**: Telegram direct message
-- **Frequenza**: On-demand per task + daily summary se attivo
+### **Con Agente (Primary)**
+- **Formato**: Claude Code sessions
+- **Frequenza**: On-demand per task
 - **Content**: Task delegation, requirements, approvals, questions
-- **Response Time**: <2h per urgent, <24h per normal
-- **Escalation**: Phone call per critical issues
+- **Response Time**: Sincrono durante la sessione
 
 ### **Con Team (Group)**
 - **Formato**: Telegram 8020dev group
@@ -183,7 +182,7 @@ graph LR
 - 📊 **Status Dashboard** check per all projects
 - 📈 **KPI review** e trend analysis
 - 🎯 **Priority adjustment** se necessario
-- 📞 **Team check-in** con Ciccio
+- 📞 **Team check-in** con l'Agente
 
 ### **Monthly Strategic Review**  
 - 📋 **Roadmap validation** vs market changes
