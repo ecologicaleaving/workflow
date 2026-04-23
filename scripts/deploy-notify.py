@@ -28,6 +28,7 @@ TEST_URLS = {
     'finn':           'https://apps.8020solutions.org/downloads/test/',
     'musicbuddy-app': 'https://apps.8020solutions.org/downloads/test/',
     'musicbuddy-web': None,
+    'EventAudio':     'https://eventaudio.8020solutions.org',
 }
 
 # Status emojis
