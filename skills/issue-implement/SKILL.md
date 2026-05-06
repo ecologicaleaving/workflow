@@ -2,7 +2,7 @@
 
 **Trigger:** `/vai` di Davide — piano approvato, implementazione parte
 **Agente:** Claude Code
-**Versione:** 5.0.0
+**Versione:** 5.1.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 3
 
@@ -100,6 +100,36 @@ Leggi skill `frontend-debug` per l'uso del MCP.
 
 ---
 
+### Step 4c — Smoke test path completo (se la issue tocca DB con RLS)
+
+**Si applica se:** la issue aggiunge/modifica una migration con `ENABLE ROW LEVEL SECURITY` o policy nuove, **e** introduce o modifica endpoint API che scrivono/leggono quella tabella.
+
+**Perché esiste questo step:** build verde + schema corretto + lint pulito **non** garantiscono che la policy RLS conceda le operazioni che l'API tenta. Errore tipico:
+- API usa `upsert` → richiede permission sia `INSERT` che `UPDATE`
+- Policy concede solo `INSERT` (caso comune: tabella write-only pubblica tipo lead capture)
+- → 500 silenzioso in produzione, smoke test in CI lo passa perché non gira mai sul DB reale con la policy applicata
+
+Questo è successo realmente, due hot-fix consecutivi post-merge — è il motivo per cui questo step esiste.
+
+**Procedura:**
+
+1. **Applica la migration sul DB di test** (psql diretto o `supabase db reset`)
+2. **Avvia l'app contro lo schema reale** (`npm run dev`)
+3. **Chiama l'endpoint via curl con i payload reali della UI** — testa almeno: caso felice, duplicato/conflict, payload invalido
+4. **Verifica nel DB** che la riga sia stata effettivamente scritta:
+   ```bash
+   psql -c "SELECT ... FROM <tabella> WHERE ... LIMIT 1;"
+   ```
+5. **Se l'endpoint usa `upsert`, `update`, `delete`, `select`** → verifica esplicitamente che la policy concede TUTTI i verbi richiesti, non solo `INSERT`
+
+**Regola:** ogni verbo che l'API chiama (`insert`, `update`, `upsert`, `delete`, `select`) deve avere una policy `FOR <verbo>` esplicita nella migration, oppure essere `FOR ALL`. `upsert` = `INSERT` + `UPDATE` insieme.
+
+**Failure** → torna allo Step 2: policy e API code devono essere coerenti, non solo schema.
+
+**Se la migration NON è applicabile in locale** (es. dipende da VPS Supabase self-hosted): documenta nel commento PR e marca la verifica come "manuale post-deploy" — l'orchestratore farà lo smoke test post-merge prima di chiudere la issue.
+
+---
+
 ### Step 5 — Auto-gate finale
 
 Verifica autonomamente prima di pushare:
@@ -107,6 +137,7 @@ Verifica autonomamente prima di pushare:
 - [ ] Tutti gli AC soddisfatti
 - [ ] Test e build passati
 - [ ] AC verificati nel browser (**o** MCP non disponibile — documentato)
+- [ ] **Smoke test RLS-aware passato (se applicabile — vedi Step 4c)**
 - [ ] Security audit passato
 - [ ] PROJECT.md aggiornato
 - [ ] Nessun file anomalo (.env, debug, config sensibili)
@@ -132,6 +163,7 @@ Vedi `skills/references/agent-monitor.md` per istruzioni.
 
 ## Changelog
 
+- **v5.1.0** (2026-05-06): Aggiunto Step 4c — smoke test RLS-aware quando issue tocca migration con policy + endpoint API. Lezione da rilibro #71/#73/#74: build verde non basta, serve eseguire l'API contro la policy applicata. Aggiornata checklist auto-gate.
 - **v5.0.0** (2026-04-13): Rimosso ruolo Claudio — auto-gate, agente procede autonomamente al push
 - **v4.0.0** (2026-04-03): Agente unico (stesso della Fase 2), gate finale unico, rimossi checkpoint intermedi
 - **v3.0.0** (2026-04-03): Riduzione a 3 checkpoint, rimossa duplicazione
