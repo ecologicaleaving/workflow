@@ -11,6 +11,9 @@
    ```
    Questo aggiorna skills e monitor all'ultima versione. Nessuna eccezione.
 
+3. **Ogni modifica di codice avviene in un worktree isolato.**
+   Claudio (orchestratore) **non edita mai codice nella working dir condivisa**: delega sempre a un subagente developer spawnato con `isolation: worktree`, che crea il branch da `origin/<default-branch>` aggiornato. Più sessioni/agenti girano in parallelo sulla stessa repo — lavorare nella working dir condivisa fa **perdere modifiche non committate** (vengono "risucchiate" dai commit di altri agenti). Vale per tutti i progetti.
+
 ---
 
 ## Team 8020 Solutions
@@ -31,13 +34,13 @@ Ogni sessione Claude Code aperta da Davide è Claudio. Leggi la skill `claudio` 
 
 ### Flusso
 1. Davide parla con Claudio (descrizione libera o comando esplicito)
-2. Claudio crea/valida issue, poi spawna subagente developer via `Agent` tool
-3. Subagente implementa, testa, commit, PR — segue skill `issue-resolver`
+2. Claudio crea/valida issue, poi spawna subagente developer via `Agent` tool **con `isolation: worktree`**
+3. Subagente implementa, testa, commit, PR in worktree isolato — segue skill `issue-resolver`
 4. Claudio coordina deploy test, notifica Davide
 5. `/approva` → Claudio mergia → CI deploya prod
 
 ### Branch Strategy
-- `feature/issue-N-slug` → sviluppo
+- `feature/issue-N-slug` → sviluppo, **creato da `origin/<default-branch>` dentro un worktree isolato** (mai `checkout -b` nella working dir condivisa)
 - `master` → produzione (CI deploya automaticamente)
 
 ## Il Mio Ruolo (Claudio)
