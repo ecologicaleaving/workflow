@@ -1,13 +1,13 @@
 #!/bin/bash
-# safe-github.sh  (ex ciccio-safe-github.sh — rinominato, Ciccio non è più attivo)
+# safe-github.sh
 # ============================================================
 # GUARDRAIL per operazioni GitHub
 # Blocca operazioni rischiose prima che causino danni.
 #
 # USO:
-#   ciccio-safe-github check-branch --repo <owner/repo> --branch <branch>
-#   ciccio-safe-github commit --repo <owner/repo> --branch <branch> --file <path> --content <b64> --sha <sha> --msg <msg>
-#   ciccio-safe-github sync-template --template <path> --repos <repo1,repo2,...>
+#   safe-github check-branch --repo <owner/repo> --branch <branch>
+#   safe-github commit --repo <owner/repo> --branch <branch> --file <path> --content <b64> --sha <sha> --msg <msg>
+#   safe-github sync-template --template <path> --repos <repo1,repo2,...>
 #
 # REGOLE:
 #   1. MAI commit diretto su main/master di repo applicative
@@ -220,7 +220,7 @@ case "$CMD" in
     commit)         cmd_commit "$@" ;;
     sync-template)  cmd_sync_template "$@" ;;
     help|*)
-        echo "USO: ciccio-safe-github <comando> [opzioni]"
+        echo "USO: safe-github <comando> [opzioni]"
         echo ""
         echo "Comandi:"
         echo "  check-branch  --repo <r> --branch <b>     Verifica che il branch sia sicuro"

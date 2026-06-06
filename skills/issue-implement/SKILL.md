@@ -155,12 +155,6 @@ Gate superato → procedi con `issue-pr-ready`.
 
 ---
 
-## 🔍 Agent Monitor
-
-Vedi `skills/references/agent-monitor.md` per istruzioni.
-
----
-
 ## Changelog
 
 - **v5.1.0** (2026-05-06): Aggiunto Step 4c — smoke test RLS-aware quando issue tocca migration con policy + endpoint API. Lezione da rilibro #71/#73/#74: build verde non basta, serve eseguire l'API contro la policy applicata. Aggiornata checklist auto-gate.

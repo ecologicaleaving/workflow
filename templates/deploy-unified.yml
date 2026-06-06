@@ -158,7 +158,7 @@ jobs:
   # - Deploy APK su app-hub VPS
   # - Comment PR con link download APK
   # - Create GitHub Release su master
-  # - Mark deployed-test + move card (via ciccio)
+  # - Mark deployed-test (label via gh)
   # ===========================================================================
   build-flutter:
     name: 📱 Build & Deploy Flutter
@@ -385,13 +385,10 @@ jobs:
 
   # ===========================================================================
   # JOB: notify
-  # Notifiche al termine di ogni build (success o failure):
-  #   1. Telegram → Davide (real-time)
-  #   2. repository_dispatch → ecologicaleaving/workflow → Claude Code
+  # Notifica al termine di ogni build (success o failure):
+  #   repository_dispatch → ecologicaleaving/workflow → Claude Code
   #
   # Secrets richiesti:
-  #   TELEGRAM_BOT_TOKEN   — token bot Telegram
-  #   TELEGRAM_CHAT_ID     — chat ID Davide
   #   GH_PAT               — PAT con scope repo (per repository_dispatch cross-repo)
   # ===========================================================================
   notify:
@@ -401,13 +398,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── Checkout workflow repo (contiene deploy-notify.py) ─────────────────
-      - name: Checkout workflow repo
-        uses: actions/checkout@v4
-        with:
-          repository: ecologicaleaving/workflow
-          path: workflow
-
       # ── Calcola stato e URL ────────────────────────────────────────────────
       - name: Prepare notification payload
         id: prep
@@ -452,29 +442,7 @@ jobs:
           echo "artifact_url=${ARTIFACT_URL}"   >> "$GITHUB_OUTPUT"
           echo "run_url=${RUN_URL}"             >> "$GITHUB_OUTPUT"
 
-      # ── 1. Telegram → Davide ───────────────────────────────────────────────
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install requests
-        run: pip install requests
-
-      - name: Notify Telegram
-        if: env.TELEGRAM_BOT_TOKEN != ''
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python workflow/scripts/deploy-notify.py \
-            "${{ steps.prep.outputs.repo }}" \
-            "build" \
-            "${{ steps.prep.outputs.status }}" \
-            "${{ steps.prep.outputs.branch }}" \
-            "${{ steps.prep.outputs.run_url }}"
-
-      # ── 2. repository_dispatch → Claude Code ──────────────────────────────
+      # ── repository_dispatch → Claude Code ─────────────────────────────────
       - name: Notify Claude Code
         if: steps.prep.outputs.status != 'skipped' && env.GH_PAT != ''
         env:
