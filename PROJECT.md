@@ -39,11 +39,11 @@ GitHub Actions (ubuntu-latest)
       ↓
    Build app
       ↓ (via SSH)
-   VPS CiccioHouse (46.225.60.101)
+   VPS (46.225.60.101)
       ↓
    Webroot / APK destination
       ↓
-   Notifica Telegram a Davide
+   Deploy completato — esito visibile nei log del run
 ```
 
 ### Deploy per Branch
@@ -65,7 +65,7 @@ Ogni branch ottiene il **proprio ambiente isolato**:
 | Secret | Valore | Descrizione |
 |--------|--------|-------------|
 | `VPS_SSH_KEY` | chiave privata ed25519 | Deploy key (generata 2026-02-26) |
-| `VPS_HOST` | `46.225.60.101` | IP VPS CiccioHouse |
+| `VPS_HOST` | `46.225.60.101` | IP VPS |
 | `VPS_USER` | `root` | Utente SSH |
 | `CICCIO_GATEWAY_TOKEN` | `4bc2ca7...` | Token OpenClaw per notifiche |
 

@@ -14,8 +14,8 @@ graph LR
     B --> C[Develop & Test]
     C --> D[Update PROJECT.md]
     D --> E[Commit & Push]
-    E --> F[Deploy Request to Ciccio]
-    F --> G[Merge to main]
+    E --> F[CI deploy automatico su test]
+    F --> G[Merge to main → CI deploy prod]
 ```
 
 ## 🌿 Branch Types
@@ -23,7 +23,7 @@ graph LR
 ### **📦 main/master** - Production Branch
 - **Purpose**: Codice pronto per production
 - **Protection**: Protected branch, require PR per changes
-- **Deploy**: Auto-deploy o deploy da Ciccio su richiesta
+- **Deploy**: Auto-deploy via CI al merge
 - **Naming**: `main` per nuovi progetti, `master` per esistenti
 
 ### **⚡ feature/** - Feature Development  
@@ -86,18 +86,17 @@ git commit -m "feat: implement user authentication logic"
 # - Enhances commit message
 ```
 
-### **3. 🔄 Push and Deploy Request**
+### **3. 🔄 Push → Deploy automatico su test**
 ```bash
 # Push to GitHub
 git push origin feature/my-new-feature
 
-# Notify Ciccio for deploy to test environment
-# Via Telegram: "Ciccio, deploy feature/my-new-feature su test"
+# La CI deploya automaticamente su test-*.8020solutions.org
 ```
 
 ### **4. ✅ Testing & Approval**  
-- Ciccio deploys to test environment
-- David reviews and approves feature
+- La CI deploya su test environment al push
+- David reviews and approves feature (`/approva`)
 - Any fixes: additional commits on feature branch
 
 ### **5. 🎯 Merge to Production**
@@ -120,26 +119,26 @@ git push origin --delete feature/my-new-feature
 ## 🚀 Deploy Workflow Integration
 
 ### **🧪 Test Deployments**
-- **Trigger**: Push to feature branch + request to Ciccio
+- **Trigger**: Push to feature branch → CI deploya in automatico
 - **Environment**: test-*.8020solutions.org subdomain  
 - **Purpose**: Validation before production
 - **Lifetime**: Temporary, cleaned up after merge
 
 ### **🌐 Production Deployments**  
-- **Trigger**: Merge to main + deploy request to Ciccio
+- **Trigger**: Merge to main → CI deploya in automatico
 - **Environment**: Production URLs (live domains)
-- **Approval**: David approval required
+- **Approval**: David approval required (`/approva`)
 - **Process**: 
-  1. Ciccio pulls main branch
+  1. La CI fa il build da main
   2. Builds from releases/ artifacts
   3. Deploys to production
   4. Health checks and verification
-  5. Reports success to David
+  5. Esito visibile a David nei log del run
 
 ## 📋 Branch Protection Rules
 
 ### **Main/Master Branch**
-- ✅ **Require pull request reviews**: 1 reviewer (David or Ciccio)
+- ✅ **Require pull request reviews**: 1 reviewer (David)
 - ✅ **Dismiss stale reviews**: When new commits pushed
 - ✅ **Require status checks**: CI must pass
 - ✅ **Require up-to-date branches**: Must be current with main
@@ -152,18 +151,13 @@ git push origin --delete feature/my-new-feature
 
 ## 🎭 Role-Specific Workflows
 
-### **👨‍💻 Claudio (Developer)**
+### **🧠 Agente / Claudio (Orchestrator)**
 1. **Create feature branch** from main
-2. **Develop with commit skin** automation
-3. **Push and request deploy** to test environment  
-4. **Iterate based on feedback**
-5. **Merge to main** when approved
-
-### **🧠 Ciccio (Orchestrator)**  
-1. **Deploy feature branches** to test environments
-2. **Monitor CI/CD** status and health checks
-3. **Deploy main branch** to production on request
-4. **Manage branch cleanup** and repository hygiene
+2. **Delega l'implementazione** a un subagente developer (worktree isolato)
+3. **Push** → la CI deploya in automatico su test
+4. **Monitor CI/CD** status and health checks
+5. **Merge to main** quando approvato → la CI deploya in prod
+6. **Manage branch cleanup** and repository hygiene
 
 ### **🎯 David (Product Owner)**
 1. **Review test deployments** and approve features

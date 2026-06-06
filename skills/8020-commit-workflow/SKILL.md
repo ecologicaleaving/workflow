@@ -91,9 +91,8 @@ If commit skin is active, it will automatically:
 After `git push`:
 
 1. CI deploys automatically to `test-*.8020solutions.org`
-2. Bot Telegram notifies Davide with test link + AC
-3. Agent opens PR via skill `issue-pr-ready`
-4. Davide tests → `/approva` or `/reject`
+2. Agent opens PR via skill `issue-pr-ready` and notifies Davide with test link + AC
+3. Davide tests → `/approva` or `/reject`
 
 > IMPORTANT: Never push to master directly. Never merge without Davide's approval.
 > Never push anything that is broken or untested.

@@ -1,5 +1,5 @@
 > ⚠️ **DEPRECATO** — Questo file è storico. Fonte di verità aggiornata: `WORKFLOW.md`
-> Ruoli attivi: solo **Davide** (Product Owner) e **Agente** (Claude Code). Claudio e Ciccio non sono più ruoli attivi.
+> Ruoli attivi: **Davide** (Product Owner) e **Agente / Claudio** (Claude Code, orchestratore). Ciccio non è più un ruolo attivo.
 
 # 80/20 Solutions - Workflow Rules Complete Reference
 

@@ -68,7 +68,7 @@
         },
         "Deploy": {
           "id": "37c4aa50",
-          "description": "Approvato, Ciccio deploya"
+          "description": "Approvato, la CI deploya in prod al merge"
         },
         "Done": {
           "id": "98236657",
@@ -103,10 +103,6 @@
         "label": "agent:claude-code",
         "host": "PC Windows"
       },
-      "ciccio": {
-        "label": "agent:ciccio",
-        "host": "VPS"
-      },
       "codex": {
         "label": "agent:codex",
         "host": "PC Windows"
@@ -129,12 +125,14 @@
         "monitor-workflow"
       ]
     },
-    "ciccio": {
-      "role": "orchestrator-vps",
+    "agente": {
+      "role": "orchestrator",
       "responsibilities": [
+        "create-issues",
+        "delegate-implementation",
         "merge-prs",
-        "deploy-prod",
-        "manage-infra"
+        "coordinate-deploy",
+        "monitor-workflow"
       ]
     }
   },

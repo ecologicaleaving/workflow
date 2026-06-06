@@ -12,16 +12,16 @@
 
 | Dove | Per cosa | Chi gestisce |
 |------|----------|--------------|
-| **GitHub Secrets** (repo settings) | Credenziali CI/CD (build APK, deploy) | Ciccio / Davide |
+| **GitHub Secrets** (repo settings) | Credenziali CI/CD (build APK, deploy) | Davide |
 | **File `.env` locale** | Dev locale sul PC (gitignored) | Davide / Claudio |
-| **VPS `/etc/environment` o `.bashrc`** | Servizi sempre attivi sul VPS | Ciccio |
+| **VPS `/etc/environment` o `.bashrc`** | Servizi sempre attivi sul VPS | Davide |
 | **`SETUP_*.md`** | Link al dashboard, mai la chiave | Chiunque |
 
 ---
 
 ## Workflow per ogni nuovo progetto
 
-### 1. Setup iniziale (Davide / Ciccio)
+### 1. Setup iniziale (Davide)
 
 ```bash
 # Aggiungi i secrets al repo GitHub
@@ -91,7 +91,7 @@ cp .env.example .env
 
 ---
 
-## Regole per gli agenti (Claudio / Codex / Ciccio)
+## Regole per gli agenti (Claudio / Codex)
 
 1. **Mai hardcodare** credenziali nel codice sorgente
 2. **Mai committare** file `.env` (verificare `.gitignore` prima di ogni commit)
