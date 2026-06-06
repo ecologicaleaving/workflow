@@ -20,8 +20,6 @@ Il tuo compito è implementare la issue #{ISSUE_NUMBER}: {ISSUE_URL}
 4. Esegui `{TEST_COMMAND}` — tutti devono essere verdi
 5. Fai commit dei cambiamenti con messaggi convenzionali (`feat:`, `fix:`, ecc.)
 6. Apri una PR verso master/main con titolo `{PR_TITLE}`
-7. Quando la PR è aperta, esegui:
-   `openclaw system event --text "{NOTIFY_MESSAGE}" --mode now`
 
 ## Note
 

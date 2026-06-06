@@ -66,7 +66,7 @@ Clona il repo (se non presente) e checkout sul branch della PR:
 
 ```bash
 # Se repo non presente
-cd /home/kreshos/.openclaw/workspace
+cd C:\Users\KreshOS\Documents\00-Progetti
 git clone https://github.com/ecologicaleaving/<repo>.git
 
 # Checkout branch PR
@@ -79,7 +79,7 @@ Lancia l'agente con il contesto raccolto (issue + feedback Davide):
 
 ```
 Sei l'agente di research per il progetto <repo>.
-Il repo è in /home/kreshos/.openclaw/workspace/<repo>, branch `pr-<PR_N>`.
+Il repo è in C:\Users\KreshOS\Documents\00-Progetti\<repo>, branch `pr-<PR_N>`.
 
 **OBIETTIVO: Analisi rework PR #<PR_N> — <titolo issue>**
 

@@ -350,6 +350,26 @@ jobs:
             --add-label "deployed-test" \
             --remove-label "review-ready" || true
 
+      # Sposta la card Kanban su "Test" (best-effort: richiede un PAT con scope
+      # project nel secret GH_PAT; se assente, salta senza far fallire il deploy)
+      - name: Move Kanban card → Test
+        if: github.ref_name != 'master' && github.ref_name != 'main' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then echo "GH_PAT non configurato — salto spostamento card (label gia aggiunta)."; exit 0; fi
+          ISSUE="${{ github.event.pull_request.number }}"
+          PROJECT_ID="PVT_kwHODSTPQM4BP1Xp"; FIELD_ID="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"; TEST_OPTION="1d6a37f9"
+          ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
+            | python3 -c "import json,sys; m=[i for i in json.load(sys.stdin).get('items',[]) if str(i.get('content',{}).get('number',''))=='$ISSUE']; print(m[0]['id'] if m else '')")
+          if [ -n "$ITEM_ID" ]; then
+            gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
+              --field-id "$FIELD_ID" --single-select-option-id "$TEST_OPTION" \
+              && echo "Card #$ISSUE → Test" || echo "Spostamento card fallito (non bloccante)"
+          else
+            echo "Item progetto per issue #$ISSUE non trovato — salto."
+          fi
+
   # ===========================================================================
   # JOB: cleanup
   # Eseguito quando un branch viene eliminato.

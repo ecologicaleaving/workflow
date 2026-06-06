@@ -67,7 +67,7 @@ Ogni branch ottiene il **proprio ambiente isolato**:
 | `VPS_SSH_KEY` | chiave privata ed25519 | Deploy key (generata 2026-02-26) |
 | `VPS_HOST` | `46.225.60.101` | IP VPS |
 | `VPS_USER` | `root` | Utente SSH |
-| `CICCIO_GATEWAY_TOKEN` | `4bc2ca7...` | Token OpenClaw per notifiche |
+| `GH_PAT` | PAT con scope `project` | (Opzionale) sposta la card Kanban su Test nella CI; se assente la CI aggiunge solo la label |
 
 > La deploy key pubblica è in `/root/.ssh/github-actions-deploy.pub` sul VPS.
 
@@ -98,7 +98,8 @@ cp workflow/.github/workflows/template-web-deploy.yml \
 gh secret set VPS_SSH_KEY    --repo ecologicaleaving/mio-repo --body "$(cat /root/.ssh/github-actions-deploy)"
 gh secret set VPS_HOST       --repo ecologicaleaving/mio-repo --body "46.225.60.101"
 gh secret set VPS_USER       --repo ecologicaleaving/mio-repo --body "root"
-gh secret set CICCIO_GATEWAY_TOKEN --repo ecologicaleaving/mio-repo --body "4bc2ca7..."
+# (Opzionale) PAT con scope project per spostare la card Kanban su Test dalla CI:
+# gh secret set GH_PAT       --repo ecologicaleaving/mio-repo --body "<github_pat...>"
 
 # 3. Crea webroot base sul VPS
 mkdir -p /var/www/test-mio-repo/branches
