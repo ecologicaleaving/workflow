@@ -8,12 +8,12 @@ Utilizziamo un **simplified Git Flow** ottimizzato per small team con AI-assiste
 
 ```mermaid
 graph LR
-    A[main/master] --> B[feature/nome-feature]
+    A[origin/main] --> B[worktree: feature/...]
     B --> C[Develop & Test]
     C --> D[Update PROJECT.md]
     D --> E[Commit & Push]
-    E --> F[Deploy Request to Ciccio]
-    F --> G[Merge to main]
+    E --> F[CI auto-deploy su test]
+    F --> G[/approva di Davide → Merge]
 ```
 
 ## 🌿 Branch Types
@@ -21,7 +21,7 @@ graph LR
 ### **📦 main/master** - Production Branch
 - **Purpose**: Codice pronto per production
 - **Protection**: Protected branch, require PR per changes
-- **Deploy**: Auto-deploy o deploy da Ciccio su richiesta
+- **Deploy**: Auto-deploy via CI al merge su main/master
 - **Naming**: `main` per nuovi progetti, `master` per esistenti
 
 ### **⚡ feature/** - Feature Development  
@@ -59,16 +59,21 @@ graph LR
 
 ## 🔄 Standard Workflow
 
-### **1. 🚀 Start New Feature**
+### **1. 🚀 Start New Feature (worktree isolato)**
+
+> ⚠️ **Mai `checkout -b` nella working dir condivisa.** Più agenti/sessioni possono lavorare in parallelo sulla stessa repo: nella dir condivisa le modifiche non committate vengono "risucchiate" dai commit di altri agenti. Crea sempre il branch in un **worktree isolato** basato su `origin/<default-branch>` aggiornato. I subagenti developer vanno spawnati con `isolation: worktree` (l'harness gestisce creazione e cleanup).
+
 ```bash
-# Sync with main
-git checkout main
-git pull origin main
+# Aggiorna i riferimenti remoti (NON serve checkout nella dir condivisa)
+git fetch origin
 
-# Create feature branch  
-git checkout -b feature/my-new-feature
+# Crea il branch in un worktree isolato, basato su origin/<default-branch>
+git worktree add ../<repo>-wt-<slug> -b feature/my-new-feature origin/main
 
-# Start development...
+# Lavora DENTRO il worktree...
+# Nota: il worktree non eredita node_modules (gitignored). Per build/typecheck
+# crea una junction verso il node_modules del repo principale, e rimuovila con
+# `rmdir` (non Remove-Item ricorsivo) PRIMA di `git worktree remove`.
 ```
 
 ### **2. 👨‍💻 Development Process**
@@ -84,60 +89,54 @@ git commit -m "feat: implement user authentication logic"
 # - Enhances commit message
 ```
 
-### **3. 🔄 Push and Deploy Request**
+### **3. 🔄 Push → deploy automatico su test**
 ```bash
-# Push to GitHub
-git push origin feature/my-new-feature
+# Push del branch dal worktree
+git push -u origin feature/my-new-feature
 
-# Notify Ciccio for deploy to test environment
-# Via Telegram: "Ciccio, deploy feature/my-new-feature su test"
+# La CI builda e deploya automaticamente su test-*.8020solutions.org
+# Poi apri la PR: gh pr create
 ```
 
-### **4. ✅ Testing & Approval**  
-- Ciccio deploys to test environment
-- David reviews and approves feature
-- Any fixes: additional commits on feature branch
+### **4. ✅ Testing & Approval**
+- La CI deploya su test automaticamente dopo il push
+- Davide testa su test e approva con `/approva` (o `/reject` con feedback)
+- Eventuali fix: commit aggiuntivi sul branch feature (nel worktree)
 
 ### **5. 🎯 Merge to Production**
 ```bash
-# Switch to main
-git checkout main
-git pull origin main
+# Solo dopo /approva di Davide. Merge via GitHub:
+gh pr merge <PR_N> --merge   # oppure --squash secondo convenzione del repo
 
-# Merge feature branch
-git merge feature/my-new-feature
+# La CI deploya automaticamente in produzione al merge su main/master.
 
-# Update PROJECT.md if needed (usually automatic via skin)
-git push origin main
-
-# Clean up
-git branch -d feature/my-new-feature
+# Pulizia worktree + branch
+git worktree remove ../<repo>-wt-<slug>
 git push origin --delete feature/my-new-feature
 ```
 
 ## 🚀 Deploy Workflow Integration
 
 ### **🧪 Test Deployments**
-- **Trigger**: Push to feature branch + request to Ciccio
+- **Trigger**: Push del branch feature → CI automatica
 - **Environment**: test-*.8020solutions.org subdomain  
 - **Purpose**: Validation before production
 - **Lifetime**: Temporary, cleaned up after merge
 
 ### **🌐 Production Deployments**  
-- **Trigger**: Merge to main + deploy request to Ciccio
+- **Trigger**: Merge su main/master (dopo `/approva`) → CI automatica
 - **Environment**: Production URLs (live domains)
-- **Approval**: David approval required
+- **Approval**: Richiede `/approva` esplicito di Davide
 - **Process**: 
-  1. Ciccio pulls main branch
-  2. Builds from releases/ artifacts
-  3. Deploys to production
-  4. Health checks and verification
-  5. Reports success to David
+  1. La CI parte sul push a main/master
+  2. Build e deploy automatici
+  3. Smoke test post-deploy (`tests/curl-tests.sh`)
+  4. Notifica esito (build-log)
 
 ## 📋 Branch Protection Rules
 
 ### **Main/Master Branch**
-- ✅ **Require pull request reviews**: 1 reviewer (David or Ciccio)
+- ✅ **Require pull request reviews**: approvazione di Davide (`/approva`)
 - ✅ **Dismiss stale reviews**: When new commits pushed
 - ✅ **Require status checks**: CI must pass
 - ✅ **Require up-to-date branches**: Must be current with main
@@ -146,28 +145,22 @@ git push origin --delete feature/my-new-feature
 ### **Feature Branches**  
 - ✅ **No protection**: Freedom for rapid development
 - ✅ **CI checks**: Optional but recommended
-- ✅ **Self-merge allowed**: Claudio can merge own features dopo approval
+- ✅ **Merge**: solo l'Agente mergia, e solo dopo `/approva` di Davide
 
 ## 🎭 Role-Specific Workflows
 
-### **👨‍💻 Claudio (Developer)**
-1. **Create feature branch** from main
-2. **Develop with commit skin** automation
-3. **Push and request deploy** to test environment  
-4. **Iterate based on feedback**
-5. **Merge to main** when approved
+### **🤖 Agente / Claudio (orchestratore)**
+1. **Crea il branch feature** da `origin/<default>` in un **worktree isolato**
+2. **Delega l'implementazione** a un subagente developer (`isolation: worktree`)
+3. **Spinge il branch** → la CI deploya su test in automatico
+4. **Apre la PR** e monitora la CI; itera sui feedback di Davide
+5. **Mergia in main** solo dopo `/approva`, poi pulisce worktree e branch
 
-### **🧠 Ciccio (Orchestrator)**  
-1. **Deploy feature branches** to test environments
-2. **Monitor CI/CD** status and health checks
-3. **Deploy main branch** to production on request
-4. **Manage branch cleanup** and repository hygiene
-
-### **🎯 David (Product Owner)**
-1. **Review test deployments** and approve features
-2. **Approve production deployments**  
-3. **Create GitHub Issues** for new requirements
-4. **Strategic branch decisions** (releases, hotfixes)
+### **🎯 Davide (Product Owner)**
+1. **Testa i deploy su test** e approva con `/approva` (o `/reject` con motivo)
+2. **Approva i deploy in produzione** (il merge avviene solo col suo ok)
+3. **Crea GitHub Issues** per nuovi requisiti
+4. **Decisioni strategiche** su branch (release, hotfix) ed esegue le azioni infra VPS elencate dall'Agente
 
 ## 📊 Branch Naming Conventions
 
@@ -263,8 +256,8 @@ git config merge.conflictstyle diff3
 ---
 
 **Best Practices**:
+- ✅ **Lavora sempre in worktree isolato** da `origin/<default>` (mai `checkout -b` nella working dir condivisa)
 - ✅ Keep feature branches **small and focused**
 - ✅ **Update PROJECT.md** before every significant commit
 - ✅ **Test locally** before pushing
-- ✅ **Communicate with team** about branch progress
-- ✅ **Clean up branches** after successful merge
+- ✅ **Clean up branches** after successful merge (incluso `git worktree remove`)
