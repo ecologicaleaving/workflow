@@ -14,10 +14,11 @@
 |-----|-------|---------|-------------|
 | **Davide** | Product Owner | Decide, testa, approva/reject, dà i comandi | Non implementa, non deploya |
 | **Claudio** (Claude Code) | Orchestratore | Interfaccia con Davide, crea issue, coordina, spawna subagenti developer, gestisce deploy | Non implementa codice direttamente |
-| **Subagente developer** | Developer | Implementa, testa, commit, PR — spawna da Claudio via `Agent` tool | Non parla con Davide |
+| **Subagente developer** | Developer | Implementa, testa, commit, PR — spawna da Claudio via `Agent` tool con `isolation: worktree` | Non parla con Davide |
 
 > ⚖️ **LEGGE 1 — Merge:** MAI fare merge senza `/approva` esplicito di Davide. Commit e push OK, merge NO.
 > ⚖️ **LEGGE 2 — Sync:** All'inizio di ogni sessione: `git pull` workflow repo + `sync.ps1` prima di qualsiasi operazione.
+> ⚖️ **LEGGE 3 — Worktree isolato:** ogni modifica di codice passa da un subagente con `isolation: worktree`, branch creato da `origin/<default-branch>`. Claudio non edita mai codice nella working dir condivisa (più agenti in parallelo "risucchiano" le modifiche non committate).
 > ⚠️ **Regola:** Nessun fix/patch senza autorizzazione esplicita di Davide.
 > ⚠️ **Repo workflow:** Solo Claudio modifica `ecologicaleaving/workflow` su indicazione di Davide.
 
@@ -27,10 +28,10 @@
 
 ```
 Davide ←→ Claudio (questa sessione Claude Code)
-               ↓ Agent tool
-          Subagente developer (lavora in silenzio)
+               ↓ Agent tool (isolation: worktree)
+          Subagente developer (worktree isolato, lavora in silenzio)
                ↓
-          GitHub: branch → commit → PR
+          GitHub: branch (da origin/default) → commit → PR
                ↓
           CI/CD → deploy test automatico
                ↓
@@ -38,7 +39,7 @@ Davide ←→ Claudio (questa sessione Claude Code)
 ```
 
 **Claudio** = la chat aperta da Davide. Non un processo background, non un VPS.
-**Subagente** = spawna da Claudio con `Agent` tool, segue `issue-resolver`, ritorna al termine.
+**Subagente** = spawna da Claudio con `Agent` tool **e `isolation: worktree`**, segue `issue-resolver`, ritorna al termine.
 
 ---
 
@@ -258,7 +259,7 @@ Usa sempre gli script in `scripts/` invece di comandi inline:
 
 ## 📝 Convenzioni
 
-- **Branch:** `feature/issue-N-slug`, `fix/issue-N-slug`
+- **Branch:** `feature/issue-N-slug`, `fix/issue-N-slug` — creato da `origin/<default-branch>` dentro un **worktree isolato** (mai `checkout -b` nella working dir condivisa)
 - **Commit:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - **Niente commit su main/master**
 - **PROJECT.md** aggiornato prima di ogni PR

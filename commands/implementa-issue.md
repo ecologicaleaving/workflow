@@ -80,7 +80,8 @@ Prima di toccare codice:
 2. Leggi le skill: issue-implement, issue-pr-ready, 8020-commit-workflow, security-audit
 
 Poi esegui in ordine:
-- Crea branch: feature/issue-<ISSUE_N>-<slug> | fix/issue-<ISSUE_N>-<slug> | improve/issue-<ISSUE_N>-<slug>
+- `git fetch origin`, poi crea il branch da origin/<DEFAULT_BRANCH> aggiornato (NON dalla branch locale, che può essere indietro):
+  `git checkout -b feature/issue-<ISSUE_N>-<slug> origin/<DEFAULT_BRANCH>` | fix/issue-<ISSUE_N>-<slug> | improve/issue-<ISSUE_N>-<slug>
 - Implementa rispettando TUTTI gli AC e la Task Checklist della issue
 - Build obbligatoria: `npm run lint && npm run build` (o equivalente stack) verdi prima di ogni commit
 - Verifica AC nel browser via Chrome DevTools MCP (solo se progetto web e MCP disponibile)
