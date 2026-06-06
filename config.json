@@ -146,6 +146,6 @@
   "vps": {
     "host": "46.225.60.101",
     "user": "root",
-    "alias": "CiccioHouse"
+    "alias": "vps"
   }
 }

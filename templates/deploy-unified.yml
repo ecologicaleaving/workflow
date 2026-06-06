@@ -158,7 +158,7 @@ jobs:
   # - Deploy APK su app-hub VPS
   # - Comment PR con link download APK
   # - Create GitHub Release su master
-  # - Mark deployed-test + move card (via ciccio)
+  # - Mark deployed-test (label via gh)
   # ===========================================================================
   build-flutter:
     name: 📱 Build & Deploy Flutter
@@ -350,6 +350,26 @@ jobs:
             --add-label "deployed-test" \
             --remove-label "review-ready" || true
 
+      # Sposta la card Kanban su "Test" (best-effort: richiede un PAT con scope
+      # project nel secret GH_PAT; se assente, salta senza far fallire il deploy)
+      - name: Move Kanban card → Test
+        if: github.ref_name != 'master' && github.ref_name != 'main' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then echo "GH_PAT non configurato — salto spostamento card (label gia aggiunta)."; exit 0; fi
+          ISSUE="${{ github.event.pull_request.number }}"
+          PROJECT_ID="PVT_kwHODSTPQM4BP1Xp"; FIELD_ID="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"; TEST_OPTION="1d6a37f9"
+          ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
+            | python3 -c "import json,sys; m=[i for i in json.load(sys.stdin).get('items',[]) if str(i.get('content',{}).get('number',''))=='$ISSUE']; print(m[0]['id'] if m else '')")
+          if [ -n "$ITEM_ID" ]; then
+            gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
+              --field-id "$FIELD_ID" --single-select-option-id "$TEST_OPTION" \
+              && echo "Card #$ISSUE → Test" || echo "Spostamento card fallito (non bloccante)"
+          else
+            echo "Item progetto per issue #$ISSUE non trovato — salto."
+          fi
+
   # ===========================================================================
   # JOB: cleanup
   # Eseguito quando un branch viene eliminato.
@@ -385,13 +405,10 @@ jobs:
 
   # ===========================================================================
   # JOB: notify
-  # Notifiche al termine di ogni build (success o failure):
-  #   1. Telegram → Davide (real-time)
-  #   2. repository_dispatch → ecologicaleaving/workflow → Claude Code
+  # Notifica al termine di ogni build (success o failure):
+  #   repository_dispatch → ecologicaleaving/workflow → Claude Code
   #
   # Secrets richiesti:
-  #   TELEGRAM_BOT_TOKEN   — token bot Telegram
-  #   TELEGRAM_CHAT_ID     — chat ID Davide
   #   GH_PAT               — PAT con scope repo (per repository_dispatch cross-repo)
   # ===========================================================================
   notify:
@@ -401,13 +418,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── Checkout workflow repo (contiene deploy-notify.py) ─────────────────
-      - name: Checkout workflow repo
-        uses: actions/checkout@v4
-        with:
-          repository: ecologicaleaving/workflow
-          path: workflow
-
       # ── Calcola stato e URL ────────────────────────────────────────────────
       - name: Prepare notification payload
         id: prep
@@ -452,29 +462,7 @@ jobs:
           echo "artifact_url=${ARTIFACT_URL}"   >> "$GITHUB_OUTPUT"
           echo "run_url=${RUN_URL}"             >> "$GITHUB_OUTPUT"
 
-      # ── 1. Telegram → Davide ───────────────────────────────────────────────
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install requests
-        run: pip install requests
-
-      - name: Notify Telegram
-        if: env.TELEGRAM_BOT_TOKEN != ''
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python workflow/scripts/deploy-notify.py \
-            "${{ steps.prep.outputs.repo }}" \
-            "build" \
-            "${{ steps.prep.outputs.status }}" \
-            "${{ steps.prep.outputs.branch }}" \
-            "${{ steps.prep.outputs.run_url }}"
-
-      # ── 2. repository_dispatch → Claude Code ──────────────────────────────
+      # ── repository_dispatch → Claude Code ─────────────────────────────────
       - name: Notify Claude Code
         if: steps.prep.outputs.status != 'skipped' && env.GH_PAT != ''
         env:

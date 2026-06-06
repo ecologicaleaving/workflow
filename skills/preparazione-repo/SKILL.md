@@ -69,7 +69,7 @@ Se 404 → crea dal template in `assets/CLAUDE.md.template`:
 2. Crea il file via commit diretto su `main` (o branch principale del repo)
 
 ```powershell
-$body = Get-Content "C:\Users\KreshOS\.openclaw\workspace\workflow-repo\skills\preparazione-repo\assets\CLAUDE.md.template" -Raw
+$body = Get-Content "C:\Users\KreshOS\Documents\00-Progetti\workflow\skills\preparazione-repo\assets\CLAUDE.md.template" -Raw
 # sostituisci i placeholder
 $body = $body -replace '\{owner\}', '{owner}' `
                -replace '\{repo\}', '{repo}' `
@@ -103,7 +103,7 @@ Se 404 → crea i 3 template da `assets/`:
 Per ciascun file:
 
 ```powershell
-$content = Get-Content "C:\Users\KreshOS\.openclaw\workspace\workflow-repo\skills\preparazione-repo\assets\issue-template-{type}.md" -Raw
+$content = Get-Content "C:\Users\KreshOS\Documents\00-Progetti\workflow\skills\preparazione-repo\assets\issue-template-{type}.md" -Raw
 $encoded = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($content))
 gh api repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE/{type}.md `
   --method PUT `

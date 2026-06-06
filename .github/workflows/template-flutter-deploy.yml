@@ -7,11 +7,10 @@ name: Build & Deploy APK
 #   VPS_SSH_KEY   — chiave privata SSH (github-actions-deploy)
 #   VPS_HOST      — IP VPS (46.225.60.101)
 #   VPS_USER      — utente SSH (root)
-#   TELEGRAM_TOKEN / TELEGRAM_CHAT_ID — per notifiche (opzionale)
 #
-# Flusso automatico card Project board:
+# Flusso automatico label:
 #   commit → review-ready → PUSH
-#   CI deploy OK → deployed-test → Test (notifica Davide)
+#   CI deploy OK → deployed-test
 #
 # TRIGGER: solo PR (build su feature branch) + push main/master (release)
 # Evita doppio run su push+PR sullo stesso commit.
@@ -96,22 +95,36 @@ jobs:
             "${{ steps.apk.outputs.name }}" \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/downloads/test/
 
-      # ── Cuore del workflow: label + card board ─────────────────
-      - name: Mark deployed-test & move card to Test
-        if: success()
+      # ── Cuore del workflow: label deployed-test + card Kanban ──
+      - name: Mark deployed-test
+        if: success() && steps.info.outputs.issue_num != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE="${{ steps.info.outputs.issue_num }}"
           REPO="${{ github.repository }}"
-          if [ -n "$ISSUE" ]; then
-            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=10 \
-              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-              "export PATH=\$PATH:/root/go/bin && \
-               gh issue edit $ISSUE --repo $REPO \
-                 --remove-label review-ready \
-                 --add-label deployed-test 2>/dev/null || true && \
-               python3 /root/.openclaw/workspace-ciccio/scripts/project_board.py \
-                 $REPO $ISSUE Test 2>/dev/null || true" || true
+          gh issue edit "$ISSUE" --repo "$REPO" \
+            --remove-label review-ready \
+            --add-label deployed-test || true
+
+      # Sposta la card Kanban su "Test" (best-effort: richiede un PAT con scope
+      # project nel secret GH_PAT; se assente, salta senza far fallire il deploy)
+      - name: Move Kanban card → Test
+        if: success() && steps.info.outputs.issue_num != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then echo "GH_PAT non configurato — salto spostamento card (label gia aggiunta)."; exit 0; fi
+          ISSUE="${{ steps.info.outputs.issue_num }}"
+          PROJECT_ID="PVT_kwHODSTPQM4BP1Xp"; FIELD_ID="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"; TEST_OPTION="1d6a37f9"
+          ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
+            | python3 -c "import json,sys; m=[i for i in json.load(sys.stdin).get('items',[]) if str(i.get('content',{}).get('number',''))=='$ISSUE']; print(m[0]['id'] if m else '')")
+          if [ -n "$ITEM_ID" ]; then
+            gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
+              --field-id "$FIELD_ID" --single-select-option-id "$TEST_OPTION" \
+              && echo "Card #$ISSUE → Test" || echo "Spostamento card fallito (non bloccante)"
+          else
+            echo "Item progetto per issue #$ISSUE non trovato — salto."
           fi
 
       - name: Comment PR with APK link
@@ -134,37 +147,3 @@ jobs:
           tag_name: v${{ steps.info.outputs.version }}
           name: v${{ steps.info.outputs.version }}
           files: ${{ steps.apk.outputs.name }}
-
-      - name: Fetch issue AC
-        id: ac
-        if: success() && steps.info.outputs.issue_num != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_N="${{ steps.info.outputs.issue_num }}"
-          BODY=$(gh issue view "$ISSUE_N" --repo "${{ github.repository }}" --json body -q '.body' 2>/dev/null || echo "")
-          AC=$(echo "$BODY" | \
-            awk '/## Acceptance Criteria/{f=1;next} f&&/^##/{exit} f&&/- \[/{print}' | \
-            head -10 | \
-            sed 's/- \[x\]/☑/g' | sed 's/- \[ \]/☐/g' | \
-            tr '\n' '|' | sed 's/|$//')
-          echo "ac=$AC" >> $GITHUB_OUTPUT
-
-      - name: Notify
-        if: always()
-        run: |
-          EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
-          APK="${{ steps.apk.outputs.name }}"
-          URL="https://apps.8020solutions.org/downloads/test/${APK}"
-          MSG="${EMOJI} ${{ github.event.repository.name }} build ${{ job.status }}\nBranch: ${{ steps.info.outputs.branch }}\n🔗 ${URL}"
-
-          AC_RAW="${{ steps.ac.outputs.ac }}"
-          ISSUE_N="${{ steps.info.outputs.issue_num }}"
-          if [ "${{ job.status }}" = "success" ] && [ -n "$ISSUE_N" ] && [ -n "$AC_RAW" ]; then
-            AC_FMT=$(echo "$AC_RAW" | tr '|' '\n' | sed 's/^/  /' | tr '\n' '|' | sed 's/|/\\n/g' | sed 's/\\n$//')
-            MSG="${MSG}\n\n🧪 AC da testare (Issue #${ISSUE_N}):\n${AC_FMT}"
-          fi
-
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "ciccio-notify '${MSG}'" || true

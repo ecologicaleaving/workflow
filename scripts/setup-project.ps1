@@ -8,7 +8,7 @@
 # Uso (dalla root del progetto):
 #   powershell -ExecutionPolicy Bypass -File path\to\workflow\scripts\setup-project.ps1
 #   oppure (se workflow è già clonato localmente):
-#   powershell -ExecutionPolicy Bypass -File C:\Users\KreshOS\.openclaw\workspace\workflow-repo\scripts\setup-project.ps1
+#   powershell -ExecutionPolicy Bypass -File C:\Users\KreshOS\Documents\00-Progetti\workflow\scripts\setup-project.ps1
 # ============================================================
 
 $ErrorActionPreference = "Stop"
