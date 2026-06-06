@@ -63,6 +63,7 @@ Nessuna eccezione. Anche se la fix sembra banale, Davide decide.
 ## 👥 Modello ruoli attuale
 
 - **Davide** — Product Owner: comanda, testa, approva/reject
-- **Agente** (Claude Code) — fa tutto il resto in autonomia
+- **Agente** (Claude Code, "Claudio") — orchestratore: crea/valida issue, coordina, delega l'implementazione ai subagenti developer, gestisce kanban, PR, merge e deploy
+- **Subagente developer** — spawnato dall'Agente (`isolation: worktree`), implementa in autonomia
 
-Claudio e Ciccio non sono più ruoli attivi. L'agente gestisce issue, kanban, implementazione, PR e merge.
+Il deploy è automatico via CI: su test al push, in prod al merge dopo `/approva`.
