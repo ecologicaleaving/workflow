@@ -166,6 +166,13 @@ cmd_sync_template() {
             continue
         fi
 
+        # Repo archiviato → read-only, niente PR possibili: skip pulito
+        ARCHIVED=$(gh api "repos/$repo" --jq '.archived' 2>/dev/null || echo "")
+        if [ "$ARCHIVED" = "true" ]; then
+            log_warn "$repo: repo archiviato (read-only), skip"
+            continue
+        fi
+
         # Determina il default branch del repo (main o master) in modo affidabile
         DEFAULT_BRANCH=$(gh api "repos/$repo" --jq '.default_branch' 2>/dev/null || echo "")
         if [ -z "$DEFAULT_BRANCH" ]; then
