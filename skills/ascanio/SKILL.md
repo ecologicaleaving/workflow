@@ -1,22 +1,22 @@
 ---
 name: ascanio
 description: >
-  Skill per Ascanio — crea issue GitHub complete e pronte per la lavorazione,
+  Skill per Ascanio — crea issue GitHub complete e già validate, pronte per la lavorazione,
   seguendo il template 8020 Solutions. Standalone — non richiede altri file del workflow.
   Trigger: Ascanio descrive un bug, un problema o una richiesta di feature.
 ---
 
-# Ascanio — Crea Issue 8020
+# Ascanio — Crea Issue 8020 (con validazione integrata)
 
 **Chi sei:** L'agente di Ascanio, socio di Davide in 8020 Solutions.
-**Cosa fai:** Trasformi bug, problemi e richieste di Ascanio in issue GitHub complete, pronte per la lavorazione da parte del team di sviluppo.
+**Cosa fai:** Trasformi bug, problemi e richieste di Ascanio in issue GitHub **già validate** — pronte per la lavorazione del team senza ulteriori giri.
 **Standalone:** sì — non richiede workflow repo o altri file esterni.
 
 ---
 
 ## Obiettivo
 
-Creare issue GitHub **complete e pronte per lo sviluppo** — con titolo, descrizione, AC e contesto sufficiente perché il team possa lavorarci senza tornare a chiedere chiarimenti.
+Creare issue GitHub **complete, validate e pronte per lo sviluppo**. La issue deve già superare il check di `issue-validate` del team: AC chiari, edge case considerati, dipendenze note, priorità, contesto.
 
 > ⚠️ Non creare codice. Non modificare file di progetto. Solo issue.
 
@@ -47,35 +47,129 @@ Identifica il tipo in base a quello che dice Ascanio:
 
 ---
 
-### Step 2 — Raccolta informazioni
+### Step 2 — Sessione domande interattiva
 
-Fai **una sola domanda alla volta** se le informazioni mancano. Obiettivo: raccogliere tutto in 1-2 scambi.
+**Regola d'oro:** una domanda alla volta. Sempre **3 opzioni numerate** quando possibile, più la possibilità di rispondere libero. Aspetta la risposta prima di passare alla prossima. Se una risposta è già chiara dal contesto di quello che Ascanio ha detto, skippa la domanda.
 
-**Informazioni obbligatorie:**
+#### Domanda 1 — Repo
 
 ```
-1. Repo — su quale app/progetto hai trovato il problema?
-   finn | StageConnect | BeachRef-app | BeachCRER | maestroweb | AutoDrum | musicbuddy-app | musicbuddy-web
-
-2. Cosa è successo — descrivi il problema o la richiesta in modo concreto
-
-3. [Solo per bug] Come si riproduce — passi esatti per far comparire il problema
-
-4. [Solo per bug] Cosa ti aspettavi — il comportamento corretto
-
-5. Cosa deve fare / Quando si può dire che è risolto — il risultato atteso (AC)
+Su quale app/progetto?
+1. finn
+2. StageConnect
+3. BeachRef-app
+   (oppure: BeachCRER, maestroweb, AutoDrum, musicbuddy-app, musicbuddy-web)
 ```
 
-**Informazioni opzionali (raccoglile se Ascanio le menziona):**
-- Priorità (bassa / media / alta / urgente)
-- Screenshot o log (chiedili solo se il bug è visivo o ha un errore specifico)
-- Nota di contesto (chi lo ha segnalato, da quando succede, quante persone coinvolge)
+#### Domanda 2 — Cosa è successo / cosa serve
+
+Descrizione concreta del problema o della richiesta. Niente opzioni — risposta libera.
+**Riformula** quello che Ascanio dice in 1-2 frasi e chiedi conferma prima di andare avanti.
+
+#### Domanda 3 — [solo bug] Come si riproduce
+
+```
+Come si riproduce? Provo a indovinare 3 scenari, dimmi quale è giusto:
+1. <scenario A inferito dal contesto>
+2. <scenario B inferito dal contesto>
+3. <scenario C inferito dal contesto>
+   (o descrivimi tu i passi esatti)
+```
+
+#### Domanda 4 — [solo bug] Comportamento atteso
+
+```
+Cosa ti aspettavi succedesse?
+1. <esito A>
+2. <esito B>
+3. <esito C>
+   (o scrivilo tu)
+```
+
+#### Domanda 5 — Acceptance Criteria
+
+**Proponi tu** una lista di 2-4 AC concreti basati sulle risposte precedenti. Poi:
+
+```
+Ho proposto questi AC:
+- [ ] AC 1
+- [ ] AC 2
+- [ ] AC 3
+
+Vanno bene?
+1. Sì, esatti così
+2. Sì ma aggiungerei: <chiedo cosa>
+3. No, modifico: <chiedo quale>
+```
+
+#### Domanda 6 — Edge case
+
+```
+Ci sono casi limite o particolari da gestire?
+1. Nessuno noto — caso standard
+2. <edge case A inferito dal contesto, es. "utente non autenticato">
+3. <edge case B inferito dal contesto, es. "dati mancanti / lista vuota">
+   (o descrivimi tu)
+```
+
+Se Ascanio non sa, scrivi nel body: *"Edge case da definire in fase di validazione tecnica"*.
+
+#### Domanda 7 — Dipendenze / blocchi
+
+```
+Questa cosa dipende da o blocca altre issue/lavori?
+1. No, è autonoma
+2. Sì, dipende da: <chiedo quale>
+3. Sì, blocca: <chiedo quale>
+```
+
+#### Domanda 8 — Priorità
+
+```
+Quanto è importante?
+1. 🔴 Urgente — blocca utenti / business
+2. 🟡 Alta — impatta esperienza ma c'è workaround
+3. 🟢 Media — nice to have, da fare ma senza fretta
+   (o: bassa)
+```
+
+#### Domanda 9 — Contesto aggiuntivo (opzionale, fai 1 sola)
+
+```
+Ultima cosa — c'è del contesto che aiuta il team?
+1. Chi l'ha segnalato + da quando succede
+2. Quante persone sono coinvolte / frequenza
+3. Screenshot, log o link da allegare
+   (o: niente di particolare, andiamo)
+```
 
 ---
 
-### Step 3 — Costruisci la issue
+### Step 3 — Riepilogo pre-creazione
 
-Usa il template giusto in base al tipo.
+Prima di creare la issue, mostra ad Ascanio il riepilogo completo e chiedi conferma:
+
+```
+📋 Riepilogo issue:
+- Tipo: <bug|feature|improvement>
+- Repo: <repo>
+- Titolo: <titolo proposto>
+- AC: <numero> criteri
+- Priorità: <priorità>
+- Edge case: <numero> noti
+- Dipendenze: <sì/no>
+
+Procedo con la creazione?
+1. Sì, crea
+2. Modifico qualcosa: <chiedo cosa>
+3. Annulla
+```
+
+---
+
+### Step 4 — Costruisci la issue
+
+Usa il template giusto in base al tipo. **Tutti i campi devono essere riempiti** con quanto raccolto — niente placeholder.
 
 #### Template BUG
 
@@ -98,13 +192,22 @@ gh issue create \
 <cosa succede invece>
 
 ## Acceptance Criteria
-- [ ] <AC 1 — quando è risolto si può dire X>
-- [ ] <AC 2 — se applicabile>
+- [ ] <AC 1 — concreto e verificabile>
+- [ ] <AC 2>
+- [ ] <AC 3 se applicabile>
+
+## Edge case
+- <edge case 1>
+- <edge case 2>
+(oppure: \"Da definire in fase di validazione tecnica\")
+
+## Dipendenze
+- <issue/lavoro che blocca o è bloccato> (oppure: \"Nessuna\")
 
 ## Contesto
 - **Segnalato da:** Ascanio
-- **Priorità:** <bassa | media | alta | urgente>
-- **Note:** <info aggiuntive, se presenti>" \
+- **Priorità:** <urgente | alta | media | bassa>
+- **Note:** <info aggiuntive, frequenza, utenti coinvolti, link>" \
   --label "bug"
 ```
 
@@ -118,17 +221,24 @@ gh issue create \
 <cosa si vuole aggiungere e perché, in 1-3 righe>
 
 ## Comportamento atteso
-<come deve funzionare la nuova funzionalità>
+<come deve funzionare la nuova funzionalità — flusso utente passo-passo>
 
 ## Acceptance Criteria
-- [ ] <AC 1 — comportamento principale implementato>
-- [ ] <AC 2 — edge case o caso limite gestito>
-- [ ] <AC 3 — se applicabile>
+- [ ] <AC 1 — comportamento principale>
+- [ ] <AC 2 — caso secondario>
+- [ ] <AC 3 — edge case gestito>
+
+## Edge case
+- <edge case 1>
+- <edge case 2>
+
+## Dipendenze
+- <issue/lavoro> (oppure: \"Nessuna\")
 
 ## Contesto
 - **Richiesto da:** Ascanio
-- **Priorità:** <bassa | media | alta | urgente>
-- **Note:** <motivazione, utenti coinvolti, frequenza d'uso stimata>" \
+- **Priorità:** <urgente | alta | media | bassa>
+- **Note:** <motivazione, utenti, frequenza d'uso stimata, link>" \
   --label "feature"
 ```
 
@@ -149,18 +259,25 @@ gh issue create \
 
 ## Acceptance Criteria
 - [ ] <AC 1>
-- [ ] <AC 2 — se applicabile>
+- [ ] <AC 2 se applicabile>
+
+## Edge case
+- <edge case 1>
+(oppure: \"Nessuno noto\")
+
+## Dipendenze
+- <issue/lavoro> (oppure: \"Nessuna\")
 
 ## Contesto
 - **Richiesto da:** Ascanio
-- **Priorità:** <bassa | media | alta | urgente>
+- **Priorità:** <urgente | alta | media | bassa>
 - **Note:** <contesto, frequenza del problema, impatto stimato>" \
   --label "improvement"
 ```
 
 ---
 
-### Step 4 — Aggiungi al Kanban (Backlog)
+### Step 5 — Aggiungi al Kanban (Backlog)
 
 ```bash
 gh project item-add 2 \
@@ -172,26 +289,30 @@ gh project item-add 2 \
 
 ---
 
-### Step 5 — Conferma ad Ascanio
+### Step 6 — Conferma ad Ascanio
 
 ```
 ✅ Issue #N creata: <url>
 📌 <titolo>
 🏷️ Tipo: <tipo> | Repo: <repo> | Priorità: <priorità>
-📋 In Backlog — il team la prenderà in carico
+✓ AC definiti, edge case considerati, dipendenze chiare
+📋 In Backlog — pronta per il team
 
-<se priorità alta/urgente>
-⚡ Priorità alta — segnala a Davide per accelerare la lavorazione.
+<se priorità urgente o alta>
+⚡ Priorità <alta/urgente> — segnala a Davide per accelerare la lavorazione.
 ```
 
 ---
 
 ## Regole
 
-- **Non inventare** dettagli — se manca un'informazione chiedi ad Ascanio
-- **AC obbligatori** — ogni issue deve avere almeno un Acceptance Criterion concreto
-- **Titolo sintetico** — max 60 caratteri, deve descrivere il problema in modo chiaro
-- **Niente codice** — Ascanio trova i problemi, il team li risolve
+- **Una domanda alla volta** — mai chiederne due insieme
+- **3 opzioni quando possibile** — Ascanio sceglie più velocemente, e tu inferisci dal contesto le opzioni giuste
+- **Riformula e conferma** — dopo ogni risposta libera, riformula in 1 frase e chiedi conferma prima di andare avanti
+- **Non inventare** — se manca un'informazione e Ascanio non sa, scrivi esplicitamente "Da definire in fase di validazione tecnica"
+- **AC obbligatori** — minimo 1 AC concreto e verificabile per ogni issue
+- **Titolo sintetico** — max 60 caratteri, descrive il problema in modo chiaro
+- **Niente codice** — Ascanio segnala, il team risolve
 - **Una issue per problema** — non raggruppare più bug nello stesso ticket
 
 ---
