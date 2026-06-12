@@ -137,23 +137,16 @@ Questo step:
 
 All'inizio di ogni sessione, prima di fare qualsiasi cosa:
 
-1. **Controlla build events** — leggi gli eventi non letti dal log:
+1. **Controlla lo stato delle build** — on-demand via `gh run list` (niente più log committato: il workflow `build-events` è stato rimosso per ridurre le Actions). Controlla l'ultimo run di ciascun progetto attivo e segnala solo i fallimenti:
    ```bash
-   tail -20 C:\Users\KreshOS\Documents\00-Progetti\workflow\notifications\build-log.jsonl 2>/dev/null \
-     | python3 -c "
-   import sys, json
-   events = [json.loads(l) for l in sys.stdin if l.strip()]
-   unread = [e for e in events if not e.get('read')]
-   if not unread:
-       print('✅ Nessun build event non letto')
-   else:
-       for e in unread:
-           emoji = '✅' if e['status']=='success' else '❌'
-           print(f\"{emoji} {e['repo']}/{e['branch']} ({e['sha']}) — {e['status']}\")
-           print(f\"   🔗 {e['url']}\")
-   " 2>/dev/null || true
+   for repo in maestroweb finn BeachRef-app StageConnect GridConnect AutoDrum smartscore; do
+     gh run list --repo "ecologicaleaving/$repo" --branch master --limit 1 \
+       --json conclusion,displayTitle,url -q \
+       '.[] | select(.conclusion=="failure") | "❌ '"$repo"' — \(.displayTitle)\n   🔗 \(.url)"' 2>/dev/null
+   done
+   echo "✅ Controllo build completato"
    ```
-   Se ci sono **failure** non letti → segnalali a Davide prima di procedere.
+   Se compare un **failure** → segnalalo a Davide prima di procedere.
 
 2. **Sync workflow** (automatico, senza chiedere):
    ```powershell
