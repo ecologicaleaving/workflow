@@ -15,9 +15,11 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
-# Evita run concorrenti sullo stesso branch
+# Evita run concorrenti sullo stesso branch.
+# event_name nel group: evita che un evento 'delete' (cleanup) cancelli
+# un 'push' deploy in corso sullo stesso ref (vedi maestroweb #731).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
