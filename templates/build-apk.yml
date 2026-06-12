@@ -8,12 +8,13 @@ name: Build & Deploy APK
 #   VPS_HOST      — IP VPS (46.225.60.101)
 #   VPS_USER      — utente SSH (root)
 #
-# Flusso automatico label:
-#   commit → review-ready → PUSH
-#   CI deploy OK → deployed-test
-#
 # TRIGGER: solo PR (build su feature branch) + push main/master (release)
 # Evita doppio run su push+PR sullo stesso commit.
+# concurrency: i push successivi sullo stesso branch cancellano i build
+# obsoleti ancora in corso (un solo APK builda — l'ultimo commit).
+#
+# NB: label deployed-test e spostamento card Kanban NON sono più gestiti
+# qui — li fa Claudio on-demand nel flusso issue (meno Actions).
 # ============================================================
 
 on:
@@ -22,6 +23,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -94,38 +99,6 @@ jobs:
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "${{ steps.apk.outputs.name }}" \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/app-hub/downloads/test/
-
-      # ── Cuore del workflow: label deployed-test + card Kanban ──
-      - name: Mark deployed-test
-        if: success() && steps.info.outputs.issue_num != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE="${{ steps.info.outputs.issue_num }}"
-          REPO="${{ github.repository }}"
-          gh issue edit "$ISSUE" --repo "$REPO" \
-            --remove-label review-ready \
-            --add-label deployed-test || true
-
-      # Sposta la card Kanban su "Test" (best-effort: richiede un PAT con scope
-      # project nel secret GH_PAT; se assente, salta senza far fallire il deploy)
-      - name: Move Kanban card → Test
-        if: success() && steps.info.outputs.issue_num != ''
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -z "${GH_TOKEN}" ]; then echo "GH_PAT non configurato — salto spostamento card (label gia aggiunta)."; exit 0; fi
-          ISSUE="${{ steps.info.outputs.issue_num }}"
-          PROJECT_ID="PVT_kwHODSTPQM4BP1Xp"; FIELD_ID="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"; TEST_OPTION="1d6a37f9"
-          ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
-            | python3 -c "import json,sys; m=[i for i in json.load(sys.stdin).get('items',[]) if str(i.get('content',{}).get('number',''))=='$ISSUE']; print(m[0]['id'] if m else '')")
-          if [ -n "$ITEM_ID" ]; then
-            gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
-              --field-id "$FIELD_ID" --single-select-option-id "$TEST_OPTION" \
-              && echo "Card #$ISSUE → Test" || echo "Spostamento card fallito (non bloccante)"
-          else
-            echo "Item progetto per issue #$ISSUE non trovato — salto."
-          fi
 
       - name: Comment PR with APK link
         if: github.event_name == 'pull_request'

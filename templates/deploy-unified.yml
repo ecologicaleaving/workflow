@@ -8,7 +8,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: ['**']
+    branches: ['main', 'master']
   delete:
     branches: ['**']
   pull_request:
@@ -335,40 +335,8 @@ jobs:
 
             console.log(`✅ Release created: ${release.data.html_url}`);
 
-      # ── Mark deployed-test + move card Kanban ─────────────────────────────
-      - name: Mark deployed-test
-        if: github.ref_name != 'master' && github.ref_name != 'main' && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          REPO="${{ github.event.repository.name }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-
-          # Aggiunge label deployed-test alla PR/issue
-          gh issue edit "$PR_NUMBER" \
-            --repo "ecologicaleaving/${REPO}" \
-            --add-label "deployed-test" \
-            --remove-label "review-ready" || true
-
-      # Sposta la card Kanban su "Test" (best-effort: richiede un PAT con scope
-      # project nel secret GH_PAT; se assente, salta senza far fallire il deploy)
-      - name: Move Kanban card → Test
-        if: github.ref_name != 'master' && github.ref_name != 'main' && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -z "${GH_TOKEN}" ]; then echo "GH_PAT non configurato — salto spostamento card (label gia aggiunta)."; exit 0; fi
-          ISSUE="${{ github.event.pull_request.number }}"
-          PROJECT_ID="PVT_kwHODSTPQM4BP1Xp"; FIELD_ID="PVTSSF_lAHODSTPQM4BP1Xpzg-INlw"; TEST_OPTION="1d6a37f9"
-          ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving --format json --limit 200 \
-            | python3 -c "import json,sys; m=[i for i in json.load(sys.stdin).get('items',[]) if str(i.get('content',{}).get('number',''))=='$ISSUE']; print(m[0]['id'] if m else '')")
-          if [ -n "$ITEM_ID" ]; then
-            gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
-              --field-id "$FIELD_ID" --single-select-option-id "$TEST_OPTION" \
-              && echo "Card #$ISSUE → Test" || echo "Spostamento card fallito (non bloccante)"
-          else
-            echo "Item progetto per issue #$ISSUE non trovato — salto."
-          fi
+      # NB: label deployed-test e spostamento card Kanban NON sono più gestiti
+      # qui — li fa Claudio on-demand nel flusso issue (meno Actions).
 
   # ===========================================================================
   # JOB: cleanup
@@ -402,83 +370,3 @@ jobs:
             "rm -rf /var/www/test-${REPO} || true"
 
           echo "✅ Cleanup done for test-${REPO}"
-
-  # ===========================================================================
-  # JOB: notify
-  # Notifica al termine di ogni build (success o failure):
-  #   repository_dispatch → ecologicaleaving/workflow → Claude Code
-  #
-  # Secrets richiesti:
-  #   GH_PAT               — PAT con scope repo (per repository_dispatch cross-repo)
-  # ===========================================================================
-  notify:
-    name: 📣 Notify
-    needs: [detect, build-web, build-flutter]
-    if: always() && github.event_name != 'delete'
-    runs-on: ubuntu-latest
-
-    steps:
-      # ── Calcola stato e URL ────────────────────────────────────────────────
-      - name: Prepare notification payload
-        id: prep
-        run: |
-          REPO="${{ github.event.repository.name }}"
-          BRANCH="${{ github.ref_name }}"
-          SHA="${{ github.sha }}"
-          SHORT_SHA="${SHA:0:7}"
-          STACK="${{ needs.detect.outputs.stack }}"
-          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-          # URL artefatto
-          if [[ "$STACK" == "flutter" ]]; then
-            BRANCH_SLUG="${BRANCH//\//-}"
-            FLAVOR="dev"
-            [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]] && FLAVOR="prod"
-            ARTIFACT_URL="https://apps.8020solutions.org/${REPO}/${REPO}-${BRANCH_SLUG}-${SHORT_SHA}-${FLAVOR}.apk"
-          else
-            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
-              ARTIFACT_URL="https://${REPO}.8020solutions.org"
-            else
-              ARTIFACT_URL="https://test-${REPO}.8020solutions.org"
-            fi
-          fi
-
-          # Status complessivo
-          WEB_RESULT="${{ needs.build-web.result }}"
-          FLUTTER_RESULT="${{ needs.build-flutter.result }}"
-          [[ "$WEB_RESULT" != "skipped" ]] && JOB_RESULT="$WEB_RESULT" || JOB_RESULT="$FLUTTER_RESULT"
-
-          case "$JOB_RESULT" in
-            success)   STATUS="success" ;;
-            failure)   STATUS="failed"  ;;
-            cancelled) STATUS="failed"  ;;
-            *)         STATUS="skipped" ;;
-          esac
-
-          echo "repo=${REPO}"                   >> "$GITHUB_OUTPUT"
-          echo "branch=${BRANCH}"               >> "$GITHUB_OUTPUT"
-          echo "short_sha=${SHORT_SHA}"         >> "$GITHUB_OUTPUT"
-          echo "status=${STATUS}"               >> "$GITHUB_OUTPUT"
-          echo "artifact_url=${ARTIFACT_URL}"   >> "$GITHUB_OUTPUT"
-          echo "run_url=${RUN_URL}"             >> "$GITHUB_OUTPUT"
-
-      # ── repository_dispatch → Claude Code ─────────────────────────────────
-      - name: Notify Claude Code
-        if: steps.prep.outputs.status != 'skipped' && env.GH_PAT != ''
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          curl -s -X POST \
-            -H "Authorization: Bearer $GH_PAT" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/ecologicaleaving/workflow/dispatches" \
-            -d '{
-              "event_type": "build_complete",
-              "client_payload": {
-                "repo":    "${{ steps.prep.outputs.repo }}",
-                "branch":  "${{ steps.prep.outputs.branch }}",
-                "status":  "${{ steps.prep.outputs.status }}",
-                "run_url": "${{ steps.prep.outputs.run_url }}",
-                "sha":     "${{ steps.prep.outputs.short_sha }}"
-              }
-            }'
