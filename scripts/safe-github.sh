@@ -166,16 +166,25 @@ cmd_sync_template() {
             continue
         fi
 
-        # Crea branch da main (non committa su main!)
-        DEFAULT_SHA=$(gh api "repos/$repo/git/ref/heads/main" --jq '.object.sha' 2>/dev/null \
-                   || gh api "repos/$repo/git/ref/heads/master" --jq '.object.sha' 2>/dev/null)
-        [ -z "$DEFAULT_SHA" ] && log_err "Non trovo main/master su $repo"
+        # Determina il default branch del repo (main o master) in modo affidabile
+        DEFAULT_BRANCH=$(gh api "repos/$repo" --jq '.default_branch' 2>/dev/null || echo "")
+        if [ -z "$DEFAULT_BRANCH" ]; then
+            log_warn "$repo: default branch non determinabile, skip"
+            continue
+        fi
 
-        # Crea branch
+        # SHA del default branch da cui creare il branch di sync (deve essere 40 hex)
+        DEFAULT_SHA=$(gh api "repos/$repo/git/ref/heads/$DEFAULT_BRANCH" --jq '.object.sha' 2>/dev/null || echo "")
+        if ! [[ "$DEFAULT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            log_warn "$repo: SHA default branch non valido ('$DEFAULT_SHA'), skip"
+            continue
+        fi
+
+        # Crea branch dal default branch (non committa sul default!)
         gh api -X POST "repos/$repo/git/refs" \
             -f "ref=refs/heads/$BRANCH" \
             -f "sha=$DEFAULT_SHA" \
-            --jq '.ref' || log_err "Impossibile creare branch $BRANCH su $repo"
+            --jq '.ref' >/dev/null 2>&1 || { log_warn "$repo: impossibile creare branch $BRANCH, skip"; continue; }
 
         # Commit sul branch (non su main!)
         ARGS=(-X PUT "repos/$repo/contents/$DEST"
@@ -189,7 +198,7 @@ cmd_sync_template() {
         PR_URL=$(gh pr create \
             --repo "$repo" \
             --head "$BRANCH" \
-            --base main \
+            --base "$DEFAULT_BRANCH" \
             --title "chore: sync workflow template $TPLNAME" \
             --body "🔄 **Sync automatico template**
 
