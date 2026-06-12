@@ -140,7 +140,9 @@ All'inizio di ogni sessione, prima di fare qualsiasi cosa:
 1. **Controlla lo stato delle build** — on-demand via `gh run list` (niente più log committato: il workflow `build-events` è stato rimosso per ridurre le Actions). Controlla l'ultimo run di ciascun progetto attivo e segnala solo i fallimenti:
    ```bash
    for repo in maestroweb finn BeachRef-app StageConnect GridConnect AutoDrum smartscore; do
-     gh run list --repo "ecologicaleaving/$repo" --branch master --limit 1 \
+     DEF=$(gh api "repos/ecologicaleaving/$repo" --jq '.default_branch' 2>/dev/null)
+     [ -z "$DEF" ] && continue   # repo non accessibile/archiviato
+     gh run list --repo "ecologicaleaving/$repo" --branch "$DEF" --limit 1 \
        --json conclusion,displayTitle,url -q \
        '.[] | select(.conclusion=="failure") | "❌ '"$repo"' — \(.displayTitle)\n   🔗 \(.url)"' 2>/dev/null
    done
