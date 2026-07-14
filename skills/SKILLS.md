@@ -12,8 +12,10 @@ Il flusso completo è in `WORKFLOW.md` nella root del repo.
 | Skill | Fase | Descrizione |
 |-------|------|-------------|
 | `create-issue` | 1 | Creazione issue leggera da report grezzo → Backlog |
+| `triage` | 1.5 | Screening batch Backlog → Definition of Ready → ready in Todo, resto classificato |
 | `issue-validate` | 2 | Validazione interattiva + research + piano → Todo |
-| `issue-implement` | 3 | Supervisione implementazione con checkpoint |
+| `issue-run` | 3 | Orchestratore Todo→PR con loop di controllo sulla Definition of Done (test automatici + UI Chrome) |
+| `issue-implement` | 3 | Supervisione implementazione con checkpoint (usata dentro `issue-run`) |
 | `issue-pr-ready` | 4 | Pre-PR checklist, apertura PR, notifiche → Test |
 | `issue-approve` | 5a | Merge PR + chiusura dopo /approva → Done |
 | `issue-reject` | 5b | Rework dopo reject semplice |
