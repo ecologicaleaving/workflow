@@ -16,6 +16,7 @@ Il flusso completo è in `WORKFLOW.md` nella root del repo.
 | `issue-validate` | 2 | Validazione interattiva + research + piano → Todo |
 | `issue-run` | 3 | Orchestratore Todo→PR con loop di controllo sulla Definition of Done (test automatici + UI Chrome) |
 | `issue-implement` | 3 | Supervisione implementazione con checkpoint (usata dentro `issue-run`) |
+| `beta-release` | 4 | Integra le PR in `beta`, re-test aggregato, deploy su test (dati reali), avviso Davide; gate prod resta `/approva` |
 | `issue-pr-ready` | 4 | Pre-PR checklist, apertura PR, notifiche → Test |
 | `issue-approve` | 5a | Merge PR + chiusura dopo /approva → Done |
 | `issue-reject` | 5b | Rework dopo reject semplice |
