@@ -2,7 +2,7 @@
 
 **Trigger:** Davide scrive `/approva`
 **Agente:** Claude Code
-**Versione:** 3.0.0
+**Versione:** 3.1.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 5a
 
@@ -15,6 +15,29 @@ Mergiare la PR, chiudere la issue, notificare Davide. Gestire eventuali azioni i
 ---
 
 ## Procedura
+
+### ⛔ Step 0 — GUARDIA BETA: determina il branch target (OBBLIGATORIO)
+
+Prima di qualunque merge, verifica se il repo usa il **flusso beta**:
+
+```bash
+git ls-remote --heads origin beta
+```
+
+**Se il branch `beta` ESISTE** (es. maestroweb):
+- `/approva` su una **feature** = la feature è approvata per l'**integrazione in `beta`**, NON per la produzione.
+  → Segui la skill `beta-release` (Step 1): merge/cherry-pick della feature in `beta`,
+  **issue resta APERTA**, card → Test. STOP: NON toccare `main`.
+- Il merge `beta`→`main` (produzione) avviene **SOLO** quando Davide approva la **beta** con
+  contesto esplicito: "approva beta", "porta in prod", oppure `/approva` dato **dopo** l'avviso
+  "✅ Beta pronta da testare". Solo allora prosegui con gli step sotto (su `beta`→`main`).
+- **In dubbio su cosa Davide stia approvando → CHIEDI prima di mergiare.** Un merge in `beta` è
+  reversibile a costo zero; un deploy prod sbagliato no.
+
+**Se il branch `beta` NON esiste** → flusso classico: prosegui con Step 1.
+
+> Incidente di riferimento: 21/07/2026, maestroweb #1426/PR #1429 — `/approva` su feature
+> interpretato come ok prod → merge in main + deploy da cancellare + revert. Mai più.
 
 ### Step 1 — Merge PR
 

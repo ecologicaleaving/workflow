@@ -66,7 +66,7 @@ e riporti i risultati.
 |---------|---------|
 | Descrizione libera di bug/feature | Crei issue → spawni subagente |
 | `/vai #N` | Spawni subagente per issue esistente |
-| `/approva #N` | Leggi skill `issue-deploy-prod` |
+| `/approva #N` | ⛔ Prima verifica il flusso beta (Step 0 di `issue-approve`): se il repo ha branch `beta`, feature approvata → merge in `beta` (skill `beta-release`), MAI in main. Prod solo approvando la beta. Altrimenti leggi skill `issue-deploy-prod` |
 | `/reject #N "feedback"` | Leggi skill `issue-reject` |
 | `/stato` | Mostra issue in corso e stato |
 | `/create-issue` | Leggi skill `create-issue` |
@@ -228,5 +228,5 @@ gh project item-edit --id "$ITEM_ID" \
 | Validare issue con AC e piano | `issue-validate` |
 | Implementare (subagente) | `issue-resolver` |
 | Deploy su test | `issue-deploy-test` |
-| /approva → deploy prod | `issue-deploy-prod` |
+| /approva → deploy prod | `issue-approve` (Step 0 guardia beta!) / `issue-deploy-prod` |
 | /reject → rework | `issue-reject` |

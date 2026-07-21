@@ -31,6 +31,13 @@ REPO=$(jq -r '.github.repos["<project>"]' config.json)
 DEFAULT_BRANCH=$(jq -r '.workflow.defaultBranch' config.json)
 BRANCH=$(git branch --show-current)
 
+# ⛔ GUARDIA BETA: se il repo ha il branch `beta` (flusso beta-release), la PR
+# di feature va aperta VERSO `beta`, non verso il default branch. Il merge in
+# main avviene solo col rilascio beta→main approvato da Davide.
+if git ls-remote --heads origin beta | grep -q beta; then
+  DEFAULT_BRANCH=beta
+fi
+
 # Push branch
 git push origin "$BRANCH"
 
