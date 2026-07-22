@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.1.0
+**Versione:** 5.1.1
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -62,6 +62,12 @@ giudica — mai lo stesso agente/modello si autovaluta.
 - **verificabile leggendo diff, risposta API o screenshot** — niente giudizio soggettivo
   ("interfaccia più chiara" ❌ → "il bottone è raggiungibile senza scroll su 1280×800" ✅)
 - **esaustivo sugli edge case** raccolti allo Step 1 punto 2
+- **formattato come riga checkbox markdown**: `- [ ] **[UI]** testo` / `- [ ] **[Codice]** testo`
+  — **MAI lista numerata** (`1. **[UI]** testo`). `parseAcceptanceCriteria` in
+  `src/lib/qa-checklist.ts` riconosce SOLO righe che iniziano con `- [ ]`/`* [ ]`; una
+  lista numerata produce zero AC estratti e `/qa` non mostra nulla per quella issue
+  (bug reale trovato il 22/07/2026 su #1462/#1463/#1466, scritte come lista numerata
+  al primo giro e dovute essere corrette a mano dopo la validazione)
 - **etichettato con il tipo** `[UI]` o `[Codice]` (vedi sotto) — obbligatorio, un AC senza
   tag non è considerato completo e fallisce la critica a prescindere dal resto
 
@@ -242,6 +248,10 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.1.1** (2026-07-22): Bar di qualità: pinnata la sintassi checkbox obbligatoria
+  (`- [ ] **[UI]** ...`) — il draft Sonnet aveva generato liste numerate su 3 issue di
+  fila (#1462, #1463, #1466), che `parseAcceptanceCriteria` non riconosce affatto
+  (zero AC estratti, `/qa` vuota per quella issue). Corrette a mano dopo il fatto.
 - **v5.1.0** (2026-07-22): Ogni AC ora obbligato a un tag `[UI]`/`[Codice]`. `[UI]` =
   osservabile senza guardare il codice → verificato da Claudio poi da Ascanio su `/qa`.
   `[Codice]` = richiede ispezionare implementazione/query/invarianti → verificato solo
