@@ -47,12 +47,11 @@ Se una risposta è già chiara dal contesto, skippa la domanda.
 
 ---
 
-### Step 1a — Loop Opus: genera e verifica gli Acceptance Criteria (obbligatorio)
+### Step 1a — Loop Sonnet (scrive) ↔ Opus (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
 
 L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
-trasformato in AC formali da un **loop Draft↔Critica eseguito da Opus** (`model: 'opus'`
-via `Agent` tool), non da chi sta già conducendo la sessione interattiva — separare chi
-scrive l'AC da chi lo giudica riduce il rischio di autocertificazione.
+trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 4.8
+giudica — mai lo stesso agente/modello si autovaluta.
 
 **Bar di qualità** (lo stesso usato in fase di implementazione — vedi anche
 `dev-loop-opus-sonnet` in MaestroWeb): ogni AC deve essere
@@ -69,11 +68,11 @@ scrive l'AC da chi lo giudica riduce il rischio di autocertificazione.
 1. `attempt = 0`, `clean = false`
 2. Finché `!clean && attempt < 4`:
    - `attempt += 1`
-   - **Draft** (Opus): genera/riscrive la lista AC da obiettivo + edge case + (se
-     `attempt > 1`) il feedback della critica precedente
-   - **Critica** (Opus, agente separato — non si autovaluta): per ogni AC del draft,
-     verdetto `pass/fail` + motivo puntuale sulla bar di qualità sopra; verdetto
-     complessivo `clean = true` solo se **tutti** gli AC passano
+   - **Draft** (`model: 'sonnet'` via `Agent` tool): genera/riscrive la lista AC da
+     obiettivo + edge case + (se `attempt > 1`) il feedback della critica precedente
+   - **Critica** (`model: 'opus'` via `Agent` tool, agente separato dal draft): per
+     ogni AC del draft, verdetto `pass/fail` + motivo puntuale sulla bar di qualità
+     sopra; verdetto complessivo `clean = true` solo se **tutti** gli AC passano
 3. Se `clean` → procedi allo Step 2 con la lista AC finale
 4. Se dopo 4 tentativi `!clean` → **non forzare**: presenta a Davide/Ascanio in chat i
    punti ancora ambigui con la motivazione della critica e chiedi chiarimento diretto,
@@ -225,12 +224,13 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
-- **v5.0.0** (2026-07-22): Reintrodotto Opus, stavolta solo per gli AC — Step 1a: loop
-  Draft↔Critica (Opus, agenti separati, cap 4 iterazioni) genera e verifica gli
-  Acceptance Criteria contro una bar di qualità esplicita (atomico, verificabile,
-  esaustivo sugli edge case) prima che entrino nel body della issue. Simmetrico al loop
-  Opus-pianifica/verifica ↔ Sonnet-implementa introdotto in fase di implementazione
-  (skill `dev-loop-opus-sonnet`, per ora solo su MaestroWeb).
+- **v5.0.0** (2026-07-22): Reintrodotto Opus, stavolta solo per il giudizio degli AC —
+  Step 1a: loop Draft (Sonnet 5) ↔ Critica (Opus 4.8, agente separato, cap 4
+  iterazioni) genera e verifica gli Acceptance Criteria contro una bar di qualità
+  esplicita (atomico, verificabile, esaustivo sugli edge case) prima che entrino nel
+  body della issue. Simmetrico al loop Opus-pianifica/verifica ↔ Sonnet-implementa
+  introdotto in fase di implementazione (skill `dev-loop-opus-sonnet`, per ora solo su
+  MaestroWeb).
 - **v4.0.0** (2026-04-13): Rimosso ruolo Claudio — agente unico gestisce tutto
 - **v3.0.0** (2026-04-03): Agente unico Sonnet per research+piano+implementazione, rimosso Haiku separato
 - **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli
