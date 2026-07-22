@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 4.0.0
+**Versione:** 5.0.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -33,7 +33,7 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 
 **Domande standard (adatta al tipo bug/feature/improvement):**
 
-1. **Acceptance Criteria** — Cosa deve essere vero perché questa issue sia "done"? Proponi una lista basandoti sulla descrizione e aspetta conferma/modifica.
+1. **Acceptance Criteria** — Cosa deve essere vero perché questa issue sia "done"? Raccogli l'obiettivo in linguaggio libero da Davide/Ascanio (non chiedere già una lista formale di AC — quella la produce il loop dello Step 1a).
 
 2. **Edge case / comportamenti limite** — Ci sono casi particolari da gestire? (es. dati mancanti, utenti non autorizzati, file vuoti, ecc.)
 
@@ -44,6 +44,43 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 5. **Priorità** — Alta / Media / Bassa (le stime non interessano a Davide, skippa)
 
 Se una risposta è già chiara dal contesto, skippa la domanda.
+
+---
+
+### Step 1a — Loop Opus: genera e verifica gli Acceptance Criteria (obbligatorio)
+
+L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
+trasformato in AC formali da un **loop Draft↔Critica eseguito da Opus** (`model: 'opus'`
+via `Agent` tool), non da chi sta già conducendo la sessione interattiva — separare chi
+scrive l'AC da chi lo giudica riduce il rischio di autocertificazione.
+
+**Bar di qualità** (lo stesso usato in fase di implementazione — vedi anche
+`dev-loop-opus-sonnet` in MaestroWeb): ogni AC deve essere
+
+- **atomico** — una "e" che unisce due comportamenti indipendenti va spezzata in due AC
+- **input concreto → output/comportamento osservabile**, mai un obiettivo generico
+  ("migliora le performance" ❌ → "la query risponde in una sola chiamata, non N+1" ✅)
+- **verificabile leggendo diff, risposta API o screenshot** — niente giudizio soggettivo
+  ("interfaccia più chiara" ❌ → "il bottone è raggiungibile senza scroll su 1280×800" ✅)
+- **esaustivo sugli edge case** raccolti allo Step 1 punto 2
+
+**Meccanica del loop** (cap **4 iterazioni**):
+
+1. `attempt = 0`, `clean = false`
+2. Finché `!clean && attempt < 4`:
+   - `attempt += 1`
+   - **Draft** (Opus): genera/riscrive la lista AC da obiettivo + edge case + (se
+     `attempt > 1`) il feedback della critica precedente
+   - **Critica** (Opus, agente separato — non si autovaluta): per ogni AC del draft,
+     verdetto `pass/fail` + motivo puntuale sulla bar di qualità sopra; verdetto
+     complessivo `clean = true` solo se **tutti** gli AC passano
+3. Se `clean` → procedi allo Step 2 con la lista AC finale
+4. Se dopo 4 tentativi `!clean` → **non forzare**: presenta a Davide/Ascanio in chat i
+   punti ancora ambigui con la motivazione della critica e chiedi chiarimento diretto,
+   invece di scrivere sulla issue AC che il loop stesso giudica non verificabili
+
+Solo dopo la conferma umana (esplicita, o convergenza pulita del loop) gli AC finali
+entrano nel body della issue allo Step 2.
 
 ---
 
@@ -188,6 +225,12 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.0.0** (2026-07-22): Reintrodotto Opus, stavolta solo per gli AC — Step 1a: loop
+  Draft↔Critica (Opus, agenti separati, cap 4 iterazioni) genera e verifica gli
+  Acceptance Criteria contro una bar di qualità esplicita (atomico, verificabile,
+  esaustivo sugli edge case) prima che entrino nel body della issue. Simmetrico al loop
+  Opus-pianifica/verifica ↔ Sonnet-implementa introdotto in fase di implementazione
+  (skill `dev-loop-opus-sonnet`, per ora solo su MaestroWeb).
 - **v4.0.0** (2026-04-13): Rimosso ruolo Claudio — agente unico gestisce tutto
 - **v3.0.0** (2026-04-03): Agente unico Sonnet per research+piano+implementazione, rimosso Haiku separato
 - **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli
