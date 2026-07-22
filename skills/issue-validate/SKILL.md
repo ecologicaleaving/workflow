@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.0.0
+**Versione:** 5.1.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -62,6 +62,24 @@ giudica — mai lo stesso agente/modello si autovaluta.
 - **verificabile leggendo diff, risposta API o screenshot** — niente giudizio soggettivo
   ("interfaccia più chiara" ❌ → "il bottone è raggiungibile senza scroll su 1280×800" ✅)
 - **esaustivo sugli edge case** raccolti allo Step 1 punto 2
+- **etichettato con il tipo** `[UI]` o `[Codice]` (vedi sotto) — obbligatorio, un AC senza
+  tag non è considerato completo e fallisce la critica a prescindere dal resto
+
+**Tipo di AC — chi lo verifica dopo**:
+
+| Tag | Cos'è | Chi verifica | Dove |
+|---|---|---|---|
+| `[UI]` | Comportamento osservabile da chi **non** guarda il codice: colore, layout, testo, navigazione, screenshot | Claudio prima (Chrome, dati reali), **poi Ascanio** su `/qa` | Card AC mostrata su `/qa`, va approvata da Ascanio |
+| `[Codice]` | Comportamento interno non osservabile senza ispezionare codice/query/stato — invarianti, riferimenti a funzioni, contratti tra moduli | **Solo** Claudio + l'agente developer (verifica Opus nel loop `dev-loop-opus-sonnet`, Fase 2) | Mai mostrata ad Ascanio — verificata e chiusa prima che la PR arrivi a `/qa` |
+
+Criterio di classificazione: se per giudicare l'AC basta guardare la pagina/uno
+screenshot senza sapere nulla dell'implementazione → `[UI]`. Se serve leggere una riga
+di codice, una query, un nome di funzione/variabile per capire cosa si sta verificando
+→ `[Codice]`, anche se l'effetto finale è (anche) visibile — es. "il bordo è rosso
+perché `severityBySite` restituisce 'critico'" è `[Codice]` (cita l'implementazione),
+mentre "il bordo è rosso quando l'impianto ha un guasto reale" è `[UI]` (stesso esito,
+descritto senza nominare l'implementazione). Nel dubbio, classifica `[Codice]` — un AC
+mostrato di troppo ad Ascanio è solo rumore, uno mancante è un buco di verifica.
 
 **Meccanica del loop** (cap **4 iterazioni**):
 
@@ -224,6 +242,16 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.1.0** (2026-07-22): Ogni AC ora obbligato a un tag `[UI]`/`[Codice]`. `[UI]` =
+  osservabile senza guardare il codice → verificato da Claudio poi da Ascanio su `/qa`.
+  `[Codice]` = richiede ispezionare implementazione/query/invarianti → verificato solo
+  da Claudio + agente developer nel loop `dev-loop-opus-sonnet` (Fase 2), mai mostrato
+  ad Ascanio. Riduce il rumore su `/qa` a ciò che Ascanio può davvero giudicare guardando
+  la pagina. **Nota**: la parte consumer (`/qa` — parsing AC, cascade `qa-approved`) non
+  filtra ancora per tag — serve un follow-up sul repo MaestroWeb per far sì che il
+  merge automatico consideri "tutti gli AC approvati" come "tutti gli `[UI]` approvati
+  da Ascanio + tutti i `[Codice]` già verdi dal loop di Fase 2", non tutti gli AC
+  indistintamente.
 - **v5.0.0** (2026-07-22): Reintrodotto Opus, stavolta solo per il giudizio degli AC —
   Step 1a: loop Draft (Sonnet 5) ↔ Critica (Opus 4.8, agente separato, cap 4
   iterazioni) genera e verifica gli Acceptance Criteria contro una bar di qualità
