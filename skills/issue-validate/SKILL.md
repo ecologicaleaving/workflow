@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.1.1
+**Versione:** 5.2.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -44,6 +44,47 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 5. **Priorità** — Alta / Media / Bassa (le stime non interessano a Davide, skippa)
 
 Se una risposta è già chiara dal contesto, skippa la domanda.
+
+---
+
+### Step 1a-pre — Investigazione root cause approfondita (obbligatoria per i bug)
+
+Prima di scrivere anche un solo AC su una issue **di tipo bug**, leggi il codice reale
+coinvolto e fondati una ipotesi di causa radice grounded (righe/file/funzioni citate),
+non una supposizione plausibile scritta a tavolino. Motivo: il 22-23/07 su MaestroWeb
+(#1462, colorazione card `/things`) un'intera issue è stata validata, implementata a
+metà e poi **buttata via** perché la prima ipotesi ("bug nel merge delle severità")
+sembrava ragionevole ma non spiegava il sintomo reale (riportato da Davide solo dopo:
+il fenomeno è transitorio, legato al caricamento) — un secondo giro di investigazione
+sul codice vero ha trovato la causa reale in tutt'altro punto (una query batch senza
+limite che lascia lo stato "non valutabile" collassare su "offline" durante il primo
+mount). Il costo di quella scoperta tardiva è stato un intero giro di AC, piano e
+implementazione da rifare.
+
+Procedura:
+
+1. Leggi il codice dei file plausibilmente coinvolti (segui gli indizi nella
+   descrizione: nomi di componenti/hook/pagine citati, categoria del sintomo) — non
+   fermarti al primo file che sembra spiegare il sintomo, verifica che la spiegazione
+   regga anche per i dettagli specifici riportati (es. "succede subito" vs "succede
+   dopo un po'", "si risolve da solo" vs "resta così", "tutto insieme" vs "un pezzo
+   alla volta" — questi dettagli falsificano o confermano ipotesi diverse).
+2. Se il sintomo ha una caratteristica temporale/di stato (transitorio, ricorrente,
+   legato a un'azione specifica) e Davide/Ascanio non l'hanno già specificata, **chiedi
+   prima di ipotizzare** — non scrivere una root cause a partire dalla sola prima
+   descrizione se manca un dettaglio che distinguerebbe cause alternative.
+3. Cita nella issue (sezione "Root cause") i riferimenti esatti — file, righe,
+   funzioni — della tua ipotesi, non descrizioni generiche. Se l'ipotesi non è
+   verificabile da codice statico (es. serve un log, un errore in produzione, un
+   comportamento a runtime), dillo esplicitamente invece di presentarla come certa.
+4. Solo dopo aver fondato l'ipotesi sul codice reale, procedi allo Step 1a — gli AC
+   del loop Draft↔Critica vanno scritti contro QUESTA root cause, non contro il
+   sintomo generico.
+
+Se in un secondo momento emergono dettagli che falsificano l'ipotesi (come successo
+su #1462), non forzare gli AC esistenti: aggiorna la issue con la nuova ipotesi
+grounded e ripeti lo Step 1a da capo — è più veloce rifare un giro di AC ben mirato
+che implementare una fix contro la causa sbagliata.
 
 ---
 
@@ -248,6 +289,13 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.2.0** (2026-07-23): Nuovo Step 1a-pre, obbligatorio per i bug — investigazione
+  root cause grounded nel codice reale (file/righe/funzioni citate) PRIMA di scrivere
+  gli AC, con verifica esplicita che l'ipotesi regga sui dettagli specifici del
+  sintomo (timing, ricorrenza, ambito). Se un dettaglio successivo falsifica
+  l'ipotesi, si riparte da un nuovo Step 1a invece di forzare gli AC esistenti.
+  Innescato da MaestroWeb #1462: prima ipotesi plausibile ma sbagliata, scoperta
+  solo dopo un giro intero di AC+piano+implementazione già fatto e da rifare.
 - **v5.1.1** (2026-07-22): Bar di qualità: pinnata la sintassi checkbox obbligatoria
   (`- [ ] **[UI]** ...`) — il draft Sonnet aveva generato liste numerate su 3 issue di
   fila (#1462, #1463, #1466), che `parseAcceptanceCriteria` non riconosce affatto
