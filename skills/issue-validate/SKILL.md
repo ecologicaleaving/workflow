@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 4.0.0
+**Versione:** 5.1.1
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -33,7 +33,7 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 
 **Domande standard (adatta al tipo bug/feature/improvement):**
 
-1. **Acceptance Criteria** — Cosa deve essere vero perché questa issue sia "done"? Proponi una lista basandoti sulla descrizione e aspetta conferma/modifica.
+1. **Acceptance Criteria** — Cosa deve essere vero perché questa issue sia "done"? Raccogli l'obiettivo in linguaggio libero da Davide/Ascanio (non chiedere già una lista formale di AC — quella la produce il loop dello Step 1a).
 
 2. **Edge case / comportamenti limite** — Ci sono casi particolari da gestire? (es. dati mancanti, utenti non autorizzati, file vuoti, ecc.)
 
@@ -44,6 +44,66 @@ Fai le domande **una alla volta**, in ordine. Aspetta la risposta prima di passa
 5. **Priorità** — Alta / Media / Bassa (le stime non interessano a Davide, skippa)
 
 Se una risposta è già chiara dal contesto, skippa la domanda.
+
+---
+
+### Step 1a — Loop Sonnet (scrive) ↔ Opus (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
+
+L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
+trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 4.8
+giudica — mai lo stesso agente/modello si autovaluta.
+
+**Bar di qualità** (lo stesso usato in fase di implementazione — vedi anche
+`dev-loop-opus-sonnet` in MaestroWeb): ogni AC deve essere
+
+- **atomico** — una "e" che unisce due comportamenti indipendenti va spezzata in due AC
+- **input concreto → output/comportamento osservabile**, mai un obiettivo generico
+  ("migliora le performance" ❌ → "la query risponde in una sola chiamata, non N+1" ✅)
+- **verificabile leggendo diff, risposta API o screenshot** — niente giudizio soggettivo
+  ("interfaccia più chiara" ❌ → "il bottone è raggiungibile senza scroll su 1280×800" ✅)
+- **esaustivo sugli edge case** raccolti allo Step 1 punto 2
+- **formattato come riga checkbox markdown**: `- [ ] **[UI]** testo` / `- [ ] **[Codice]** testo`
+  — **MAI lista numerata** (`1. **[UI]** testo`). `parseAcceptanceCriteria` in
+  `src/lib/qa-checklist.ts` riconosce SOLO righe che iniziano con `- [ ]`/`* [ ]`; una
+  lista numerata produce zero AC estratti e `/qa` non mostra nulla per quella issue
+  (bug reale trovato il 22/07/2026 su #1462/#1463/#1466, scritte come lista numerata
+  al primo giro e dovute essere corrette a mano dopo la validazione)
+- **etichettato con il tipo** `[UI]` o `[Codice]` (vedi sotto) — obbligatorio, un AC senza
+  tag non è considerato completo e fallisce la critica a prescindere dal resto
+
+**Tipo di AC — chi lo verifica dopo**:
+
+| Tag | Cos'è | Chi verifica | Dove |
+|---|---|---|---|
+| `[UI]` | Comportamento osservabile da chi **non** guarda il codice: colore, layout, testo, navigazione, screenshot | Claudio prima (Chrome, dati reali), **poi Ascanio** su `/qa` | Card AC mostrata su `/qa`, va approvata da Ascanio |
+| `[Codice]` | Comportamento interno non osservabile senza ispezionare codice/query/stato — invarianti, riferimenti a funzioni, contratti tra moduli | **Solo** Claudio + l'agente developer (verifica Opus nel loop `dev-loop-opus-sonnet`, Fase 2) | Mai mostrata ad Ascanio — verificata e chiusa prima che la PR arrivi a `/qa` |
+
+Criterio di classificazione: se per giudicare l'AC basta guardare la pagina/uno
+screenshot senza sapere nulla dell'implementazione → `[UI]`. Se serve leggere una riga
+di codice, una query, un nome di funzione/variabile per capire cosa si sta verificando
+→ `[Codice]`, anche se l'effetto finale è (anche) visibile — es. "il bordo è rosso
+perché `severityBySite` restituisce 'critico'" è `[Codice]` (cita l'implementazione),
+mentre "il bordo è rosso quando l'impianto ha un guasto reale" è `[UI]` (stesso esito,
+descritto senza nominare l'implementazione). Nel dubbio, classifica `[Codice]` — un AC
+mostrato di troppo ad Ascanio è solo rumore, uno mancante è un buco di verifica.
+
+**Meccanica del loop** (cap **4 iterazioni**):
+
+1. `attempt = 0`, `clean = false`
+2. Finché `!clean && attempt < 4`:
+   - `attempt += 1`
+   - **Draft** (`model: 'sonnet'` via `Agent` tool): genera/riscrive la lista AC da
+     obiettivo + edge case + (se `attempt > 1`) il feedback della critica precedente
+   - **Critica** (`model: 'opus'` via `Agent` tool, agente separato dal draft): per
+     ogni AC del draft, verdetto `pass/fail` + motivo puntuale sulla bar di qualità
+     sopra; verdetto complessivo `clean = true` solo se **tutti** gli AC passano
+3. Se `clean` → procedi allo Step 2 con la lista AC finale
+4. Se dopo 4 tentativi `!clean` → **non forzare**: presenta a Davide/Ascanio in chat i
+   punti ancora ambigui con la motivazione della critica e chiedi chiarimento diretto,
+   invece di scrivere sulla issue AC che il loop stesso giudica non verificabili
+
+Solo dopo la conferma umana (esplicita, o convergenza pulita del loop) gli AC finali
+entrano nel body della issue allo Step 2.
 
 ---
 
@@ -188,6 +248,27 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.1.1** (2026-07-22): Bar di qualità: pinnata la sintassi checkbox obbligatoria
+  (`- [ ] **[UI]** ...`) — il draft Sonnet aveva generato liste numerate su 3 issue di
+  fila (#1462, #1463, #1466), che `parseAcceptanceCriteria` non riconosce affatto
+  (zero AC estratti, `/qa` vuota per quella issue). Corrette a mano dopo il fatto.
+- **v5.1.0** (2026-07-22): Ogni AC ora obbligato a un tag `[UI]`/`[Codice]`. `[UI]` =
+  osservabile senza guardare il codice → verificato da Claudio poi da Ascanio su `/qa`.
+  `[Codice]` = richiede ispezionare implementazione/query/invarianti → verificato solo
+  da Claudio + agente developer nel loop `dev-loop-opus-sonnet` (Fase 2), mai mostrato
+  ad Ascanio. Riduce il rumore su `/qa` a ciò che Ascanio può davvero giudicare guardando
+  la pagina. **Nota**: la parte consumer (`/qa` — parsing AC, cascade `qa-approved`) non
+  filtra ancora per tag — serve un follow-up sul repo MaestroWeb per far sì che il
+  merge automatico consideri "tutti gli AC approvati" come "tutti gli `[UI]` approvati
+  da Ascanio + tutti i `[Codice]` già verdi dal loop di Fase 2", non tutti gli AC
+  indistintamente.
+- **v5.0.0** (2026-07-22): Reintrodotto Opus, stavolta solo per il giudizio degli AC —
+  Step 1a: loop Draft (Sonnet 5) ↔ Critica (Opus 4.8, agente separato, cap 4
+  iterazioni) genera e verifica gli Acceptance Criteria contro una bar di qualità
+  esplicita (atomico, verificabile, esaustivo sugli edge case) prima che entrino nel
+  body della issue. Simmetrico al loop Opus-pianifica/verifica ↔ Sonnet-implementa
+  introdotto in fase di implementazione (skill `dev-loop-opus-sonnet`, per ora solo su
+  MaestroWeb).
 - **v4.0.0** (2026-04-13): Rimosso ruolo Claudio — agente unico gestisce tutto
 - **v3.0.0** (2026-04-03): Agente unico Sonnet per research+piano+implementazione, rimosso Haiku separato
 - **v2.0.0** (2026-04-03): Refactor — Opus→Sonnet per piano, rimossa duplicazione modelli
