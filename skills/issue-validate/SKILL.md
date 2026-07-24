@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.1.1
+**Versione:** 5.3.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -47,11 +47,40 @@ Se una risposta è già chiara dal contesto, skippa la domanda.
 
 ---
 
+### Step 0b — Scegli il tier di rigore (obbligatorio, prima del loop)
+
+Il loop Draft↔Critica dello Step 1a è costoso — ogni giro è un'investigazione completa
+(un agente rilegge codice/branch/API reali da zero, non si fida del testo). Applicarlo
+sempre allo stesso livello sprecherebbe token su issue banali e rischierebbe di essere
+troppo permissivo su issue che governano rilascio/dati/soldi. Scegli il **tier** prima di
+partire, dichiaralo in una riga a Davide ("Tier: leggero — fix di wording, nessun
+meccanismo critico") e procedi subito — non aspettare conferma, salvo che Davide non ti
+corregga (in quel caso, ripeti da questo step col tier giusto).
+
+| Tier | Quando | Giri massimi | Critica |
+|---|---|---|---|
+| **Leggero** | Wording, copy, fix estetici minori, nessun meccanismo toccato | 1 (raramente 2) | Opus critica solo se il draft ha AC vaghi/non atomici a occhio; se il draft è ovviamente pulito, può essere skippata — annotalo esplicitamente ("critica skippata: AC banali, nessun rischio") |
+| **Standard** | Bug/feature UI o logica applicativa normale, non tocca rilascio/dati/auth | 2 | Sempre almeno un giro Sonnet↔Opus |
+| **Critico** | Tocca meccanismi di **rilascio** (deploy, `/approva`, promozione beta→main), **dati** (migrazioni, scritture irreversibili, denaro), **auth/permessi**, o qualunque cosa che finirebbe in produzione senza un secondo controllo umano prima di avere effetto | fino a **6** (vedi cap Step 1a) | Sempre, rigore massimo, non fermarsi al primo verdetto pulito se la critica stessa segnala incertezza residua |
+
+Esempi dalla sessione del 22-24/07/2026 (maestroweb): #1470 (wording di un messaggio) →
+leggero, 1 giro, 5 AC. #1462/#1463/#1466/#1468/#1475 (bug/feature UI normali) →
+standard, 1-2 giri. #1478 (promozione selettiva `beta`→`main`, esegue `/approva`) →
+critico, 6 giri — ha trovato 2 bug che avrebbero reso la feature completamente non
+funzionante in produzione. La differenza di costo tra leggero e critico è reale (un
+ordine di grandezza in agenti spawnati) — è il punto: non pagarla quando non serve.
+
+Se in dubbio tra due tier, scegli quello più alto — costa un giro in più, non un
+incidente in produzione.
+
+---
+
 ### Step 1a — Loop Sonnet (scrive) ↔ Opus (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
 
 L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
 trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 4.8
-giudica — mai lo stesso agente/modello si autovaluta.
+giudica — mai lo stesso agente/modello si autovaluta. Numero di giri governato dal
+**tier** scelto allo Step 0b.
 
 **Bar di qualità** (lo stesso usato in fase di implementazione — vedi anche
 `dev-loop-opus-sonnet` in MaestroWeb): ogni AC deve essere
@@ -87,20 +116,27 @@ mentre "il bordo è rosso quando l'impianto ha un guasto reale" è `[UI]` (stess
 descritto senza nominare l'implementazione). Nel dubbio, classifica `[Codice]` — un AC
 mostrato di troppo ad Ascanio è solo rumore, uno mancante è un buco di verifica.
 
-**Meccanica del loop** (cap **4 iterazioni**):
+**Meccanica del loop** (cap dipendente dal tier — Step 0b: leggero 1-2, standard 2,
+critico fino a 6):
 
-1. `attempt = 0`, `clean = false`
-2. Finché `!clean && attempt < 4`:
+1. `attempt = 0`, `clean = false`, `maxAttempts` = cap del tier
+2. Finché `!clean && attempt < maxAttempts`:
    - `attempt += 1`
    - **Draft** (`model: 'sonnet'` via `Agent` tool): genera/riscrive la lista AC da
      obiettivo + edge case + (se `attempt > 1`) il feedback della critica precedente
-   - **Critica** (`model: 'opus'` via `Agent` tool, agente separato dal draft): per
-     ogni AC del draft, verdetto `pass/fail` + motivo puntuale sulla bar di qualità
-     sopra; verdetto complessivo `clean = true` solo se **tutti** gli AC passano
+   - **Critica** (`model: 'opus'` via `Agent` tool, agente separato dal draft) — su
+     tier leggero con draft ovviamente pulito, questo passo può essere skippato
+     esplicitamente (vedi Step 0b): per ogni AC del draft, verdetto `pass/fail` + motivo
+     puntuale sulla bar di qualità sopra; verdetto complessivo `clean = true` solo se
+     **tutti** gli AC passano
 3. Se `clean` → procedi allo Step 2 con la lista AC finale
-4. Se dopo 4 tentativi `!clean` → **non forzare**: presenta a Davide/Ascanio in chat i
-   punti ancora ambigui con la motivazione della critica e chiedi chiarimento diretto,
-   invece di scrivere sulla issue AC che il loop stesso giudica non verificabili
+4. Se dopo `maxAttempts` tentativi `!clean` → **non forzare**: presenta a Davide/Ascanio
+   in chat i punti ancora ambigui con la motivazione della critica e chiedi chiarimento
+   diretto, invece di scrivere sulla issue AC che il loop stesso giudica non
+   verificabili. Su tier critico, se la critica converge ma segnala ancora incertezza
+   residua non risolta, non fermarti al primo `clean = true` — un altro giro di
+   verifica mirata su quel punto specifico costa molto meno di un incidente in prod
+   (vedi #1478, 6 giri, 2 bug bloccanti trovati proprio negli ultimi giri).
 
 Solo dopo la conferma umana (esplicita, o convergenza pulita del loop) gli AC finali
 entrano nel body della issue allo Step 2.
@@ -248,6 +284,13 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.3.0** (2026-07-24): Nuovo Step 0b — tier di rigore (leggero/standard/critico) da
+  scegliere prima del loop AC, dichiarato in una riga a Davide e applicato subito senza
+  aspettare conferma (corregge se sbagliato, non blocca per chiederla prima). Il cap
+  iterazioni dello Step 1a ora dipende dal tier invece di essere fisso a 4. Introdotto
+  dopo la sessione del 22-24/07 dove il costo per issue è variato di un ordine di
+  grandezza tra un fix di wording (1 giro) e un meccanismo di rilascio (#1478, 6 giri) —
+  serve un modo esplicito per non pagare il rigore massimo ovunque.
 - **v5.1.1** (2026-07-22): Bar di qualità: pinnata la sintassi checkbox obbligatoria
   (`- [ ] **[UI]** ...`) — il draft Sonnet aveva generato liste numerate su 3 issue di
   fila (#1462, #1463, #1466), che `parseAcceptanceCriteria` non riconosce affatto
