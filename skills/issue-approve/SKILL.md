@@ -2,7 +2,7 @@
 
 **Trigger:** Davide scrive `/approva`
 **Agente:** Claude Code
-**Versione:** 3.1.0
+**Versione:** 3.2.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 5a
 
@@ -38,6 +38,13 @@ git ls-remote --heads origin beta
 
 > Incidente di riferimento: 21/07/2026, maestroweb #1426/PR #1429 — `/approva` su feature
 > interpretato come ok prod → merge in main + deploy da cancellare + revert. Mai più.
+
+> **Aggiornamento 24/07/2026**: quando Davide dà `/approva` per il merge `beta`→`main` (prod),
+> se il repo ha `scripts/approva-promote.ts` (oggi solo maestroweb), il merge NON è più "prendi
+> tutto `beta`" — usa lo script di promozione selettiva, vedi skill `beta-release` Step 5 per
+> la procedura completa (dry-run obbligatorio prima del run reale, `--merge` mai `--squash`).
+> Questo perché con merge-diretto-in-beta il branch contiene sempre issue approvate e non
+> approvate mescolate.
 
 ### Step 1 — Merge PR
 
@@ -120,3 +127,8 @@ Aggiungi riga a `memory/weekly/current.md`:
 
 - Mai eseguire senza `/approva` esplicito di Davide
 - Se la issue ha avuto reject precedenti, le label `needs-fix` vengono rimosse
+
+## Changelog
+- **v3.2.0** (2026-07-24): Nota sul nuovo meccanismo di promozione selettiva `beta`→`main`
+  (`scripts/approva-promote.ts`, vedi skill `beta-release` Step 5) — il merge del branch `beta`
+  intero non è più sicuro quando esiste questo script.

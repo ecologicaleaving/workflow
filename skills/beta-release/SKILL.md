@@ -83,15 +83,53 @@ Atteso 200. (Setup infra e protezioni: vedi issue #1302/#1303 e `docs/test-envir
 La conferma di Ascanio arriva **fuori sistema** (a voce/Telegram) e la recepisce Davide.
 
 ### Step 5 — Gate prod (SOLO con /approva di Davide)
-**Non** mergiare `beta`→`main` senza `/approva` esplicito (legge assoluta). Su `/approva`:
+
+**⚠️ Cambiato il 24/07/2026 (maestroweb, issue #1478/#1483 — vedi `dev-loop-opus-sonnet` per
+il contesto):** con il flusso merge-diretto-in-beta (Ascanio/Davide revisionano DOPO il merge,
+non prima), `beta` contiene sempre un mix di issue già approvate su `/qa` (label `qa-approved`)
+e issue ancora in revisione. **Mergiare l'intero `beta` in `main` porterebbe in produzione anche
+codice non approvato** — non è più sicuro farlo, se il repo ha lo script di promozione selettiva.
+
+**Se il repo ha `scripts/approva-promote.ts` (oggi solo maestroweb — verifica con
+`ls scripts/approva-promote.ts` prima di procedere)**, usa quello al posto del merge intero:
+
+```bash
+# 1. Sempre un dry-run PRIMA del run reale — non salta mai questo passaggio
+npx tsx scripts/approva-promote.ts --dry-run
+# Controlla il report: quali issue PROMOSSE, quali ESCLUSE (non approvate), quali NON
+# RISOLVIBILI (nessuna PR/issue collegata — es. commit di manutenzione senza "Closes #N").
+
+# 2. Se ci sono commit "NON RISOLVIBILE": lo script si rifiuta di procedere (fail-safe
+#    intenzionale, vedi issue #1478). Serve intervento umano — di solito basta collegare
+#    quel commit a una issue: crea una issue leggera di tracciamento, aggiungi "Closes #N"
+#    al body della PR originale, applica la label qa-approved alla issue di tracciamento
+#    (il lavoro è già mergiato e verificato, non serve rivalidare gli AC), poi ripeti dal
+#    dry-run. NON bypassare il fail-safe in altro modo.
+
+# 3. Solo se il dry-run è pulito (nessun blocco, elenco promosse coerente con quanto atteso):
+npx tsx scripts/approva-promote.ts
+# Apre una PR verso main con SOLO i commit delle issue approvate.
+
+# 4. Attendi CI verde sulla PR, poi mergia con --merge (MAI --squash — romperebbe
+#    l'idempotenza patch-id dello script, causando ri-promozioni duplicate al giro dopo):
+gh pr merge <PR> --repo ecologicaleaving/<repo> --merge
+```
+
+**Se il repo NON ha lo script** (repo diversi da maestroweb, o prima che venga esteso):
+resta il flusso precedente — **Non** mergiare `beta`→`main` senza `/approva` esplicito (legge
+assoluta):
 ```bash
 gh pr create --base main --head beta --title "release(beta): …" --body "…Closes #…"
 # attendi CI verde, poi:
 gh pr merge <PR> --repo ecologicaleaving/<repo> --merge
 ```
-Il merge in `main` triggera il deploy di **produzione** (`deploy.yml`). Poi sposta le card → Done,
-verifica il deploy prod, e — se un'ondata conteneva **migration** — assicurati che fossero
-additive e già applicate (vincolo beta→prod, vedi [[project_beta_release_flow]]).
+Va bene solo se **tutte** le issue in `beta` sono già state approvate su `/qa` — verificalo a
+mano prima di procedere se il repo non ha ancora il meccanismo selettivo.
+
+In entrambi i casi: il merge in `main` triggera il deploy di **produzione** (`deploy.yml`). Poi
+sposta le card → Done, verifica il deploy prod, e — se un'ondata conteneva **migration** —
+assicurati che fossero additive e già applicate (vincolo beta→prod, vedi
+[[project_beta_release_flow]]).
 
 ---
 
@@ -100,6 +138,14 @@ additive e già applicate (vincolo beta→prod, vedi [[project_beta_release_flow
 - Su test i dati sono **reali di produzione**: il codice beta ci scrive davvero. Le protezioni
   (banner + conferma scritture, #1303) riducono il rischio ma NON coprono i bug del codice beta.
 - Una feature con **migration** non può andare in beta→prod se la migration non è già in prod.
+- Se il repo ha `scripts/approva-promote.ts`: **mai** mergiare l'intero `beta` in un colpo solo —
+  usa sempre lo script, sempre con `--dry-run` prima, sempre `--merge` mai `--squash` sul merge
+  finale della PR generata.
 
 ## Changelog
+- **v1.1.0** (2026-07-24): Step 5 riscritto per il flusso di promozione selettiva
+  (`scripts/approva-promote.ts`, maestroweb issue #1478) — con merge-diretto-in-beta, l'intero
+  `beta` non è più sicuro da mergiare in blocco perché contiene sempre un mix di issue
+  approvate/non approvate. Documentato anche il fail-safe su commit orfani e il vincolo
+  `--merge` mai `--squash`.
 - **v1.0.0** (2026-07-14): Prima versione — integrazione beta + re-test + deploy test su dati reali + avviso + gate prod. Estratta dal ciclo collaudato sulle 9 issue Ascanio.
