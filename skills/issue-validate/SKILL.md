@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.3.0
+**Versione:** 5.4.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -78,7 +78,7 @@ incidente in produzione.
 ### Step 1a — Loop Sonnet (scrive) ↔ Opus (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
 
 L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
-trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 4.8
+trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 5
 giudica — mai lo stesso agente/modello si autovaluta. Numero di giri governato dal
 **tier** scelto allo Step 0b.
 
@@ -284,6 +284,11 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ## Changelog
 
+- **v5.4.0** (2026-07-25): L'agente che giudica gli AC nello Step 1a è ora **Opus 5**
+  (era Opus 4.8). Nessun cambio di meccanica: l'invocazione resta `model: 'opus'`, che
+  risolve al modello Opus corrente — cambia solo il modello effettivo dietro il ruolo di
+  critica. Allineata la stessa sostituzione nella skill `dev-loop-opus-sonnet`
+  (MaestroWeb), dove Opus è planner e verificatore AC.
 - **v5.3.0** (2026-07-24): Nuovo Step 0b — tier di rigore (leggero/standard/critico) da
   scegliere prima del loop AC, dichiarato in una riga a Davide e applicato subito senza
   aspettare conferma (corregge se sbagliato, non blocca per chiederla prima). Il cap
