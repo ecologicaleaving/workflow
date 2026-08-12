@@ -46,6 +46,41 @@ git ls-remote --heads origin beta
 > Questo perché con merge-diretto-in-beta il branch contiene sempre issue approvate e non
 > approvate mescolate.
 
+### ⛔ Step 0b — Se la revisione è avvenuta su un'EPICA: propaga `qa-approved` alle figlie
+
+Quando più issue dello stesso filone vengono revisionate su **una scheda riassuntiva** (epica) invece
+che una per una, l'approvazione di Ascanio arriva **solo sull'epica**: la label `qa-approved` viene
+applicata lì dall'automatismo di `/qa`, e le figlie restano senza.
+
+`scripts/approva-promote.ts` cerca `qa-approved` sulle issue **collegate ai commit** — e un'epica
+non ha commit propri. Risultato: **un lotto regolarmente approvato non viene promosso, e il report
+dice «Nessuna issue qa-approved» senza che nulla sia andato storto.** Nessun errore, nessun avviso:
+solo un run che non promuove niente.
+
+Prima di lanciare la promozione, quindi:
+
+```bash
+# 1. l'epica è qa-approved?
+gh issue view <EPICA> --repo ecologicaleaving/<repo> --json labels -q '[.labels[].name]'
+
+# 2. propaga alle figlie elencate nell'epica
+for n in <FIGLIA_1> <FIGLIA_2> ...; do
+  gh issue edit $n --repo ecologicaleaving/<repo> --add-label qa-approved
+done
+```
+
+**Su ogni figlia lascia un commento che dice dove l'approvazione è avvenuta davvero** (epica, data,
+chi). La label significa letteralmente «criteri approvati da Ascanio su /qa»: senza la nota, fra un
+mese la storia dirà che ogni scheda è stata revisionata singolarmente — cosa mai accaduta.
+
+Non propagare mai `qa-approved` a una figlia che l'epica **non** elenca: la promozione è per gruppo
+di commit, e una figlia in più porta in produzione codice che nessuno ha approvato.
+
+> Origine: 12/08/2026, maestroweb — epica #1680 con figlie #1676/#1677/#1678/#1679/#1681. Ascanio
+> approva tutti gli AC sull'epica, la label arriva lì, e il dry-run di promozione risponde «niente
+> da promuovere». Il buco è **strutturale**, non un errore di esecuzione: si ripresenta a ogni
+> lotto revisionato su epica finché lo script non saprà risolvere epica→figlie da solo.
+
 ### Step 1 — Merge PR
 
 ```bash
