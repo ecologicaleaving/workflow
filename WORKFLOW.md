@@ -78,6 +78,62 @@ Davide descrive problema/feature
 
 ---
 
+## 🃏 La card di Ascanio (solo MaestroWeb)
+
+> Vale **solo su MaestroWeb**, dove esiste la task list nel pannello laterale e
+> in `/qa`. Sugli altri progetti non c'è nulla di tutto questo.
+
+Ascanio non apre issue: scrive una **card** in «Idee ASCANIO». Quella card è
+l'embrione dell'epica, vive nel nostro database (`qa_tasks.stage`) ed è **l'unica
+cosa che lui vede**. Le issue GitHub restano roba nostra.
+
+### Le cinque sezioni
+
+`Revisione` · `Idee ASCANIO` · `To Do ASCANIO` · `In Lavorazione` · `BackLog`
+
+«Revisione» sta in cima perché è la risposta alla domanda per cui il pannello si
+apre: *cosa aspetta me adesso*.
+
+### ⛔ Spostare la card è OBBLIGATORIO, e lo fa l'agente
+
+La sezione **non si deduce da niente**: non guarda GitHub, non si aggiorna da
+sola, non c'è nessun automatismo che la corregge. Se l'agente non sposta la card,
+Ascanio continua a vedere lo stato di ieri — e non ha modo di accorgersene.
+
+| Quando | La card va in | Insieme a |
+|--------|---------------|-----------|
+| Prendo in carico la richiesta di Ascanio | **In Lavorazione** | Fase 2 → Fase 3 (`/vai`) |
+| Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | in qualsiasi momento |
+| Lavoro finito, testato da noi e in `beta` | **Revisione** | dopo la Fase 4, **mai prima** |
+| Ascanio approva | **BackLog** | lo fa lui dal pannello |
+| Ascanio rimanda indietro | **In Lavorazione** | lo fa lui, con nota obbligatoria |
+
+**«Revisione» solo dopo aver testato noi.** Metterci una card prima significa far
+provare ad Ascanio qualcosa che non abbiamo guardato: è il modo di bruciare
+l'unica persona che verifica sul campo.
+
+Quando sposti in «Revisione», **scrivi cosa provare** nel campo delle note di
+revisione (form di modifica della card). Senza quelle, Ascanio non sa cosa
+guardare e la card torna indietro per il motivo sbagliato.
+
+### Il lavoro che nasce strada facendo
+
+Bug che troviamo noi, refactor, issue tecniche: **niente card**. Si gestiscono
+interamente su GitHub e si testano come da workflow — sono propedeutici a ciò che
+Ascanio conferma, non oggetto della sua revisione.
+
+### Card ≠ Kanban GitHub
+
+Sono due cose diverse e vanno mosse **entrambe**:
+
+- **card Ascanio** (`qa_tasks.stage`, database Maestro) → questa sezione;
+- **card Kanban** (Project V2 su GitHub) → la tabella qui sotto.
+
+Una issue lavorata sposta la sua card Kanban *e*, se nasce da una segnalazione di
+Ascanio, anche la sua card nel pannello.
+
+---
+
 ## FASE 1 — Creazione Issue
 
 **Chi:** Agente
@@ -110,6 +166,8 @@ Issue leggera — i dettagli arrivano nella Fase 2.
 **Chi:** Agente
 **Skill:** `issue-implement`
 **Kanban:** Todo → InProgress (dopo `/vai`)
+**Card Ascanio (MaestroWeb):** → **In Lavorazione** — obbligatorio se la issue
+nasce da una sua segnalazione
 
 ### Auto-gate
 
@@ -147,6 +205,7 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 **Chi:** Agente + CI (deploy automatico)
 **Skill:** `issue-pr-ready`
 **Kanban:** InProgress → Test
+**Card Ascanio (MaestroWeb):** resta **In Lavorazione** — v. punto 7
 
 1. Agente verifica checklist pre-PR (AC, test, PROJECT.md, niente file anomali)
 2. Agente apre PR con summary strutturato
@@ -154,6 +213,10 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 4. **Agente monitora il deploy** — se fallisce: legge i log, fixa, re-push, reitera (max 3 volte)
 5. Agente aggiunge label `review-ready` solo quando CI è verde
 6. Agente notifica Davide con link, istruzioni di test e AC da verificare
+7. **Solo MaestroWeb — la card di Ascanio NON si sposta ancora.** Va in
+   «Revisione» dopo che l'abbiamo provata noi sul deploy, non appena la CI è
+   verde: verde vuol dire che i test passano, non che la cosa funziona. Quando la
+   sposti, scrivi **cosa provare** nelle note di revisione della card.
 
 ### Notifica Davide
 
@@ -177,6 +240,8 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 **Chi:** Agente
 **Skill:** `issue-approve`
 **Kanban:** Test → Done
+**Card Ascanio (MaestroWeb):** la sposta **lui** in BackLog approvando dal
+pannello — l'agente non la tocca
 
 1. Agente mergia la PR su main: `gh pr merge --merge --delete-branch`
 2. CI deploya automaticamente in produzione
@@ -192,6 +257,9 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 **Chi:** Agente
 **Skill:** `issue-reject` (per reject semplici) | `issue-research-rework` (per reject complessi ≥2)
 **Kanban:** Test → Review → InProgress → Test (loop)
+**Card Ascanio (MaestroWeb):** se il reject viene da lui, la card è **già**
+tornata In Lavorazione col suo «Rimanda» — leggi la nota che ha lasciato nel
+thread prima di rimettere mano al codice
 
 1. Agente registra feedback + risultati test come commento sulla issue
 2. Label: rimuove `review-ready`, aggiunge `needs-fix`
@@ -201,7 +269,10 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 
 ---
 
-## 📊 Kanban
+## 📊 Kanban (Project V2 su GitHub)
+
+> Da non confondere con **la card di Ascanio** (sopra), che vive nel database di
+> Maestro ed è un oggetto diverso. Su MaestroWeb vanno mosse **entrambe**.
 
 | Colonna | Significato | Chi sposta |
 |---------|-------------|------------|

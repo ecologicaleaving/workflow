@@ -13,6 +13,21 @@ description: >
 Use when all acceptance criteria for an issue are complete
 and the branch is ready for pull request and review.
 
+## ⛔ MaestroWeb — la card di Ascanio non si sposta ancora
+
+Se la issue nasce da una segnalazione di Ascanio, la sua card resta **In
+Lavorazione** anche adesso che la PR è aperta e la CI è verde.
+
+Va in «Revisione» **dopo che l'hai provata tu** sul deploy: verde vuol dire che i
+test passano, non che la cosa funziona — e mandare ad Ascanio qualcosa che non
+abbiamo guardato brucia l'unica persona che verifica sul campo.
+
+Quando la sposti, **scrivi cosa provare** nelle note di revisione della card
+(form di modifica). Senza quelle non sa cosa guardare, e torna indietro per il
+motivo sbagliato.
+
+Nessun automatismo lo fa al posto tuo: la sezione è un dato che scriviamo noi.
+
 ## Prerequisites
 
 - Auto-gate finale superato (issue-implement Step 5)

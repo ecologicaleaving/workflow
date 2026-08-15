@@ -15,6 +15,20 @@ L'agente lavora in autonomia — si blocca solo su anomalie o gate fallito.
 
 ---
 
+## ⛔ MaestroWeb — prima cosa: sposta la card di Ascanio
+
+Se la issue nasce da una sua segnalazione, **appena parti** porta la sua card in
+**In Lavorazione** (pannello laterale o `/qa`, selettore «Sezione» nel dettaglio).
+
+Non è cosmesi: quella card è l'unica cosa che Ascanio vede. Finché resta in «Idee
+ASCANIO» lui non sa che la stiamo facendo, e la può risegnalare. Nessun
+automatismo la sposta — la sezione è un dato che scriviamo noi.
+
+Il lavoro che nasce **strada facendo** (bug nostri, refactor, issue tecniche) non
+ha card e non deve averla: sta su GitHub e basta.
+
+---
+
 ## Procedura
 
 ### Step 1 — Sposta card → InProgress
