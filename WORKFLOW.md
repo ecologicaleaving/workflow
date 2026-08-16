@@ -104,17 +104,23 @@ Ascanio continua a vedere lo stato di ieri — e non ha modo di accorgersene.
 |--------|---------------|-----------|
 | Prendo in carico la richiesta di Ascanio | **In Lavorazione** | Fase 2 → Fase 3 (`/vai`) |
 | Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | in qualsiasi momento |
-| Lavoro finito, testato da noi e in `beta` | **Revisione** | dopo la Fase 4, **mai prima** |
+| CI verde e mergiato in `beta` | **Revisione** | subito dopo il merge |
 | Ascanio approva | **BackLog** | lo fa lui dal pannello |
 | Ascanio rimanda indietro | **In Lavorazione** | lo fa lui, con nota obbligatoria |
 
-**«Revisione» solo dopo aver testato noi.** Metterci una card prima significa far
-provare ad Ascanio qualcosa che non abbiamo guardato: è il modo di bruciare
-l'unica persona che verifica sul campo.
+**Appena è su `beta`, la card va in Revisione.** Non si aspetta che la provi
+prima Davide o l'agente: **a testare è Ascanio** — è il suo lavoro, ed è l'unico
+che la guarda su impianti veri. Trattenere una card «finché non la controllo io»
+è tempo perso due volte, e Davide l'ha detto esplicitamente il 16/08/2026.
 
 Quando sposti in «Revisione», **scrivi cosa provare** nel campo delle note di
-revisione (form di modifica della card). Senza quelle, Ascanio non sa cosa
-guardare e la card torna indietro per il motivo sbagliato.
+revisione (form di modifica della card). Quella è la parte che non si salta:
+senza, Ascanio non sa cosa guardare e la card torna indietro per il motivo
+sbagliato. Le note si scrivono per chi apre l'app, non per chi legge il diff —
+cosa aprire, cosa deve succedere, e i casi strani da provare apposta.
+
+Se il lavoro tocca dati veri (anagrafiche, import, comandi), **dillo nelle
+note**: l'ambiente di test scrive in produzione.
 
 ### Il lavoro che nasce strada facendo
 

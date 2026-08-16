@@ -219,7 +219,7 @@ card è l'embrione dell'epica; le issue tecniche che ne nascono restano nostre.
 |--------|---------------|-----|
 | Prendi in carico la sua segnalazione | **In Lavorazione** | tu, appena parti |
 | Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | tu |
-| Finito, **testato da te** e in `beta` | **Revisione** + cosa provare | tu |
+| CI verde e mergiato in `beta` | **Revisione** + cosa provare | tu, subito |
 | Approvata | **BackLog** | lui, dal pannello |
 | Rimandata indietro | **In Lavorazione** | lui, con nota |
 
@@ -227,8 +227,10 @@ card è l'embrione dell'epica; le issue tecniche che ne nascono restano nostre.
 GitHub, non si aggiorna da sola: se non la sposti, Ascanio vede lo stato di ieri
 e non ha modo di accorgersene.
 
-**Mai in «Revisione» prima di averla provata tu.** La CI verde dice che i test
-passano, non che la cosa funziona.
+**Appena è su `beta`, va in Revisione.** Non aspettare di provarla: **a testare è
+Ascanio**, è il suo lavoro, ed è l'unico che la guarda su impianti veri.
+Trattenere una card «finché non la controllo io» è tempo perso due volte (Davide,
+16/08/2026). Quello che non si salta sono **le note su cosa provare**.
 
 Il lavoro che nasce strada facendo (bug nostri, refactor, issue tecniche) **non
 ha card**: sta su GitHub e basta, è propedeutico a ciò che lui conferma.

@@ -13,18 +13,20 @@ description: >
 Use when all acceptance criteria for an issue are complete
 and the branch is ready for pull request and review.
 
-## ⛔ MaestroWeb — la card di Ascanio non si sposta ancora
+## ⛔ MaestroWeb — appena è su `beta`, la card va in Revisione
 
-Se la issue nasce da una segnalazione di Ascanio, la sua card resta **In
-Lavorazione** anche adesso che la PR è aperta e la CI è verde.
+Se la issue nasce da una segnalazione di Ascanio: CI verde → merge in `beta` →
+**card in «Revisione»**, subito.
 
-Va in «Revisione» **dopo che l'hai provata tu** sul deploy: verde vuol dire che i
-test passano, non che la cosa funziona — e mandare ad Ascanio qualcosa che non
-abbiamo guardato brucia l'unica persona che verifica sul campo.
+Non si aspetta di provarla prima: **a testare è Ascanio**, è il suo lavoro, ed è
+l'unico che la guarda su impianti veri. Trattenere una card «finché non la
+controllo io» è tempo perso due volte (Davide, 16/08/2026).
 
 Quando la sposti, **scrivi cosa provare** nelle note di revisione della card
-(form di modifica). Senza quelle non sa cosa guardare, e torna indietro per il
-motivo sbagliato.
+(form di modifica). Quella è la parte che non si salta: senza, Ascanio non sa
+cosa guardare e la card torna indietro per il motivo sbagliato. Si scrivono per
+chi apre l'app — cosa aprire, cosa deve succedere, e i casi strani da provare
+apposta. Se il lavoro tocca dati veri, dillo.
 
 Nessun automatismo lo fa al posto tuo: la sezione è un dato che scriviamo noi.
 
