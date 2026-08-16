@@ -13,6 +13,23 @@ description: >
 Use when all acceptance criteria for an issue are complete
 and the branch is ready for pull request and review.
 
+## ⛔ MaestroWeb — appena è su `beta`, la card va in Revisione
+
+Se la issue nasce da una segnalazione di Ascanio: CI verde → merge in `beta` →
+**card in «Revisione»**, subito.
+
+Non si aspetta di provarla prima: **a testare è Ascanio**, è il suo lavoro, ed è
+l'unico che la guarda su impianti veri. Trattenere una card «finché non la
+controllo io» è tempo perso due volte (Davide, 16/08/2026).
+
+Quando la sposti, **scrivi cosa provare** nelle note di revisione della card
+(form di modifica). Quella è la parte che non si salta: senza, Ascanio non sa
+cosa guardare e la card torna indietro per il motivo sbagliato. Si scrivono per
+chi apre l'app — cosa aprire, cosa deve succedere, e i casi strani da provare
+apposta. Se il lavoro tocca dati veri, dillo.
+
+Nessun automatismo lo fa al posto tuo: la sezione è un dato che scriviamo noi.
+
 ## Prerequisites
 
 - Auto-gate finale superato (issue-implement Step 5)

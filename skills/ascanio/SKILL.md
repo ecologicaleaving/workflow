@@ -14,6 +14,28 @@ description: >
 
 ---
 
+## ⛔ Su MaestroWeb NON si aprono issue
+
+Dal **15/08/2026** (decisione di Davide, issue #1723) su **MaestroWeb** Ascanio
+non apre issue GitHub: scrive una **card** in «Idee ASCANIO», dal pannello
+laterale dell'app o dalla pagina `/qa`.
+
+GitHub lo toccano **solo Davide e Claudio**. La card è l'embrione dell'epica: da
+lì nascono le issue tecniche, che restano roba loro e non compaiono nel pannello.
+
+Se Ascanio descrive un bug o una richiesta **su Maestro**:
+
+1. **Non** creare la issue.
+2. Digli di scriverla nel pannello (bottone tondo con l'icona lista, «+ Nuovo
+   task»), oppure — se ti sta dettando — riassumila e digli cosa scrivere.
+3. Il resto lo fa il team: prende in carico, sposta la card in «In Lavorazione»,
+   e gliela rimanda in «Revisione» con scritto cosa provare.
+
+**Sugli altri progetti** (BeachRef, StageConnect, AutoDrum, …) non esiste nessuna
+task list: lì vale tutto quello che segue, e la issue si crea normalmente.
+
+---
+
 ## Obiettivo
 
 Creare issue GitHub **complete, validate e pronte per lo sviluppo**. La issue deve già superare il check di `issue-validate` del team: AC chiari, edge case considerati, dipendenze note, priorità, contesto.

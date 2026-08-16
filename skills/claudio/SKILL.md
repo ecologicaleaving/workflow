@@ -176,10 +176,18 @@ Al termine posta un commento sull'issue con:
 **Field ID**: `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`
 
 ### Sposta card
+
+> ⚠️ **`--limit` deve superare il numero di item del board.** Al 15/08/2026 sono
+> **497** (di cui 387 `Done`). Con un limite più basso `item-list` ne restituisce
+> solo i primi N **senza segnalare nulla**: la issue che cerchi sembra non
+> esistere, e le conclusioni che ne trai sono false. Successo davvero — con
+> `--limit 300` risultavano «zero issue in Review Ascanio» mentre ce n'erano tre.
+> Se il numero non torna, alza il limite e ricontrolla prima di concludere.
+
 ```bash
 # Ottieni item ID
 ITEM_ID=$(gh project item-list 2 --owner ecologicaleaving \
-  --format json --limit 200 | \
+  --format json --limit 600 | \
   python3 -c "import json,sys; d=json.load(sys.stdin); \
   items=d.get('items',[]); \
   m=[i for i in items if str(i.get('content',{}).get('number',''))=='ISSUE_N']; \
@@ -191,6 +199,43 @@ gh project item-edit --id "$ITEM_ID" \
   --field-id PVTSSF_lAHODSTPQM4BP1Xpzg-INlw \
   --single-select-option-id OPTION_ID
 ```
+
+Una issue aperta con `gh issue create` **non finisce sul board da sola**:
+aggiungila con `gh project item-add 2 --owner ecologicaleaving --url <issue-url>`
+prima di provare a spostarla.
+
+---
+
+## 🃏 La card di Ascanio — solo MaestroWeb
+
+Oltre alla card Kanban c'è una **seconda card**, e sono due cose diverse: quella
+di Ascanio vive nel database di Maestro (`qa_tasks.stage`) ed è **l'unica cosa
+che lui vede**. Su MaestroWeb vanno mosse **entrambe**.
+
+Ascanio non apre issue: scrive in «Idee ASCANIO» dal pannello laterale. Quella
+card è l'embrione dell'epica; le issue tecniche che ne nascono restano nostre.
+
+| Quando | La card va in | Chi |
+|--------|---------------|-----|
+| Prendi in carico la sua segnalazione | **In Lavorazione** | tu, appena parti |
+| Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | tu |
+| CI verde e mergiato in `beta` | **Revisione** + cosa provare | tu, subito |
+| Approvata | **BackLog** | lui, dal pannello |
+| Rimandata indietro | **In Lavorazione** | lui, con nota |
+
+**È obbligatorio e non c'è nessun automatismo.** La sezione non si deduce da
+GitHub, non si aggiorna da sola: se non la sposti, Ascanio vede lo stato di ieri
+e non ha modo di accorgersene.
+
+**Appena è su `beta`, va in Revisione.** Non aspettare di provarla: **a testare è
+Ascanio**, è il suo lavoro, ed è l'unico che la guarda su impianti veri.
+Trattenere una card «finché non la controllo io» è tempo perso due volte (Davide,
+16/08/2026). Quello che non si salta sono **le note su cosa provare**.
+
+Il lavoro che nasce strada facendo (bug nostri, refactor, issue tecniche) **non
+ha card**: sta su GitHub e basta, è propedeutico a ciò che lui conferma.
+
+Dettaglio completo: `WORKFLOW.md` → «La card di Ascanio».
 
 ---
 
