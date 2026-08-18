@@ -138,6 +138,58 @@ Sono due cose diverse e vanno mosse **entrambe**:
 Una issue lavorata sposta la sua card Kanban *e*, se nasce da una segnalazione di
 Ascanio, anche la sua card nel pannello.
 
+
+### ⛔ Una scheda di Ascanio = UN'EPICA, e l'approvazione è una sola
+
+La scheda che scrive Ascanio è **l'embrione di un'epica**, non di una issue. Quasi
+sempre quello che chiede è una cosa sola per lui — «l'anagrafica», «la ricerca
+dell'inverter» — e diventa molte issue solo perché **noi** la scomponiamo per
+lavorarla.
+
+Quella scomposizione è roba nostra e deve restare invisibile:
+
+| | dove vive | chi la vede | chi la approva |
+|---|---|---|---|
+| **la scheda** | `qa_tasks` | Ascanio | Ascanio, **una volta sola** |
+| **l'epica** | GitHub | noi | — |
+| **le sotto-issue** | GitHub | noi | **nessuno**: si chiudono e basta |
+
+**Le sotto-issue non compaiono mai nel pannello di Ascanio** e non ricevono mai
+una `qa-approved` propria: la eredita dall'epica quando lui approva la scheda.
+
+#### Perché non è una preferenza organizzativa
+
+Il 18/08/2026 la promozione in produzione **si è spezzata** proprio su questo.
+L'anagrafica clienti era nata come quindici issue sorelle invece che come
+un'epica con figlie. Conseguenze, tutte misurate:
+
+- Ascanio ha dovuto approvare **quindici volte** una cosa che aveva chiesto una
+  volta sola;
+- il lavoro era **intrecciato** (le sotto-feature si costruiscono l'una
+  sull'altra, sugli stessi file) mentre l'approvazione era **frammentata**:
+  promuoverne alcune e non altre ha prodotto **dieci gruppi caduti per
+  conflitto** di cherry-pick;
+- alcune sotto-issue non avevano approvazione perché non dovevano averla — ed
+  erano comunque necessarie a far funzionare quelle approvate.
+
+La promozione selettiva regge **solo** se l'unità approvata coincide con l'unità
+di lavoro. Un'epica è quell'unità. Una issue figlia non lo è mai.
+
+#### In pratica
+
+Quando prendi in carico una scheda di Ascanio:
+
+1. apri **un'epica** collegata alla scheda (`qa_task_issues` punta all'epica);
+2. le sotto-issue sono **figlie dell'epica**, mai collegate alla scheda;
+3. lavori le figlie come al solito — PR, CI, merge in `beta`;
+4. quando l'epica è completa, la scheda va in **Revisione**;
+5. Ascanio approva **la scheda**: da lì la `qa-approved` arriva all'epica e a
+   tutte le sue figlie.
+
+**Se una scheda ha più di una issue collegata, è il segnale che la regola non è
+stata seguita.** Non è vietato, ma va guardato: significa che Ascanio dovrà
+approvare più volte, e che la promozione potrà spezzarsi.
+
 ---
 
 ## FASE 1 — Creazione Issue
