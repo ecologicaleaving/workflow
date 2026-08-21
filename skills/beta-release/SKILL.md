@@ -93,7 +93,20 @@ codice non approvato** — non è più sicuro farlo, se il repo ha lo script di 
 **Se il repo ha `scripts/approva-promote.ts` (oggi solo maestroweb — verifica con
 `ls scripts/approva-promote.ts` prima di procedere)**, usa quello al posto del merge intero:
 
+**Prima del dry-run — lotto revisionato su un'EPICA?** Se l'approvazione di Ascanio è arrivata su
+una scheda riassuntiva, `qa-approved` sta **solo** sull'epica e lo script non la vede: l'epica non
+ha commit propri, e la selezione avviene sulle issue collegate ai commit. Il report dirà «Nessuna
+issue qa-approved», che sembra «non c'è niente da fare» ed è invece un lotto approvato che resta
+fermo. Propaga la label alle figlie elencate nell'epica **prima** di procedere — procedura completa
+e vincoli in `issue-approve` Step 0b.
+
 ```bash
+# 0. Se `npx tsx` non parte («tsx non è riconosciuto»), node_modules/.bin può essere vuoto:
+#    node node_modules/tsx/dist/cli.mjs scripts/approva-promote.ts --dry-run
+# 0b. Sincronizza il branch main LOCALE prima di lanciare, o un main stale riporta indietro la
+#     working copy e lo script sparisce dal filesystem a metà run:
+git fetch origin main && git branch -f main origin/main
+
 # 1. Sempre un dry-run PRIMA del run reale — non salta mai questo passaggio
 npx tsx scripts/approva-promote.ts --dry-run
 # Controlla il report: quali issue PROMOSSE, quali ESCLUSE (non approvate), quali NON
