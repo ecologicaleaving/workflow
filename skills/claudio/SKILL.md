@@ -201,8 +201,31 @@ gh project item-edit --id "$ITEM_ID" \
 ```
 
 Una issue aperta con `gh issue create` **non finisce sul board da sola**:
-aggiungila con `gh project item-add 2 --owner ecologicaleaving --url <issue-url>`
+aggiungila con `gh project item-add <numero> --owner <org> --url <issue-url>`
 prima di provare a spostarla.
+
+### Il board dipende dall'organizzazione
+
+Gli ID scritti qui sopra sono quelli di `ecologicaleaving`. Su un repo di
+un'altra org non esistono, e `gh project item-add 2 --owner 80-20Solutions`
+risponde *"Could not resolve to a ProjectV2 with the number 2"* — è successo
+per settimane su TunedIn, e ogni agente lo riportava come un problema di
+permessi mentre era un board che non c'era.
+
+| Organizzazione | Board | Numero | Project ID |
+|---|---|---|---|
+| `ecologicaleaving` | 80/20 Solutions — Development Hub | `2` | `PVT_kwHODSTPQM4BP1Xp` |
+| `80-20Solutions` | 80/20 Solutions — TunedIn | `3` | `PVT_kwDODt_H1s4BhfqB` |
+
+Prima di dare per scontato che manchi un board, controlla con
+`gh project list --owner <org>`. E se un repo davvero non ne ha uno,
+**non è un errore bloccante**: la lavorazione non dipende dalla card.
+Segnalalo a Davide una volta e prosegui.
+
+> Gli ID dei campi cambiano da board a board. Se ti servono per un board che
+> non è in tabella, ricavali invece di cercarli: la skill `issue-start`
+> (STEP 3) contiene una query che li deriva dalla card stessa e funziona
+> ovunque.
 
 ---
 
