@@ -99,8 +99,21 @@ Salva l'URL della issue creata (lo usi nello step successivo).
 
 ### Step 4 — Aggiungi al Kanban (Backlog)
 
+> ⚠️ **Il board dipende dall'organizzazione del repo**, non è sempre il `2`.
+> Su un repo di un'altra org quel numero non esiste e `gh` risponde *"Could not
+> resolve to a ProjectV2 with the number 2"*.
+>
+> | Organizzazione | Board | Numero |
+> |---|---|---|
+> | `ecologicaleaving` | 80/20 Solutions — Development Hub | `2` |
+> | `80-20Solutions` | 80/20 Solutions — TunedIn | `3` |
+>
+> Se l'org non è in tabella, controlla con `gh project list --owner <org>`.
+> Se davvero non ha un board, **non è un errore bloccante**: la issue è creata,
+> dillo a Davide e vai avanti.
+
 ```bash
-# 1. Aggiungi la issue al project board
+# 1. Aggiungi la issue al project board (numero e owner secondo la tabella sopra)
 gh project item-add 2 \
   --owner ecologicaleaving \
   --url "<issue_url>"

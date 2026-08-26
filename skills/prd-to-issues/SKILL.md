@@ -175,6 +175,11 @@ Dopo ogni issue creata, aggiungi al Kanban:
 gh project item-add 2 --owner ecologicaleaving --url {issue_url}
 ```
 
+> ⚠️ Numero e owner dipendono dall'org del repo: `2` è `ecologicaleaving`, `3`
+> è `80-20Solutions` (board «TunedIn»). Su un'org senza board `gh` risponde
+> *"Could not resolve to a ProjectV2"* — le issue restano create, non ritentare
+> e segnalalo una volta sola a fine lavoro.
+
 ### Step 4 — Cross-reference dipendenze
 
 Dopo aver creato tutte le issue (ora hai i numeri reali), aggiorna i campi "Dipendenze" con i numeri issue corretti:

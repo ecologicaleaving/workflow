@@ -218,6 +218,19 @@ gh issue comment <N> --repo ecologicaleaving/<repo> --body "🔴 Blocked: dipend
 > `./scripts/kanban-move.sh <N> <repo> Todo` dal workflow repo. Campi: Status field
 > `PVTSSF_lAHODSTPQM4BP1Xpzg-INlw`, opzioni Backlog `2ab61313` · Todo `f75ad846`.
 
+> ⚠️ **Gli ID qui sopra sono di `ecologicaleaving`.** Ogni org ha il suo board, e
+> su un repo di un'altra org quel numero non esiste: `gh` risponde *"Could not
+> resolve to a ProjectV2 with the number 2"*.
+>
+> | Organizzazione | Board | Numero | Project ID |
+> |---|---|---|---|
+> | `ecologicaleaving` | Development Hub | `2` | `PVT_kwHODSTPQM4BP1Xp` |
+> | `80-20Solutions` | TunedIn | `3` | `PVT_kwDODt_H1s4BhfqB` |
+>
+> Per un board non in tabella non cercare gli ID a mano: la skill `issue-start`
+> (STEP 3) ha una query che li ricava dalla card stessa. E un repo senza board
+> non blocca il triage — segnalalo e prosegui.
+
 ---
 
 ### Step 4 — Chiudi le NEEDS-DECISION
