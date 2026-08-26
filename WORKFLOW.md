@@ -135,6 +135,16 @@ Sono due cose diverse e vanno mosse **entrambe**:
 - **card Ascanio** (`qa_tasks.stage`, database Maestro) → questa sezione;
 - **card Kanban** (Project V2 su GitHub) → la tabella qui sotto.
 
+> ⛔ **La card di Ascanio viene PRIMA della issue.** Quando lavori qualcosa che
+> nasce da una sua segnalazione, il primo gesto è aggiornare la SUA card
+> (`qa_tasks`), poi la issue/PR. Vale anche per una card che parte da **«Idee
+> ASCANIO»**: appena diventa lavoro pronto da provare, la porti tu da *Idee* a
+> *Revisione* con le note — non resta in Idee. Muovere la issue o il Kanban
+> GitHub **non** muove la sua card, e lui vede solo quella. *(Inciso il 26/08/2026
+> dopo che una card Solarman è rimasta in «Idee» mentre la issue era già in
+> Review: Davide non la vedeva nel pannello. A noi interessano le card di
+> Ascanio: quelle vanno SEMPRE tenute allineate al lavoro reale.)*
+
 Una issue lavorata sposta la sua card Kanban *e*, se nasce da una segnalazione di
 Ascanio, anche la sua card nel pannello.
 
