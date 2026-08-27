@@ -2,7 +2,7 @@
 
 **Trigger:** `/issue-validate #N` o `/valida #N`
 **Agente:** Claude Code
-**Versione:** 5.4.0
+**Versione:** 5.5.0
 
 > Riferimento flusso: vedi `WORKFLOW.md` — Fase 2
 
@@ -24,6 +24,58 @@ gh issue view <N> --repo ecologicaleaving/<repo> --json title,body,labels
 ```
 
 Prendi nota di cosa c'è già. Non chiedere cose che Davide ha già scritto.
+
+---
+
+### Step 0a — Il grep PRIMA di scrivere il meccanismo (obbligatorio)
+
+**Regola: nella issue non entra una sola frase su COME funziona una cosa se non l'hai
+appena verificata nel codice.** Il sintomo lo racconta chi segnala; il meccanismo lo
+scrivi tu, e sei tu a doverlo provare.
+
+Prima di scrivere una riga di «Perché», «Note tecniche» o Acceptance Criteria, apri il
+codice e verifica ogni affermazione di meccanismo che stai per mettere nero su bianco:
+
+```bash
+# la funzione/variabile/tabella che stai per citare esiste, e fa quello che dici?
+grep -rn "<identificatore>" src/ supabase/ --include=*.ts --include=*.tsx --include=*.sql
+
+# la costante ha il valore che stai per scrivere?
+grep -rn "NOME_COSTANTE" src/ | head
+```
+
+Cosa va verificato, e non dedotto:
+
+| Se nella issue stai per scrivere… | …prima verifica che |
+|---|---|
+| «X non viene mai calcolato» | non esista già un altro percorso che lo calcola |
+| «il dato arriva da Y» | Y sia davvero la sorgente, e non un commento rimasto indietro |
+| «la tabella Z contiene…» | Z **esista**: un commento nel codice può citare una tabella mai creata |
+| «la soglia è N» | N sia il valore attuale, non quello di quando fu scritta la documentazione |
+| «le due schede fanno la stessa cosa» | le firme delle funzioni che le alimentano combacino |
+| «basta riorganizzare la presentazione» | i due insiemi di dati abbiano la stessa semantica |
+
+Se il codice contraddice quello che stavi per scrivere, **la scoperta è il valore della
+validazione**: mettila nella issue al posto della tua ipotesi.
+
+**Perché questo step esiste.** Il 27/08/2026 su MaestroWeb, tre issue su cinque scritte
+nella stessa sessione sono state corrette dal planner in fase di implementazione, sempre
+per lo stesso vizio: la segnalazione di Ascanio era giusta nel sintomo, ma la spiegazione
+del meccanismo era stata aggiunta senza verificarla.
+
+- **#1797** — «nessun controllo incrocia capacità configurata e reale»: **esistevano già
+  entrambi** (`battery-soh.ts` e `battery-power-anomaly.ts`, quest'ultimo da #703). Un
+  `grep` avrebbe cambiato la issue da «costruisci il controllo» a «perché quel controllo,
+  che c'è, non ha segnalato?».
+- **#1794** — diagnosi giusta ma parziale: mancava un secondo punto con lo stesso difetto,
+  e il vero produttore dei dati scriveva in una tabella diversa da quella citata dal
+  commento nel codice.
+- **#1799** — la premessa («le due schede sono entrambe legate al periodo») era **falsa su
+  tre punti**: il planner si è rifiutato di implementare e la issue è tornata in decisione.
+
+Il loop di implementazione le ha intercettate tutte e tre, quindi in produzione non è
+arrivato nulla di sbagliato. Ma un loop che ripianifica costa giri, e una issue rimandata
+indietro costa una decisione umana in più: il `grep` costa secondi.
 
 ---
 
@@ -283,6 +335,15 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 ---
 
 ## Changelog
+
+- **v5.5.0** (2026-08-27): Nuovo **Step 0a — il grep PRIMA di scrivere il meccanismo**,
+  obbligatorio. Nella issue non entra una frase su *come* funziona una cosa se non e stata
+  verificata nel codice: il sintomo lo racconta chi segnala, il meccanismo lo scrive
+  l'agente ed e l'agente a doverlo provare. Introdotto dopo la sessione MaestroWeb del
+  27/08, dove tre issue su cinque (#1797, #1794, #1799) sono state corrette dal planner in
+  fase di implementazione per lo stesso vizio — su #1797 i due controlli dichiarati
+  mancanti esistevano gia, su #1799 la premessa era falsa su tre punti e la issue e tornata
+  in decisione. Il loop le ha prese tutte, ma come rete, non come controllo.
 
 - **v5.4.0** (2026-07-25): L'agente che giudica gli AC nello Step 1a è ora **Opus 5**
   (era Opus 4.8). Nessun cambio di meccanica: l'invocazione resta `model: 'opus'`, che

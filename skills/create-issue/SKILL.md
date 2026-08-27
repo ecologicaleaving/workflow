@@ -162,6 +162,10 @@ gh project item-edit \
 - Niente checkpoint, niente task checklist
 - Crea subito, veloce
 - Non modificare nessun file del progetto in questa fase
+- **Scrivi il sintomo, non il meccanismo.** Qui la issue è leggera apposta: «la card dice
+  CRITICO ma lo storico è vuoto» va bene, «lo storico è vuoto perché X non scrive in Y» no
+  — quella è un'ipotesi, e va verificata nel codice in `/issue-validate` (Step 0a) prima di
+  diventare una frase che qualcuno leggerà come un fatto
 
 ---
 
