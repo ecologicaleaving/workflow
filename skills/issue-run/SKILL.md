@@ -65,7 +65,9 @@ HARD-STOP (blocca e notifica Davide) se:
 | AC funzionali | implementazione | ogni AC esercitato (vedi test UI) |
 | **Test automatici verdi** | scrittura test | `npm test` / `vitest` verde; se area senza framework → **segnalalo**, non saltare |
 | **Test UI da Chrome** | verifica browser | `claude-in-chrome`: flusso reale + screenshot + console pulita |
-| lint + `tsc --noEmit` | build | entrambi puliti (lint ≠ type-check) |
+| lint + `tsc --noEmit` | build | entrambi puliti **in locale** (lint ≠ type-check) |
+| **Nessun check rimandato alla CI** | pre-push | v. `WORKFLOW.md` → «Check in locale». La CI conferma, non scopre |
+| **Saltati riportati** | pre-push | un test che si auto-salta non verifica niente: va detto quanti e perché |
 | curl test se tocca API/route | smoke | `tests/curl-tests.sh` aggiornato e verde |
 | PROJECT.md aggiornato | chiusura | sezione backlog/stato aggiornata |
 

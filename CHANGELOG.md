@@ -1,5 +1,29 @@
 # Changelog — Workflow 8020
 
+## v2.5.0 — 2026-08-30
+
+### Novità
+
+**Check in locale obbligatori prima del push — la CI conferma, non scopre**
+- Nuova sezione canonica in `WORKFLOW.md` → «Check in locale (obbligatorio pre-push)»:
+  lint, `tsc --noEmit`, test unitari ed e2e devono essere verdi **sulla macchina**
+  prima di un push che apre o aggiorna una PR
+- `issue-pr-ready`: nuovo **Step 0** come gate non saltabile prima del push
+- `8020-commit-workflow`: nuovo punto **0** nella pre-commit checklist
+- `issue-run`: due voci in più nella mappa DoD — nessun check rimandato alla CI,
+  e i test saltati vanno riportati
+- Motivo: un giro di CI costa ~12 minuti e dice *quanti* test cadono; un giro in
+  locale dice *quale asserto* cade. Il 30/08/2026 su MaestroWeb 57 e2e rosse
+  sembravano «test da adattare ai dati»: erano una chiave di sessione scritta a
+  mano: in CI si vedeva solo il numero (#1856)
+- Documentati i tre ostacoli che facevano credere impossibile il ciclo locale, e
+  che invece si risolvono: Playwright non parte su Node 24 (serve il 22), le
+  `NEXT_PUBLIC_*` sono congelate nel bundle al momento della build, un modulo
+  nativo in un workspace non necessario può bloccare `npm ci`
+- Regola nuova sulla lettura degli esiti: **un test saltato non è un verde**, e un
+  job `skipped` non è un job verde — vanno riportati accanto ai passati, non
+  dentro
+
 ## v2.4.0 — 2026-03-25
 
 ### Novità

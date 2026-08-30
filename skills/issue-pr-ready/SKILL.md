@@ -40,6 +40,29 @@ Nessun automatismo lo fa al posto tuo: la sezione è un dato che scriviamo noi.
 
 ## Procedure
 
+### Step 0 — Check in locale (gate, non saltabile)
+
+**La CI conferma, non scopre.** Prima del push, sulla macchina, tutti verdi:
+
+```bash
+npm run lint          # lint ≠ type-check: servono entrambi
+npx tsc --noEmit
+npm test              # o vitest; se l'area non ha framework, DILLO
+npx playwright test   # se il repo ha e2e
+```
+
+Regola completa e i gotcha che rendono il ciclo locale possibile (Node 22 per
+Playwright, `NEXT_PUBLIC_*` congelate nel bundle alla build, moduli nativi che
+bloccano `npm ci`) → **`WORKFLOW.md` → «Check in locale (obbligatorio pre-push)»**.
+
+Due cose da riportare sempre nel messaggio a Davide, non solo il numero dei passati:
+
+- **quanti test sono stati saltati e perché** — un test che si auto-salta non sta
+  verificando niente
+- **se un check non è stato eseguito in locale**, quale e per quale motivo
+
+Se un check è rosso, si torna a lavorare: la PR non si apre per farla girare in CI.
+
 ### Step 1 — Push Branch e Apertura PR
 
 ```bash
