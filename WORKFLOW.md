@@ -261,6 +261,54 @@ L'agente procede in autonomia e si auto-blocca solo su anomalie o al gate finale
 Anomalia non risolvibile → blocca, notifica Davide, aspetta istruzioni.
 Più di 5 iterazioni senza convergere → blocco automatico.
 
+### Check in locale (obbligatorio pre-push)
+
+**I check girano in locale PRIMA del push. La CI conferma, non scopre.**
+
+Prima di ogni push che apre o aggiorna una PR, sulla macchina dell'agente devono
+essere verdi:
+
+| Check | Comando | Nota |
+|---|---|---|
+| Lint | `npm run lint` | lint ≠ type-check: servono entrambi |
+| Tipi | `npx tsc --noEmit` | la build passa dove `tsc` fallisce, e viceversa |
+| Test unitari | `npm test` / `vitest` | se l'area non ha framework → **dillo**, non saltare |
+| E2E | `npx playwright test` | vedi sotto: girano in locale, davvero |
+
+**Perché non basta la CI.** Un giro di CI costa ~12 minuti e restituisce *quanti*
+test falliscono. Un giro in locale costa minuti e mostra *quale asserto* cade, su
+quale elemento, con quale errore in console. Sono due informazioni diverse, e solo
+la seconda fa avanzare il lavoro.
+
+Il 30/08/2026 la suite E2E di MaestroWeb aveva 57 rossi che sembravano «test da
+adattare ai dati». Erano una chiave di sessione scritta a mano nel `global-setup`:
+i test non entravano mai nell'applicazione e aspettavano il timeout. In CI si
+vedeva solo il numero 57, e da quel numero la diagnosi non si ricava. In locale il
+primo screenshot mostrava la pagina di login, e da lì al colpevole c'è voluta
+mezz'ora. (#1856)
+
+**Gotcha che rendono impossibile il ciclo locale, e che si risolvono:**
+
+- **Playwright non parte su Node 24** (`TypeError: context.conditions?.includes is
+  not a function`). Serve Node 22 — basta anteporre la cartella al `PATH`, senza
+  `nvm use`:
+  `export PATH="$HOME/AppData/Local/nvm/v22.20.0:$PATH"`
+- **Le `NEXT_PUBLIC_*` entrano nel bundle alla build.** Cambiarle nella shell dopo
+  `npm run build` non ha alcun effetto: se cambi backend, ricompila.
+- **Un modulo nativo può bloccare `npm ci`.** Se il fallimento è in un workspace che
+  ai test non serve, escludilo (`--workspaces=false --include-workspace-root`)
+  invece di rinunciare.
+
+**Un «saltato» non è un verde.** A fine run leggi anche quanti test sono stati
+saltati e perché: un test che si auto-salta per una precondizione mancante non sta
+verificando niente, e va riportato accanto al numero dei passati — non nascosto
+dentro di esso.
+
+**Se un check è davvero impossibile in locale**, lo dici a Davide dicendo *quale* e
+*perché*, e la CI resta l'unica prova per quel check. Non lo si salta in silenzio,
+e non si spaccia il verde della CI per una verifica che non ha fatto: controlla
+sempre **quali job** ha eseguito davvero (un job `skipped` non è un job verde).
+
 ### Security Audit (obbligatorio pre-push)
 
 **Skill:** `security-audit`

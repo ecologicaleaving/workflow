@@ -22,6 +22,21 @@ Read `references/workflow-rules.md` for full workflow documentation.
 
 ## Pre-Commit Checklist (ALWAYS verify before committing)
 
+### 0. Check in locale (gate pre-push)
+
+Prima di un push che apre o aggiorna una PR: `npm run lint`, `npx tsc --noEmit`,
+i test unitari e le e2e devono essere **verdi in locale**. La CI conferma, non
+scopre: in CI si legge *quanti* test cadono, in locale *quale asserto* cade — e
+solo la seconda informazione fa avanzare il lavoro.
+
+Regola completa e gotcha (Node 22 per Playwright, `NEXT_PUBLIC_*` congelate nel
+bundle alla build, moduli nativi che bloccano `npm ci`) →
+**`WORKFLOW.md` → «Check in locale (obbligatorio pre-push)»**.
+
+Un test **saltato non è un verde**: riporta anche quanti ne sono stati saltati.
+Se un check in locale è impossibile, dillo — quale e perché — invece di lasciarlo
+alla CI in silenzio.
+
 ### 1. Branch Verification
 - Verify current branch is `feature/nome-feature`, `fix/nome-issue`, or `hotfix/nome-critica`
 - NEVER commit directly to `master` or `main`
