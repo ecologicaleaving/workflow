@@ -54,6 +54,13 @@ già provati.
 > **Un fix non può creare debito tecnico.** La scorciatoia si paga al rilascio,
 > e la paga chi sta aspettando che il suo lavoro esca.
 
+
+> **Dove va il `Closes`: nel body (o titolo) della PR — non nel messaggio di
+> commit.** `approva-promote.ts` interroga la PR via API GitHub, non legge il
+> commit. Un `Closes #N` messo solo nel merge commit **non viene visto** e il
+> commit resta `NON RISOLVIBILE`: sbagliato il 31/08 subito dopo aver scritto
+> questa regola, e scoperto solo col `--dry-run`.
+
 Nel dubbio, prima di dire "pronto": `npx tsx scripts/approva-promote.ts --dry-run`
 — gira in locale, non pusha nulla, e dice subito se la promozione si bloccherebbe.
 

@@ -230,6 +230,13 @@ priorità già provati. Rimediato aprendo la issue a posteriori (#1869) e
 aggiungendo `Closes` alla PR già mergiata — si può fare, ma è lavoro in più
 fatto nel momento peggiore, cioè quando si vuole rilasciare.
 
+
+> **Dove va il `Closes`: nel body (o titolo) della PR — non nel messaggio di
+> commit.** `approva-promote.ts` interroga la PR via API GitHub, non legge il
+> commit. Un `Closes #N` messo solo nel merge commit **non viene visto** e il
+> commit resta `NON RISOLVIBILE`: sbagliato il 31/08 subito dopo aver scritto
+> questa regola, e scoperto solo col `--dry-run`.
+
 **Prima di aprire una PR, sempre:**
 
 1. esiste una issue? se no, si apre — anche breve, anche a posteriori, anche per
