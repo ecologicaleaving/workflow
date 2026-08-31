@@ -202,6 +202,48 @@ approvare più volte, e che la promozione potrà spezzarsi.
 
 ---
 
+## ⛔ Nessun lavoro senza issue — nemmeno un fix
+
+**Ogni commit che finisce su `beta` deve essere riconducibile a una issue, con
+`Closes #N` nel corpo o nel titolo della PR.** Vale per le feature, vale per i
+bug, e vale soprattutto per i fix piccoli e "di servizio" — quelli che sembrano
+troppo brevi per meritare una issue. Sono esattamente quelli che creano il
+debito.
+
+**Non è burocrazia: è ciò che tiene in piedi il rilascio.** `approva-promote.ts`
+attribuisce ogni commit alla sua issue per decidere cosa promuovere. Un commit
+che non riesce ad attribuire è **`NON RISOLVIBILE`**, e uno solo così **fa
+abortire l'intera promozione** — bloccando anche il lavoro di altri che era
+pronto e approvato.
+
+Successo il **31/08/2026**: una PR di una riga sullo strumento di precheck,
+aperta al volo senza issue perché "era un fix di processo". Risultato al
+`--dry-run`:
+
+```
+❌ NON RISOLVIBILE ad01e0f7 — PR #1864 senza closing-keyword nel body/titolo
+❌ ABORT — 1 commit non risolvibile su beta (AC11). Nessun branch creato.
+```
+
+Quel singolo commit avrebbe bloccato la messa in produzione di due bug ad alta
+priorità già provati. Rimediato aprendo la issue a posteriori (#1869) e
+aggiungendo `Closes` alla PR già mergiata — si può fare, ma è lavoro in più
+fatto nel momento peggiore, cioè quando si vuole rilasciare.
+
+**Prima di aprire una PR, sempre:**
+
+1. esiste una issue? se no, si apre — anche breve, anche a posteriori, anche per
+   tre righe di codice
+2. la PR ha `Closes #N` nel body o nel titolo?
+3. nel dubbio, `npx tsx scripts/approva-promote.ts --dry-run`: gira in locale,
+   non pusha nulla, e dice subito se la promozione si bloccherebbe
+
+> Il corollario: **un fix non può creare debito tecnico.** Se per andare più
+> veloce salti la issue, il conto arriva al rilascio successivo — e lo paga chi
+> sta aspettando che il suo lavoro vada in produzione.
+
+---
+
 ## FASE 1 — Creazione Issue
 
 **Chi:** Agente

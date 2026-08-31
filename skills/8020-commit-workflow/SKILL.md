@@ -37,6 +37,26 @@ Un test **saltato non è un verde**: riporta anche quanti ne sono stati saltati.
 Se un check in locale è impossibile, dillo — quale e perché — invece di lasciarlo
 alla CI in silenzio.
 
+### 0.5 Issue collegata — anche per un fix di tre righe
+
+**Ogni PR deve avere `Closes #N` nel body o nel titolo.** Se il lavoro non ha
+una issue, aprine una *prima* di aprire la PR — breve quanto vuoi, ma aprila.
+
+Non è forma: `approva-promote.ts` attribuisce ogni commit alla sua issue per
+decidere cosa promuovere, e un commit che non riesce ad attribuire è
+`NON RISOLVIBILE` → **abort dell'intera promozione**, incluso il lavoro di
+altri già approvato.
+
+Il 31/08/2026 una PR di una riga aperta senza issue "perché era solo un fix di
+processo" ha bloccato al `--dry-run` la promozione di due bug ad alta priorità
+già provati.
+
+> **Un fix non può creare debito tecnico.** La scorciatoia si paga al rilascio,
+> e la paga chi sta aspettando che il suo lavoro esca.
+
+Nel dubbio, prima di dire "pronto": `npx tsx scripts/approva-promote.ts --dry-run`
+— gira in locale, non pusha nulla, e dice subito se la promozione si bloccherebbe.
+
 ### 1. Branch Verification
 - Verify current branch is `feature/nome-feature`, `fix/nome-issue`, or `hotfix/nome-critica`
 - NEVER commit directly to `master` or `main`
