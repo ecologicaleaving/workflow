@@ -6,7 +6,7 @@ description: >
   cosa vuol dire Approva, come si leggono i suoi commenti, come si crea la issue dalla card.
   Standalone — non richiede altri file del workflow.
   Trigger: Ascanio descrive un bug, un problema o una richiesta di feature.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Ascanio — Crea Issue 8020 (con validazione integrata)
@@ -64,7 +64,7 @@ Riferimento: `FLUSSO.md` punto 0. Qui il *come*, comandi inclusi.
 ### 1. Leggi la card nei dati, non a schermo
 
 ```bash
-curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?stage=eq.idee&select=id,title,description,created_at" \
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?stage=eq.idee&select=id,card_no,title,description,created_at" \
   -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
 
 curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments?task_id=eq.<id>&select=*" \
@@ -110,7 +110,10 @@ curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments" \
 - **Titolo** = cosa cambia per **chi usa Maestro**, non il meccanismo
   (regola «issue leggibili da Ascanio» — non "fix N+1 su historical_readings",
   ma "il grafico dei consumi carica più veloce").
-- **Prima riga del body**: `Ascanio, gg/mm: <la sua richiesta citata>`.
+- **Prima riga del body**: `Scheda S<card_no>` — il numero letto dalla card
+  appena interrogata (colonna `card_no`, #1956). Serve a risalire dalla
+  issue alla card senza cercare per titolo.
+- **Seconda riga**: `Ascanio, gg/mm: <la sua richiesta citata>`.
 - Poi, in ordine: **Cosa succede oggi** (verificato sul codice, non dedotto),
   **Cosa deve cambiare**, gli **Acceptance Criteria** con i tag (`FLUSSO.md`
   punto 1), **Come verificare**.
@@ -291,13 +294,21 @@ Procedo con la creazione?
 
 Usa il template giusto in base al tipo. **Tutti i campi devono essere riempiti** con quanto raccolto — niente placeholder.
 
+> Se la issue nasce da una card di Ascanio su MaestroWeb (triage sopra, non
+> lo Step 1-6 di questa sezione), la **prima riga del body è sempre
+> `Scheda S<card_no>`** (colonna `card_no` letta al punto 1, #1956), seguita
+> da una riga vuota e poi dal `## Descrizione` del template. Sugli altri
+> progetti (senza card) i template restano così come sono, senza quella riga.
+
 #### Template BUG
 
 ```bash
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "bug: <descrizione sintetica del problema>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa non funziona, in 1-3 righe>
 
 ## Passi per riprodurre
@@ -337,7 +348,9 @@ gh issue create \
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "feature: <nome della funzionalità>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa si vuole aggiungere e perché, in 1-3 righe>
 
 ## Comportamento atteso
@@ -368,7 +381,9 @@ gh issue create \
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "improvement: <cosa si vuole migliorare>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa funziona ora e come potrebbe migliorare, in 1-3 righe>
 
 ## Situazione attuale
