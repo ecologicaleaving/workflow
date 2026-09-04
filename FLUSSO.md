@@ -201,6 +201,34 @@ GitHub → Test. **Poi**, non prima:
    giro notturno più esecuzioni a mano, e dopo 72 ore l'avviso smette da sé
    di mostrarsi.
 
+### 4b. Le migration vanno in prod PRIMA della prova (gap #1915)
+
+La build di test-maestro fatta da `beta` punta al Supabase di **produzione**
+(`deploy-test.yml`, blocco `NEXT_PUBLIC_SUPABASE_URL`), mentre le migration di
+`beta` vanno solo sul DB di test del VPS. Una feature con migration, su
+test-maestro, mostra codice nuovo con schema vecchio: badge assenti (#1956),
+CHECK violati al salvataggio (#1958). Solo le anteprime di branch `/b/<branch>/`
+usano il DB di test.
+
+Quindi, se la PR mergiata in `beta` contiene migration **additive e
+idempotenti** (ADD COLUMN IF NOT EXISTS, CHECK allargato, tabella nuova con
+RLS, indice), Claudio le applica in prod subito dopo il merge, una per file:
+
+```bash
+gh workflow run run-migration.yml --repo ecologicaleaving/<repo> --ref beta \
+  -f migration=<file.sql> -f conferma=PRODUZIONE
+```
+
+`--ref beta` perché su `main` il file non c'è ancora; `conferma` è il freno di
+#1949. Poi verifica in prod con una query REST sulla colonna o tabella nuova
+(200, non 42703). Solo dopo: prova dal vivo e card in Revisione. Il deploy di
+`main` ritroverà la migration già applicata: per questo deve essere
+idempotente.
+
+**Mai con questo dispatch**: DROP, rinomina, cambio di semantica di dati
+esistenti, migration che schedulano cron. Quelle aspettano la promozione; per i
+cron vale la regola del punto 6.
+
 **Mai in Revisione senza averla provata tu.** Il reject di Ascanio è un
 commento sulla card + rientro in `lavorazione`.
 
@@ -262,6 +290,7 @@ Dettaglio completo: skill `approva`.
 | 3 | Dopo ogni tentativo del loop | Il verificatore Fable giudica OGNI AC sul `gh pr diff`, esegue lui stesso lint/test/build/audit su un checkout del branch — `[Campo]`/`[Azione]` restano `pending` | Verificatore (Fable) | pass/fail per AC |
 | 4 | Sulla PR | CI verde: type check, test unitari, schema da zero, E2E dove gira | CI | verde. Un "fail" può essere un `cancelled` di concorrenza — controlla sempre `.conclusion` via API prima di trattarlo come rosso vero |
 | 5 | Dopo il merge in `beta` | Deploy test verde, prova dal vivo su `test-<repo>` con dati veri, poi card in Revisione | Claudio | vedi punto 4 |
+| 5b | Dopo il merge in `beta`, se la PR ha migration additive | Applicate in prod via `run-migration.yml` (ref beta, `conferma=PRODUZIONE`) e verificate con una query REST sulla colonna nuova; prima della prova dal vivo | Claudio | 200, non 42703 — vedi punto 4b |
 | 6 | Dopo `/approva` | Dry-run pulito, CI della PR verso `main`, deploy prod verde, smoke `tests/curl-tests.sh`, sonde specifiche dell'issue in prod (es. 401 senza auth, CORS, query SQL) | Claudio | poi chiusura issue |
 | 7 | — | Prova sul campo degli AC `[Campo]`/`[Azione]`, approvazione dal pannello | Ascanio | card `revisione` → `backlog` |
 

@@ -73,6 +73,23 @@ curl -s -o /dev/null -w "%{http_code}\n" https://test-maestro.8020solutions.org
 ```
 Atteso 200. (Setup infra e protezioni: vedi issue #1302/#1303 e `docs/test-environment.md`.)
 
+### Step 3.4 — Migration additive in prod, prima della prova (gap #1915)
+
+test-maestro legge i dati di **produzione**: se la PR ha migration, la prova
+dal vivo dello Step 3.5 non può riuscire finché lo schema di prod non le ha.
+Per ogni file di migration **additivo e idempotente** della PR:
+
+```bash
+gh workflow run run-migration.yml --repo ecologicaleaving/<repo> --ref beta \
+  -f migration=<file.sql> -f conferma=PRODUZIONE
+gh run list --repo ecologicaleaving/<repo> --workflow run-migration.yml --limit 1
+# verifica: la colonna/tabella nuova risponde 200 in prod
+curl -s "$PROD_URL/rest/v1/<tabella>?select=<colonna>&limit=1" -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY"
+```
+
+Vietato per DROP, rinomine, cambi di semantica, cron: quelli aspettano la
+promozione (`FLUSSO.md` punto 4b e punto 6).
+
 ### Step 3.5 — Prova dal vivo, poi sposta la card di Ascanio (obbligatoria, non delegabile)
 
 **Mai in Revisione senza averla provata tu.** Per ogni issue appena
