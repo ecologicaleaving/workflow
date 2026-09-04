@@ -10,3 +10,9 @@ regola, o recuperare una procedura vecchia se mai servisse di nuovo.
 
 Le skill correnti sono in `skills/` e `tools/` nella root del repo. La fonte
 di verità del flusso è `FLUSSO.md`.
+
+`.github/workflows/kanban-automation.yml` e `label-automation.yml` sono
+qui dal 2026-09-04: reusable workflow che leggevano `config.json` (anch'esso
+archiviato). Verificato via grep sui repo locali in `00-Progetti` che nessun
+repo esterno li richiama più (`uses: ecologicaleaving/workflow/.github/workflows/...`).
+`.github/ISSUE_TEMPLATE/` è rimasto nella root del repo, non tocca `config.json`.

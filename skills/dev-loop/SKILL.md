@@ -90,7 +90,7 @@ export const meta = {
   description: 'Fable pianifica e verifica AC, Sonnet implementa — loop fino a verde',
   phases: [
     { title: 'Piano', model: 'fable' },
-    { title: 'Implementazione' },
+    { title: 'Implementazione', model: 'sonnet' },
     { title: 'Verifica AC', model: 'fable' },
   ],
 }
@@ -98,7 +98,7 @@ export const meta = {
 const REPO = args.repo // es. 'ecologicaleaving/maestroweb'
 
 phase('Piano')
-const plan = await withRetry529(() => agent(`Leggi la issue #${args.issueNumber} del repo ${REPO}
+const PLANNER_PROMPT = `Leggi la issue #${args.issueNumber} del repo ${REPO}
 (gh issue view ${args.issueNumber} --repo ${REPO}).
 
 Se è una issue di tipo bug: PRIMA di pianificare, leggi il codice reale dei file
@@ -116,8 +116,16 @@ un fix che risolve un sintomo diverso da quello osservato.
 
 Se la root cause regge (o la issue non è un bug): scomponi in un piano di
 implementazione concreto — file da toccare, approccio, edge case, eventuali
-migration. NON scrivere codice, solo piano.`,
-  { model: 'fable', schema: PLAN_SCHEMA }), 3)
+migration. NON scrivere codice, solo piano.`
+
+let plan = null
+for (let i = 0; i < 3 && !plan; i++) {
+  if (i) log(`Planner: nessuna risposta (probabile 529), tentativo ${i + 1}/3`)
+  plan = await agent(PLANNER_PROMPT, { model: 'fable', schema: PLAN_SCHEMA, label: `planner-${i + 1}` })
+}
+if (!plan) {
+  return { blocked: true, reason: 'planner non ha risposto dopo 3 tentativi (errore API)' }
+}
 
 if (plan.blocked) {
   log(`Piano bloccato: la root cause negli AC non regge — ${plan.reason}. Torna a issue-validate.`)
@@ -136,17 +144,26 @@ ${JSON.stringify(plan)}
 ${feedback ? `Il tentativo precedente non ha soddisfatto questi AC:\n${feedback}\nCorreggi.` : ''}
 Branch da origin/beta aggiornato. Segui CLAUDE.md del repo. Apri o aggiorna
 la PR verso beta con "Closes #${args.issueNumber}" nel body, commit e push.`,
-    { label: `dev-attempt-${attempt}`, isolation: 'worktree' })
+    { model: 'sonnet', label: `dev-attempt-${attempt}`, isolation: 'worktree' })
 
   phase('Verifica AC')
-  verdict = await withRetry529(() => agent(`Verifica CIASCUN Acceptance Criterion della issue
+  const VERIFIER_PROMPT = `Verifica CIASCUN Acceptance Criterion della issue
 #${args.issueNumber} (repo ${REPO}) — sia quelli taggati [UI] che quelli taggati
 [Codice], TUTTI qui; salta SOLO i [Campo] e [Azione] (marcali "pending",
 sono lavoro esclusivo di Ascanio, mai un agente) — contro il diff reale della
 PR aperta (gh pr diff), non contro la descrizione del commit. Esegui tu
 stesso lint/test/build su un checkout del branch, non fidarti del developer.
-Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`,
-    { model: 'fable', schema: VERDICT_SCHEMA }), 3)
+Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
+
+  verdict = await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label: `verify-${attempt}` })
+  if (!verdict) {
+    verdict = await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label: `verify-${attempt}-retry` })
+  }
+  if (!verdict) {
+    log(`Verificatore: nessuna risposta dopo 2 tentativi (probabile 529) — tentativo ${attempt} non giudicato, si ritenta l'intero giro`)
+    verdict = { allPassed: false, results: [] }
+    continue
+  }
 
   feedback = verdict.results.filter(r => !r.pass && r.status !== 'pending-campo' && r.status !== 'pending-azione')
     .map(r => `AC "${r.ac}": ${r.reason}`).join('\n')
@@ -195,9 +212,14 @@ const VERDICT_SCHEMA = {
 }
 ```
 
-`withRetry529` è un piccolo helper che ritenta la chiamata `agent()` fino a
-3 volte se l'errore è un 529, con backoff breve; Claudio lo scrive al volo
-se non già disponibile nell'ambiente Workflow.
+**Perché il retry è un ciclo `for`/controllo di `null`, non un `try/catch`.**
+Nel `Workflow` tool, `agent()` su un errore API (529, sovraccarico) **non
+lancia un'eccezione**: restituisce `null`. Un `withRetry529` costruito
+attorno a un `catch` non intercetterebbe mai nulla — il retry va scritto
+controllando esplicitamente `if (!risultato)` e riprovando, come nello
+script sopra (planner: fino a 3 tentativi, poi `blocked: true`;
+verificatore: un secondo tentativo con label `-retry`, poi si passa al giro
+successivo del loop senza far cadere l'intero workflow).
 
 ---
 
