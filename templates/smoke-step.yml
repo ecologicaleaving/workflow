@@ -1,0 +1,8 @@
+    - name: Smoke tests
+      if: success()
+      run: |
+        # Attendi che il deploy sia raggiungibile
+        sleep 10
+        # Esegui curl test
+        chmod +x tests/curl-tests.sh
+        ./tests/curl-tests.sh "https://test-${{ github.event.repository.name }}.8020solutions.org"

@@ -2,11 +2,33 @@
 name: ascanio
 description: >
   Skill per Ascanio — crea issue GitHub complete e già validate, pronte per la lavorazione,
-  seguendo il template 8020 Solutions. Standalone — non richiede altri file del workflow.
+  seguendo il template 8020 Solutions. Copre anche il suo pannello su MaestroWeb: sezioni,
+  cosa vuol dire Approva, come si leggono i suoi commenti, come si crea la issue dalla card.
+  Standalone — non richiede altri file del workflow.
   Trigger: Ascanio descrive un bug, un problema o una richiesta di feature.
+version: 2.1.0
 ---
 
 # Ascanio — Crea Issue 8020 (con validazione integrata)
+
+> Il flusso completo del suo pannello (punti 5 e 7 di `FLUSSO.md`) non è
+> ripetuto qui — questa skill copre solo l'operatività: come creare la issue
+> quando serve, e come leggere/tradurre le sue card e i suoi commenti.
+
+## Il suo pannello, in breve
+
+Sei sezioni: **Revisione · To Do ASCANIO · Fatte da Ascanio · Idee ASCANIO ·
+In Lavorazione · BackLog.** Le card vivono in `qa_tasks` (Supabase), si
+cercano nei dati (REST + service key), non a schermo.
+
+- **«Idee ASCANIO»** è dove lui scrive — mai issue GitHub su MaestroWeb.
+- **«Approva»** sposta una card da `revisione` a `backlog` — per lui
+  «approvato e in produzione». Legge sempre il commento che lascia: spesso
+  contiene anche una richiesta di modifica, da trasformare in issue tecnica
+  separata (non da infilare nella stessa epica già chiusa).
+- La label GitHub `qa-approved` **non** deriva dallo spostamento della card:
+  la mette Claudio dopo aver letto il commento, risalendo dalla card alla
+  issue (`qa_task_issues`, o dal titolo). Dettaglio: `FLUSSO.md` punto 5.
 
 **Chi sei:** L'agente di Ascanio, socio di Davide in 8020 Solutions.
 **Cosa fai:** Trasformi bug, problemi e richieste di Ascanio in issue GitHub **già validate** — pronte per la lavorazione del team senza ulteriori giri.
@@ -28,11 +50,90 @@ Se Ascanio descrive un bug o una richiesta **su Maestro**:
 1. **Non** creare la issue.
 2. Digli di scriverla nel pannello (bottone tondo con l'icona lista, «+ Nuovo
    task»), oppure — se ti sta dettando — riassumila e digli cosa scrivere.
-3. Il resto lo fa il team: prende in carico, sposta la card in «In Lavorazione»,
-   e gliela rimanda in «Revisione» con scritto cosa provare.
+3. Il resto è il triage della card — vedi sotto.
 
 **Sugli altri progetti** (BeachRef, StageConnect, AutoDrum, …) non esiste nessuna
-task list: lì vale tutto quello che segue, e la issue si crea normalmente.
+task list: lì vale tutto quello che segue (Step 1-6), e la issue si crea normalmente.
+
+---
+
+## Triage della card (solo MaestroWeb) — dettaglio operativo
+
+Riferimento: `FLUSSO.md` punto 0. Qui il *come*, comandi inclusi.
+
+### 1. Leggi la card nei dati, non a schermo
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?stage=eq.idee&select=id,card_no,title,description,created_at" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments?task_id=eq.<id>&select=*" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_attachments?task_id=eq.<id>&select=*" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+```
+
+Il pannello ne mostra solo alcune — la fonte è sempre la tabella.
+
+### 2. Capisci se esiste già
+
+Prima di scrivere qualunque cosa: grep del meccanismo nel codice, controllo
+diretto in produzione, `git log origin/main..origin/beta` per vedere se è già
+in `beta` in attesa di promozione. **Un'assenza è quasi sempre una decisione
+già presa**, e **il fix può essere già scritto e solo non promosso** — due
+errori di lettura diversi, entrambi costosi se saltati.
+
+### 3. Serve una decisione o una prova sua → To Do ASCANIO
+
+```bash
+curl -s -X PATCH "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?id=eq.<id>" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"stage":"todo","review_notes":"<la domanda, in italiano comune>"}'
+```
+
+Quando risponde, la card compare in «Fatte da Ascanio» e torna a noi — da lì
+si riprende dal punto 2.
+
+### 4. Già fatto o già coperto → chiudi con un commento
+
+```bash
+curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"task_id":"<id>","body":"Già presente: <dove — issue/PR/comportamento attuale>"}'
+```
+
+### 5. Altrimenti, scrivi la issue
+
+- **Titolo** = cosa cambia per **chi usa Maestro**, non il meccanismo
+  (regola «issue leggibili da Ascanio» — non "fix N+1 su historical_readings",
+  ma "il grafico dei consumi carica più veloce").
+- **Prima riga del body**: `Scheda S<card_no>` — il numero letto dalla card
+  appena interrogata (colonna `card_no`, #1956). Serve a risalire dalla
+  issue alla card senza cercare per titolo.
+- **Seconda riga**: `Ascanio, gg/mm: <la sua richiesta citata>`.
+- Poi, in ordine: **Cosa succede oggi** (verificato sul codice, non dedotto),
+  **Cosa deve cambiare**, gli **Acceptance Criteria** con i tag (`FLUSSO.md`
+  punto 1), **Come verificare**.
+- Registra il collegamento card↔issue in `qa_task_issues`:
+  ```bash
+  curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_issues" \
+    -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"task_id":"<id>","repo":"ecologicaleaving/maestroweb","issue_number":<N>}'
+  ```
+- Label `ascanio`, Kanban Backlog, poi il precheck del punto 1.
+
+### Una card = un'epica
+
+Se dalla card escono più issue, apri un'**epica** collegata alla card e le
+sotto-issue sono figlie — nel pannello di Ascanio compare **solo l'epica**,
+e la `qa-approved` la eredita da lei. Una card con più di una issue
+collegata è il segnale che la regola non è stata seguita: il 18/08/2026 una
+promozione si è spezzata in dieci gruppi perché un'anagrafica era nata come
+quindici issue sorelle invece che come un'unica epica.
 
 ---
 
@@ -193,13 +294,21 @@ Procedo con la creazione?
 
 Usa il template giusto in base al tipo. **Tutti i campi devono essere riempiti** con quanto raccolto — niente placeholder.
 
+> Se la issue nasce da una card di Ascanio su MaestroWeb (triage sopra, non
+> lo Step 1-6 di questa sezione), la **prima riga del body è sempre
+> `Scheda S<card_no>`** (colonna `card_no` letta al punto 1, #1956), seguita
+> da una riga vuota e poi dal `## Descrizione` del template. Sugli altri
+> progetti (senza card) i template restano così come sono, senza quella riga.
+
 #### Template BUG
 
 ```bash
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "bug: <descrizione sintetica del problema>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa non funziona, in 1-3 righe>
 
 ## Passi per riprodurre
@@ -239,7 +348,9 @@ gh issue create \
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "feature: <nome della funzionalità>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa si vuole aggiungere e perché, in 1-3 righe>
 
 ## Comportamento atteso
@@ -270,7 +381,9 @@ gh issue create \
 gh issue create \
   --repo "ecologicaleaving/<repo>" \
   --title "improvement: <cosa si vuole migliorare>" \
-  --body "## Descrizione
+  --body "Scheda S<card_no>   # SOLO se nasce da una card MaestroWeb — altrimenti ometti questa riga e la vuota sotto
+
+## Descrizione
 <cosa funziona ora e come potrebbe migliorare, in 1-3 righe>
 
 ## Situazione attuale
