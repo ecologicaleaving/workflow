@@ -26,6 +26,55 @@ Merge sempre `--merge`, **mai `--squash`**. Nessun merge in `main` senza
 
 ---
 
+## 0. Dall'idea di Ascanio alla issue
+
+Due ingressi. Le richieste di Davide diventano issue direttamente (punto 1).
+Le segnalazioni di Ascanio nascono come **card in «Idee ASCANIO»**
+(`qa_tasks`, stage `idee`) dal pannello laterale o da `/qa` — la card è
+**l'unica cosa che lui vede**.
+
+**Triage della card**, fatto da Claudio (spesso insieme a Davide):
+
+1. Leggi la card **nei dati** — titolo, descrizione, allegati, commenti
+   (`qa_tasks`, `qa_task_comments`, `qa_task_attachments` via REST con
+   service key) — non a schermo, il pannello ne mostra solo alcune.
+2. Capisci se esiste già: grep del meccanismo nel codice, controllo in
+   produzione, `git log origin/main..origin/beta`. «Un'assenza è quasi
+   sempre una decisione già presa», e «il fix può essere già scritto e solo
+   non promosso».
+3. Se serve una decisione o una prova sua → card in **To Do ASCANIO** con
+   la domanda scritta in `review_notes`, in italiano comune. Quando
+   risponde, la card compare in «Fatte da Ascanio» e torna a noi.
+4. Se è già fatto o già coperto da un'altra issue → chiudi la card con un
+   commento che dice dove sta.
+5. Altrimenti scrivi la issue.
+
+**Come si scrive la issue dalla card:**
+
+- Titolo = **cosa cambia per chi usa Maestro**, non il meccanismo (regola
+  «issue leggibili da Ascanio»).
+- Prima riga del body: `Ascanio, gg/mm: …` con la sua richiesta citata.
+- Poi: «Cosa succede oggi» (verificato sul codice), «Cosa deve cambiare»,
+  gli AC con i tag (punto 1), «Come verificare».
+- Il collegamento card↔issue si registra in `qa_task_issues`.
+- Label `ascanio`, Kanban Backlog, precheck.
+
+**Una card = un'epica.** Se dalla card escono più issue, apri un'epica
+collegata alla card e le sotto-issue sono figlie — nel pannello di Ascanio
+compare solo l'epica, e la `qa-approved` la eredita da lei. Una card con più
+di una issue collegata è il segnale che la regola non è stata seguita
+(incidente 18/08/2026: promozione spezzata in dieci gruppi per
+un'anagrafica nata come quindici issue sorelle).
+
+**Quando parte il lavoro:** card → **In Lavorazione** (punto 2). Quando è
+in `beta` e provata → **Revisione** (punto 4). Il lavoro tecnico che nasce
+strada facendo (bug nostri, refactor) **non ha card**: sta solo su GitHub.
+
+Dettaglio (template della issue, come si leggono allegati e commenti):
+skill `ascanio`.
+
+---
+
 ## 1. Issue con Acceptance Criteria verificabili
 
 Ogni issue ha una sezione `## Acceptance Criteria` con checkbox, AC atomici

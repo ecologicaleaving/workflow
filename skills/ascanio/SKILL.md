@@ -50,11 +50,87 @@ Se Ascanio descrive un bug o una richiesta **su Maestro**:
 1. **Non** creare la issue.
 2. Digli di scriverla nel pannello (bottone tondo con l'icona lista, «+ Nuovo
    task»), oppure — se ti sta dettando — riassumila e digli cosa scrivere.
-3. Il resto lo fa il team: prende in carico, sposta la card in «In Lavorazione»,
-   e gliela rimanda in «Revisione» con scritto cosa provare.
+3. Il resto è il triage della card — vedi sotto.
 
 **Sugli altri progetti** (BeachRef, StageConnect, AutoDrum, …) non esiste nessuna
-task list: lì vale tutto quello che segue, e la issue si crea normalmente.
+task list: lì vale tutto quello che segue (Step 1-6), e la issue si crea normalmente.
+
+---
+
+## Triage della card (solo MaestroWeb) — dettaglio operativo
+
+Riferimento: `FLUSSO.md` punto 0. Qui il *come*, comandi inclusi.
+
+### 1. Leggi la card nei dati, non a schermo
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?stage=eq.idee&select=id,title,description,created_at" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments?task_id=eq.<id>&select=*" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_attachments?task_id=eq.<id>&select=*" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+```
+
+Il pannello ne mostra solo alcune — la fonte è sempre la tabella.
+
+### 2. Capisci se esiste già
+
+Prima di scrivere qualunque cosa: grep del meccanismo nel codice, controllo
+diretto in produzione, `git log origin/main..origin/beta` per vedere se è già
+in `beta` in attesa di promozione. **Un'assenza è quasi sempre una decisione
+già presa**, e **il fix può essere già scritto e solo non promosso** — due
+errori di lettura diversi, entrambi costosi se saltati.
+
+### 3. Serve una decisione o una prova sua → To Do ASCANIO
+
+```bash
+curl -s -X PATCH "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?id=eq.<id>" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"stage":"todo_ascanio","review_notes":"<la domanda, in italiano comune>"}'
+```
+
+Quando risponde, la card compare in «Fatte da Ascanio» e torna a noi — da lì
+si riprende dal punto 2.
+
+### 4. Già fatto o già coperto → chiudi con un commento
+
+```bash
+curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"task_id":"<id>","body":"Già presente: <dove — issue/PR/comportamento attuale>"}'
+```
+
+### 5. Altrimenti, scrivi la issue
+
+- **Titolo** = cosa cambia per **chi usa Maestro**, non il meccanismo
+  (regola «issue leggibili da Ascanio» — non "fix N+1 su historical_readings",
+  ma "il grafico dei consumi carica più veloce").
+- **Prima riga del body**: `Ascanio, gg/mm: <la sua richiesta citata>`.
+- Poi, in ordine: **Cosa succede oggi** (verificato sul codice, non dedotto),
+  **Cosa deve cambiare**, gli **Acceptance Criteria** con i tag (`FLUSSO.md`
+  punto 1), **Come verificare**.
+- Registra il collegamento card↔issue in `qa_task_issues`:
+  ```bash
+  curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_issues" \
+    -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"task_id":"<id>","repo":"ecologicaleaving/maestroweb","issue_number":<N>}'
+  ```
+- Label `ascanio`, Kanban Backlog, poi il precheck del punto 1.
+
+### Una card = un'epica
+
+Se dalla card escono più issue, apri un'**epica** collegata alla card e le
+sotto-issue sono figlie — nel pannello di Ascanio compare **solo l'epica**,
+e la `qa-approved` la eredita da lei. Una card con più di una issue
+collegata è il segnale che la regola non è stata seguita: il 18/08/2026 una
+promozione si è spezzata in dieci gruppi perché un'anagrafica era nata come
+quindici issue sorelle invece che come un'unica epica.
 
 ---
 
