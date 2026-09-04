@@ -14,8 +14,10 @@ description: >
 **Agente:** Claude Code (Claudio) — orchestra; delega l'implementazione a un subagente developer
 **Versione:** 1.0.0
 
-> Riferimento flusso: `WORKFLOW.md` — Fase 3 (esecuzione). Wrappa `issue-start` →
+> Riferimento flusso: `WORKFLOW.md` — Fase 3 (esecuzione). Avvio (card → In Progress) →
 > `issue-implement` → test UI Chrome → `issue-pr-ready`, con il **loop DoD** come spina dorsale.
+> Su MaestroWeb la fase implementativa è la skill `dev-loop-opus-sonnet` del repo
+> (planner Opus → developer Sonnet in worktree → verificatore AC, max 4 tentativi).
 
 ---
 
@@ -75,12 +77,59 @@ HARD-STOP (blocca e notifica Davide) se:
 
 ## Procedura
 
-### Step 0 — Avvio (issue-start)
+### Step 0 — Avvio
 
-- Verifica precondizione (DoD presente). Sposta card → **In Progress**:
+- Verifica precondizione (DoD presente). Su MaestroWeb: `npm run issue:precheck N`
+  (blocca se manca la sezione Acceptance Criteria).
+- Sposta card → **In Progress**:
   ```bash
   ./scripts/kanban-move.sh <N> <repo> InProgress
   ```
+  Gli ID in `config.json` sono del board `ecologicaleaving`. Per un board di un'altra
+  org **non cercare gli ID a mano**: questa query li ricava dalla card stessa e
+  funziona ovunque.
+  ```bash
+  REPO="<owner/repo>"; N=<numero-issue>
+  read -r ITEM_ID PROJECT_ID FIELD_ID OPTION_ID <<<"$(gh api graphql -f query='
+  query($id: ID!) {
+    node(id: $id) {
+      ... on Issue {
+        projectItems(first: 5) {
+          nodes {
+            id
+            project { id }
+            fieldValueByName(name: "Status") {
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                field { ... on ProjectV2SingleSelectField { id options { id name } } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }' -f id="$(gh issue view "$N" --repo "$REPO" --json id --jq .id)" --jq '
+    .data.node.projectItems.nodes[0] as $it
+    | [$it.id, $it.project.id, $it.fieldValueByName.field.id,
+       ($it.fieldValueByName.field.options[] | select(.name=="In Progress") | .id)]
+    | @tsv')"
+
+  if [ -z "$ITEM_ID" ]; then
+    echo "La issue non e' su nessun board: salto lo spostamento e vado avanti."
+  else
+    gh api graphql -f query='
+    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+      updateProjectV2ItemFieldValue(input: {
+        projectId: $projectId, itemId: $itemId, fieldId: $fieldId
+        value: { singleSelectOptionId: $optionId }
+      }) { projectV2Item { id } }
+    }' -f projectId="$PROJECT_ID" -f itemId="$ITEM_ID" \
+       -f fieldId="$FIELD_ID" -f optionId="$OPTION_ID"
+  fi
+  ```
+  Una issue che non è su nessun board **non è un errore**: dillo una volta nel report e
+  prosegui.
+- **Solo MaestroWeb:** se la issue nasce da una card di Ascanio, la sua card va in
+  **«In Lavorazione»** adesso (`qa_tasks.stage`) — v. `WORKFLOW.md` → «La card di Ascanio».
 - Apri un **commento di stato** sulla issue con la checklist DoD copiata: sarà il registro
   vivo del loop (aggiornato a ogni ciclo).
 - Spawna il **subagente developer in worktree isolato** (`isolation: worktree`) per le fasi
@@ -120,8 +169,9 @@ con una sola `ToolSearch`:
 ### Chiusura — quando la DoD è esaurita
 
 - Riporta la checklist DoD **tutta verde** nel commento della issue, con link screenshot.
-- Procedi con `issue-pr-ready`: push, apertura PR (con nel corpo l'esito dei due test +
-  screenshot), card → **Test**, notifica Davide.
+- Procedi con `issue-pr-ready`: push, apertura PR **verso `beta`** con `Closes #N` nel body
+  (con nel corpo l'esito dei due test + screenshot), notifica Davide. Il merge in `beta`,
+  la label `deployed-test` e la card → **Test** sono di `beta-release` (Step 1).
 
 ```
 ✅ [Issue #N] DoD esaurita — pronta al test
@@ -135,8 +185,9 @@ con una sola `ToolSearch`:
 
 ## Note
 
-- `issue-run` **non mergia** e **non chiude** la issue: si ferma alla colonna Test. Il merge
-  resta a Davide dopo `/approva` (legge assoluta: mai merge senza ok esplicito).
+- `issue-run` **non chiude** la issue: si ferma alla PR verso `beta`. Il merge in `beta` lo fa
+  Claudio a CI verde (`beta-release` Step 1); il merge in `main` resta dietro `/approva` di
+  Davide (legge assoluta: mai prod senza ok esplicito).
 - La forza della skill è il **loop-until-exhausted**: non esiste "abbastanza vicino". O la
   checklist è tutta verde, o si è in HARD-STOP con una domanda precisa a Davide.
 - Se durante il loop emerge che un AC era ambiguo → è un segnale che il `triage` l'ha lasciato

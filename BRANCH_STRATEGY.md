@@ -18,11 +18,16 @@ graph LR
 
 ## 🌿 Branch Types
 
-### **📦 main/master** - Production Branch
+### **📦 main** - Production Branch
 - **Purpose**: Codice pronto per production
 - **Protection**: Protected branch, require PR per changes
-- **Deploy**: Auto-deploy via CI al merge su main/master
-- **Naming**: `main` per nuovi progetti, `master` per esistenti
+- **Deploy**: Auto-deploy via CI al merge su `main`
+- **Naming**: `main` per i progetti (il solo repo `workflow` usa `master`)
+
+### **🧪 beta** - Integration / Test Branch
+- **Purpose**: integrazione delle feature con CI verde; deploya su `test-<repo>.8020solutions.org`
+- **Flow**: `feature/*` → `beta` (merge `--merge` di Claudio dopo CI verde) → `main` (solo dopo `/approva`, promozione selettiva con `approva-promote.ts` dove esiste)
+- **Vedi**: skill `beta-release`, `WORKFLOW.md` → «Il flusso, come gira davvero»
 
 ### **⚡ feature/** - Feature Development  
 - **Purpose**: Sviluppo new features
@@ -106,7 +111,8 @@ git push -u origin feature/my-new-feature
 ### **5. 🎯 Merge to Production**
 ```bash
 # Solo dopo /approva di Davide. Merge via GitHub:
-gh pr merge <PR_N> --merge   # oppure --squash secondo convenzione del repo
+gh pr merge <PR_N> --merge   # sempre --merge, MAI --squash: lo squash rompe l'idempotenza
+                             # di approva-promote.ts e fa ri-promuovere i commit al giro dopo
 
 # La CI deploya automaticamente in produzione al merge su main/master.
 
@@ -131,7 +137,7 @@ git push origin --delete feature/my-new-feature
   1. La CI parte sul push a main/master
   2. Build e deploy automatici
   3. Smoke test post-deploy (`tests/curl-tests.sh`)
-  4. Notifica esito (build-log)
+  4. Esito visibile nei log del run (`gh run list` / `gh run view`)
 
 ## 📋 Branch Protection Rules
 

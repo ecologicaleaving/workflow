@@ -114,13 +114,6 @@ Dopo ogni azione infra, conferma a Davide:
 
 Se non servono azioni infra → skip questo step.
 
-### Step 6 — Weekly tracking
-
-Aggiungi riga a `memory/weekly/current.md`:
-```
-| YYYY-MM-DD | PR | <repo> | #N | <titolo> | ✅ merged |
-```
-
 ---
 
 ## Note

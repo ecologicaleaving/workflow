@@ -40,11 +40,12 @@ Il flusso completo è in `WORKFLOW.md` nella root del repo.
 
 ## Installazione
 
-```bash
-# Clona e copia le skill
-git clone https://github.com/ecologicaleaving/workflow.git /tmp/workflow
-cp -r /tmp/workflow/skills/<nome-skill> ~/.claude/skills/
-
-# Oppure usa lo script
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-skills.sh | bash
+```powershell
+# Dal clone del repo workflow (lo fa la checklist di avvio sessione):
+git pull origin master
+powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 ```
+
+`sync.ps1` copia **tutte** le skill di `skills/` in `~/.claude/skills` e cancella quelle
+elencate in `skills/RETIRED.txt` (skill ritirate, con il motivo). Non esiste più un
+elenco a mano di skill da installare.

@@ -191,7 +191,7 @@ certbot certonly \
 - **DONE**: Core workflow documentation per tutti i ruoli team
 - **DONE**: Commit automation (rinominato da claudio-commit-skin)
 - **DONE**: Claude Code skill 8020-commit-workflow con guida installazione dev
-- **DONE**: Script install-skills.sh per distribuzione skills via curl
+- **DONE**: Distribuzione skill via `scripts/sync.ps1` (copia tutto + ritira `skills/RETIRED.txt`); `install-skills.sh` rimosso il 04/09/2026
 - **TODO**: Training materials e video guides per onboarding
 - **TODO**: Metrics collection per workflow effectiveness
 

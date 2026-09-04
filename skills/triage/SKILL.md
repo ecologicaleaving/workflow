@@ -41,10 +41,10 @@ Output della skill:
 | Issue **già scritta bene** (AC, edge case, riferimenti) — serve solo verificare che sia pronta | **`triage`** |
 | **Ondata** di issue da smaltire in un colpo (es. batch di Ascanio) | **`triage`** |
 | Issue **scarna/grezza** da costruire con Davide (domande + research + piano) | `issue-validate` |
-| Serve il **piano tecnico** come commento prima di implementare | `issue-validate` / la fase research di `issue-resolver` |
+| Serve il **piano tecnico** come commento prima di implementare | `issue-validate` / il planner di `issue-run` (`dev-loop-opus-sonnet` su MaestroWeb) |
 
 `triage` **non** fa il piano tecnico. Le issue che passano il gate vanno in Todo; il
-research/piano avviene in fase di implementazione (`issue-resolver`).
+research/piano avviene in fase di implementazione (`issue-run`).
 
 ---
 
@@ -102,7 +102,7 @@ vedi Step 3). Il dev **non chiude** la issue finché non sono veri **entrambi** 
 obbligatori**. Una UISSUE non è "done" con i soli unit test, né con la sola verifica manuale.
 
 > La *verifica* effettiva che la DoD sia stata rispettata avviene a fine lavoro
-> (`issue-pr-ready` / `issue-done`, prima della PR). Il triage la **stabilisce**; le skill di
+> (`issue-pr-ready`, prima della PR). Il triage la **stabilisce**; le skill di
 > chiusura la **controllano**.
 
 ---
@@ -227,8 +227,8 @@ gh issue comment <N> --repo ecologicaleaving/<repo> --body "🔴 Blocked: dipend
 > | `ecologicaleaving` | Development Hub | `2` | `PVT_kwHODSTPQM4BP1Xp` |
 > | `80-20Solutions` | TunedIn | `3` | `PVT_kwDODt_H1s4BhfqB` |
 >
-> Per un board non in tabella non cercare gli ID a mano: la skill `issue-start`
-> (STEP 3) ha una query che li ricava dalla card stessa. E un repo senza board
+> Per un board non in tabella non cercare gli ID a mano: la skill `issue-run`
+> (Step 0) ha una query che li ricava dalla card stessa. E un repo senza board
 > non blocca il triage — segnalalo e prosegui.
 
 ---

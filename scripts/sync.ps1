@@ -1,6 +1,6 @@
 # ================================================================
 # sync.ps1 — Sync workflow → skill locali di Claude Code.
-# Da eseguire all'avvio di ogni sessione (v. CLAUDE.md).
+# Da eseguire all'avvio di ogni sessione (v. WORKFLOW.md, Legge 2).
 #
 # Uso: .\sync.ps1
 #
@@ -18,6 +18,14 @@
 # Ora copia TUTTO da questo clone, che il CLAUDE.md aggiorna con
 # `git pull origin master` una riga prima. Una skill nuova si
 # sincronizza da sé: non c'è nessun elenco da ricordarsi di aggiornare.
+#
+# ── Perché RITIRA (dal 04/09/2026) ──────────────────────────────
+# Copiare non basta: una skill tolta dal repo restava installata in
+# locale per sempre, e l'agente continuava a leggerla come se fosse
+# attuale. Il 04/09/2026 in ~/.claude/skills c'erano dieci skill che nel
+# repo non esistevano più (issue-resolver, issue-start, ciccio, ...).
+# Ora skills/RETIRED.txt elenca le skill ritirate: se una è ancora
+# installata, questo script la cancella e dice quale.
 # ================================================================
 
 $ErrorActionPreference = 'Stop'
@@ -25,9 +33,9 @@ $ErrorActionPreference = 'Stop'
 $REPO_ROOT    = Split-Path -Parent $PSScriptRoot
 $SKILLS_SRC   = Join-Path $REPO_ROOT 'skills'
 $COMMANDS_SRC = Join-Path $REPO_ROOT 'commands'
+$RETIRED_FILE = Join-Path $SKILLS_SRC 'RETIRED.txt'
 $SKILLS_DIR   = "$env:USERPROFILE\.claude\skills"
 $COMMANDS_DIR = "$env:USERPROFILE\.claude\commands"
-$MONITOR      = "C:\claude-workspace\monitor\claude-monitor.ps1"
 
 Write-Host "Sync workflow 80/20..." -NoNewline
 
@@ -38,11 +46,14 @@ if (-not (Test-Path $SKILLS_SRC)) {
 
 $copiati = 0
 $saltati = 0
+$ritirate = @()
 
 # ── Skill ────────────────────────────────────────────────────────
 # Ogni cartella sotto skills/ con dentro il suo SKILL.md e tutto ciò
 # che si porta (references/, assets/): si copia l'albero intero.
 foreach ($skill in Get-ChildItem -Path $SKILLS_SRC -Directory) {
+    # Una cartella senza SKILL.md non è una skill (resti sul disco, cartelle vuote).
+    if (-not (Test-Path (Join-Path $skill.FullName 'SKILL.md'))) { continue }
     $dest = Join-Path $SKILLS_DIR $skill.Name
     if (-not (Test-Path $dest)) { New-Item -Path $dest -ItemType Directory -Force | Out-Null }
 
@@ -76,20 +87,35 @@ if (Test-Path $COMMANDS_SRC) {
     }
 }
 
-# ── Monitor ──────────────────────────────────────────────────────
-# Solo se la cartella esiste già: su una macchina senza monitor non si
-# crea nulla.
-$monitorSrc = Join-Path $REPO_ROOT 'scripts\claude-monitor.ps1'
-if ((Test-Path (Split-Path $MONITOR)) -and (Test-Path $monitorSrc)) {
-    $identico = (Test-Path $MONITOR) -and
-                ((Get-FileHash $monitorSrc).Hash -eq (Get-FileHash $MONITOR).Hash)
-    if (-not $identico) { Copy-Item -Path $monitorSrc -Destination $MONITOR -Force; $copiati++ }
-    else { $saltati++ }
+# ── Ritiro ───────────────────────────────────────────────────────
+# skills/RETIRED.txt: una skill per riga, il motivo dopo '#'.
+# Una skill elencata lì e ancora presente in locale viene cancellata.
+# Una skill che ha ANCORA un SKILL.md nel repo non si tocca: è un errore
+# nel file, e va segnalato, non eseguito. (Si guarda il SKILL.md e non la
+# cartella: una cartella vuota rimasta sul disco non conta.)
+if (Test-Path $RETIRED_FILE) {
+    foreach ($riga in Get-Content -Path $RETIRED_FILE -Encoding UTF8) {
+        $nome = ($riga -split '#', 2)[0].Trim()
+        if (-not $nome) { continue }
+        if (Test-Path (Join-Path $SKILLS_SRC "$nome\SKILL.md")) {
+            Write-Host ""
+            Write-Host "  ATTENZIONE: '$nome' e' in RETIRED.txt ma esiste ancora in skills/: non la tocco." -ForegroundColor Yellow
+            continue
+        }
+        $dest = Join-Path $SKILLS_DIR $nome
+        if (Test-Path $dest) {
+            Remove-Item -Path $dest -Recurse -Force
+            $ritirate += $nome
+        }
+    }
 }
 
-$totSkill = (Get-ChildItem -Path $SKILLS_SRC -Directory).Count
+$totSkill = (Get-ChildItem -Path $SKILLS_SRC -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }).Count
 if ($copiati -eq 0) {
     Write-Host " OK (gia allineato: $totSkill skill, $saltati file)"
 } else {
     Write-Host " OK ($copiati file aggiornati su $totSkill skill, $saltati gia allineati)"
+}
+if ($ritirate.Count -gt 0) {
+    Write-Host "  Ritirate dal locale ($($ritirate.Count)): $($ritirate -join ', ')"
 }

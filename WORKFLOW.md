@@ -1,6 +1,6 @@
 # WORKFLOW.md — 80/20 Solutions Development Workflow
 
-**Versione:** 5.0.0 | **Aggiornato:** 2026-04-14
+**Versione:** 5.1.0 | **Aggiornato:** 2026-09-04
 
 > Fonte di verità unica per il flusso di sviluppo del team.
 > I valori strutturati (ID Kanban, repo, label) stanno in `config.json`.
@@ -15,6 +15,8 @@
 | **Davide** | Product Owner | Decide, testa, approva/reject, dà i comandi | Non implementa, non deploya |
 | **Claudio** (Claude Code) | Orchestratore | Interfaccia con Davide, crea issue, coordina, spawna subagenti developer, gestisce deploy | Non implementa codice direttamente |
 | **Subagente developer** | Developer | Implementa, testa, commit, PR — spawna da Claudio via `Agent` tool con `isolation: worktree` | Non parla con Davide |
+| **Ascanio** | Co-fondatore, dominio pratico | Scrive le card in «Idee ASCANIO» (MaestroWeb), prova su impianti veri, approva dal pannello | Non apre issue GitHub su MaestroWeb |
+| **Gaia** | Business + governance | BP, GTM, pricing, OKR, memoria/ADR della repo madre `ecologicaleaving`. Ha assorbito il ruolo del precedente «Ciccio» (ADR 0009) | Non tocca codice, issue tecniche, deploy |
 
 > ⚖️ **LEGGE 1 — Merge:** MAI fare merge senza `/approva` esplicito di Davide. Commit e push OK, merge NO.
 > ⚖️ **LEGGE 2 — Sync:** All'inizio di ogni sessione: `git pull` workflow repo + `sync.ps1` prima di qualsiasi operazione.
@@ -39,7 +41,7 @@ Davide ←→ Claudio (questa sessione Claude Code)
 ```
 
 **Claudio** = la chat aperta da Davide. Non un processo background, non un VPS.
-**Subagente** = spawna da Claudio con `Agent` tool **e `isolation: worktree`**, segue `issue-resolver`, ritorna al termine.
+**Subagente** = spawna da Claudio con `Agent` tool **e `isolation: worktree`**, segue `issue-run` (su MaestroWeb: `dev-loop-opus-sonnet` del repo), ritorna al termine.
 
 ---
 
@@ -49,7 +51,7 @@ Davide ←→ Claudio (questa sessione Claude Code)
 |---------|---------|
 | Descrizione libera | Claudio crea issue e spawna subagente |
 | `/vai #N` | Claudio spawna subagente per issue esistente |
-| `/approva #N` | Claudio mergia PR → CI deploya prod |
+| `/approva` | Claudio mette `qa-approved`, promuove `beta`→`main` (`approva-promote.ts`, dry-run prima) → CI deploya prod |
 | `/reject #N <feedback>` | Claudio registra feedback e rilancia rework |
 | `/stato` | Claudio mostra issue in corso |
 | `/create-issue` | Claudio crea issue leggera → Backlog |
@@ -69,12 +71,15 @@ Davide descrive problema/feature
          ↓
     FASE 3 — Implementazione (auto-gate) → InProgress
          ↓
-    FASE 4 — PR + Deploy test automatico → Test
+    FASE 4 — PR verso beta → CI verde → merge in beta → deploy test → Test
          ↓
-    Davide testa
-    ├── /approva → Agente mergia → CI deploya prod → Done
+    Prova dal vivo (chi ha lavorato) · Ascanio approva dal pannello
+    ├── /approva (Davide) → qa-approved → promozione beta→main → CI deploya prod → Done
     └── /reject  → Rework → loop da Fase 3
 ```
+
+> Il dettaglio di come gira **davvero**, passo per passo, è nella sezione
+> «Il flusso, come gira davvero» qui sotto.
 
 ---
 
@@ -87,9 +92,9 @@ Ascanio non apre issue: scrive una **card** in «Idee ASCANIO». Quella card è
 l'embrione dell'epica, vive nel nostro database (`qa_tasks.stage`) ed è **l'unica
 cosa che lui vede**. Le issue GitHub restano roba nostra.
 
-### Le cinque sezioni
+### Le sezioni
 
-`Revisione` · `Idee ASCANIO` · `To Do ASCANIO` · `In Lavorazione` · `BackLog`
+`Revisione` · `To Do ASCANIO` · `Fatte da Ascanio` · `Idee ASCANIO` · `In Lavorazione` · `BackLog`
 
 «Revisione» sta in cima perché è la risposta alla domanda per cui il pannello si
 apre: *cosa aspetta me adesso*.
@@ -104,14 +109,17 @@ Ascanio continua a vedere lo stato di ieri — e non ha modo di accorgersene.
 |--------|---------------|-----------|
 | Prendo in carico la richiesta di Ascanio | **In Lavorazione** | Fase 2 → Fase 3 (`/vai`) |
 | Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | in qualsiasi momento |
-| CI verde e mergiato in `beta` | **Revisione** | subito dopo il merge |
+| In `beta` **e provata dal vivo da chi ha lavorato** | **Revisione** + `review_notes` | dopo la prova su test-maestro, poi `npm run deps:schede` |
 | Ascanio approva | **BackLog** | lo fa lui dal pannello |
 | Ascanio rimanda indietro | **In Lavorazione** | lo fa lui, con nota obbligatoria |
 
-**Appena è su `beta`, la card va in Revisione.** Non si aspetta che la provi
-prima Davide o l'agente: **a testare è Ascanio** — è il suo lavoro, ed è l'unico
-che la guarda su impianti veri. Trattenere una card «finché non la controllo io»
-è tempo perso due volte, e Davide l'ha detto esplicitamente il 16/08/2026.
+**In Revisione SOLO dopo la prova dal vivo di chi ha lavorato.** La CI verde
+dice che i test passano, non che la cosa funziona: si prova su
+test-maestro.8020solutions.org, poi si sposta la card, con le `review_notes`,
+e si lancia `npm run deps:schede` (è il calcolo che fa comparire l'avviso «questa
+dipende da un'altra non ancora in produzione»). La variante «va in Revisione
+appena è su `beta`, testa Ascanio» è **superata**: vale il punto 4 de «Il flusso,
+come gira davvero».
 
 Quando sposti in «Revisione», **scrivi cosa provare** nel campo delle note di
 revisione (form di modifica della card). Quella è la parte che non si salta:
@@ -251,6 +259,49 @@ fatto nel momento peggiore, cioè quando si vuole rilasciare.
 
 ---
 
+## 🔁 Il flusso, come gira davvero (03-04/09/2026)
+
+> Questo è il flusso **eseguito** sulle ultime issue di MaestroWeb il 03-04/09/2026.
+> Le fasi qui sotto lo descrivono nel dettaglio; dove una skill o una frase di questo
+> file dovesse contraddirlo, **vale questo**. Non va cambiato: va solo descritto
+> senza contraddizioni.
+
+1. **Issue con Acceptance Criteria verificabili** (skill `issue-validate`). Prima del
+   loop di implementazione: `npm run issue:precheck N` — blocca se manca la sezione AC.
+2. **Card Kanban GitHub → In Progress.** Se esiste una card di Ascanio in `qa_tasks`
+   → **«In Lavorazione»**.
+3. **Implementazione** con la skill `dev-loop-opus-sonnet` del repo MaestroWeb
+   (Workflow tool: planner → developer in worktree isolato → verificatore AC, max 4
+   tentativi). Branch `feature/issue-N-slug`, **PR verso `beta`** con `Closes #N` nel
+   body. I fix piccoli li fa Claudio direttamente in un worktree, sempre con PR verso
+   `beta`.
+4. **CI verde sulla PR → Claudio mergia in `beta` con `--merge`** (mai squash), label
+   `deployed-test`, Kanban → Test. Prova dal vivo su test-maestro.8020solutions.org.
+   La card di Ascanio va in **«Revisione» SOLO dopo la prova dal vivo di chi ha
+   lavorato**, con `review_notes` che dicono cosa provare; poi `npm run deps:schede`.
+   *(La variante «va in Revisione appena è su beta, testa Ascanio» è SUPERATA.)*
+5. **Ascanio dal pannello** clicca «Approva» (card → «BackLog» = approvato e in
+   produzione, commento «✅ Approvata da Revisione a BackLog») oppure risponde. La label
+   `qa-approved` sulla issue **non** arriva da lì: la mette Claudio dopo aver letto i
+   commenti.
+6. **Davide scrive `/approva`** → Claudio mette `qa-approved`, lancia
+   `npx tsx scripts/approva-promote.ts --dry-run`, poi il run reale → PR verso `main` →
+   CI → merge `--merge` → deploy prod → smoke test → chiude le issue, label
+   `deployed-prod`, card Kanban Done.
+   Se lo script esclude gruppi per conflitto: cherry-pick a mano in worktree da
+   `origin/main` in ordine cronologico di `beta`; conflitti su `PROJECT.md` /
+   `package.json` / `package-lock.json` risolti prendendo la versione in arrivo (alla
+   fine `package.json` + lock presi interi da `beta`); conflitti su altri file → l'issue
+   esce con tutti i suoi commit; PR verso `main` a mano.
+7. **Sezioni delle card di Ascanio:** Revisione · To Do ASCANIO · Fatte da Ascanio ·
+   Idee ASCANIO · In Lavorazione · BackLog. Nessuna colonna «Review Ascanio» né
+   «Test-ready». **Branch:** `feature/*` → `beta` (test) → `main` (prod). **Ruoli:**
+   Davide, Ascanio, Claudio (tech), Gaia (business + governance; ha assorbito Ciccio,
+   ADR 0009). Nessun «Ciccio»; nessun `master` come branch di prod dei progetti (il
+   solo repo `workflow` usa `master` come default, e resta così).
+
+---
+
 ## FASE 1 — Creazione Issue
 
 **Chi:** Agente
@@ -285,6 +336,9 @@ Issue leggera — i dettagli arrivano nella Fase 2.
 **Kanban:** Todo → InProgress (dopo `/vai`)
 **Card Ascanio (MaestroWeb):** → **In Lavorazione** — obbligatorio se la issue
 nasce da una sua segnalazione
+**Su MaestroWeb:** prima `npm run issue:precheck N`, poi la skill `dev-loop-opus-sonnet`
+del repo (planner → developer in worktree → verificatore AC, max 4 tentativi).
+Branch `feature/issue-N-slug`, PR **verso `beta`** con `Closes #N` nel body.
 
 ### Auto-gate
 
@@ -373,15 +427,19 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 **Card Ascanio (MaestroWeb):** resta **In Lavorazione** — v. punto 7
 
 1. Agente verifica checklist pre-PR (AC, test, PROJECT.md, niente file anomali)
-2. Agente apre PR con summary strutturato
-3. CI deploya automaticamente su `test-<repo>.8020solutions.org`
+2. Agente apre PR **verso `beta`** (se il repo ha `beta`; altrimenti verso il default) con
+   summary strutturato e `Closes #N` nel body
+3. **CI verde sulla PR → Claudio mergia in `beta` con `--merge`** (mai squash), label
+   `deployed-test`, Kanban → Test. È il push su `beta` che deploya su
+   `test-<repo>.8020solutions.org` (skill `beta-release`, Step 1-3)
 4. **Agente monitora il deploy** — se fallisce: legge i log, fixa, re-push, reitera (max 3 volte)
-5. Agente aggiunge label `review-ready` solo quando CI è verde
-6. Agente notifica Davide con link, istruzioni di test e AC da verificare
+5. Agente notifica Davide con link, istruzioni di test e AC da verificare
+6. **Prova dal vivo** su test da parte di chi ha lavorato
 7. **Solo MaestroWeb — la card di Ascanio NON si sposta ancora.** Va in
    «Revisione» dopo che l'abbiamo provata noi sul deploy, non appena la CI è
    verde: verde vuol dire che i test passano, non che la cosa funziona. Quando la
-   sposti, scrivi **cosa provare** nelle note di revisione della card.
+   sposti, scrivi **cosa provare** nelle `review_notes` della card, poi lancia
+   `npm run deps:schede`.
 
 ### Notifica Davide
 
@@ -403,17 +461,26 @@ L'agente esegue `scripts/security-audit.sh` + check manuali prima del push.
 ## FASE 5a — Approvazione
 
 **Chi:** Agente
-**Skill:** `issue-approve`
+**Skill:** `issue-approve` (guardia beta, Step 0) → `beta-release` (Step 5)
 **Kanban:** Test → Done
 **Card Ascanio (MaestroWeb):** la sposta **lui** in BackLog approvando dal
-pannello — l'agente non la tocca
+pannello («✅ Approvata da Revisione a BackLog») — l'agente non la tocca. La label
+`qa-approved` sulla issue **non** arriva da lì: la mette Claudio dopo aver letto i commenti.
 
-1. Agente mergia la PR su main: `gh pr merge --merge --delete-branch`
-2. CI deploya automaticamente in produzione
-3. **Agente monitora il deploy prod** — se fallisce: legge i log, fixa, reitera (max 3 volte)
-4. Agente chiude la issue e aggiunge label `deployed-prod`
-5. Agente notifica Davide con conferma
-6. **Se servono azioni infra** (env vars, migrazioni DB) → Agente le esegue direttamente via SSH sul VPS
+1. `/approva` di Davide → Claudio mette `qa-approved` alle issue approvate
+2. `npx tsx scripts/approva-promote.ts --dry-run`, poi il run reale → PR verso `main`
+   con i soli commit delle issue approvate (repo senza `beta`/script: merge classico
+   della PR in `main` con `--merge`)
+3. CI verde → merge `--merge` (mai squash) → CI deploya in produzione → smoke test
+4. **Agente monitora il deploy prod** — se fallisce: legge i log, fixa, reitera (max 3 volte)
+5. Agente chiude le issue e aggiunge label `deployed-prod`, card → Done
+6. Agente notifica Davide con conferma
+7. **Se lo script esclude gruppi per conflitto:** cherry-pick a mano in worktree da
+   `origin/main` in ordine cronologico di `beta`; conflitti su `PROJECT.md` /
+   `package.json` / `package-lock.json` → versione in arrivo (alla fine `package.json` +
+   lock presi interi da `beta`); conflitti su altri file → l'issue esce con tutti i suoi
+   commit; PR verso `main` a mano
+8. **Se servono azioni infra** (env vars, migrazioni DB) → Agente le esegue direttamente via SSH sul VPS
 
 ---
 
@@ -442,11 +509,11 @@ thread prima di rimettere mano al codice
 | Colonna | Significato | Chi sposta |
 |---------|-------------|------------|
 | **Backlog** | Issue creata | Agente (create-issue) |
-| **Todo** | Validata, piano pronto, aspetta /vai | Agente (issue-validate) |
-| **InProgress** | Agente al lavoro | Agente (dopo /vai) |
-| **Test** | PR aperta, CI ha deployato in test | Agente (issue-pr-ready) |
+| **Todo** | Validata, AC verificabili, aspetta /vai | Agente (issue-validate / triage) |
+| **InProgress** | Agente al lavoro, branch `feature/issue-N-slug`, PR verso `beta` | Agente (dopo /vai) |
+| **Test** | PR mergiata in `beta` (`--merge`), label `deployed-test`, live su test-<repo> | Agente (beta-release Step 1) |
 | **Review** | Reject, rework in corso | Agente (issue-reject) |
-| **Done** | Mergiato, in produzione, chiuso | Agente (issue-approve) |
+| **Done** | Promossa `beta`→`main` dopo `/approva`, in produzione, chiusa | Agente (beta-release Step 5) |
 
 ### Label
 
@@ -455,8 +522,9 @@ thread prima di rimettere mano al codice
 | `agent:claude-code` | Agente Claude Code assegnato |
 | `in-progress` | Agente al lavoro |
 | `review-ready` | PR pronta per test Davide |
-| `deployed-test` | Live su test (aggiunta da CI) |
+| `deployed-test` | Mergiata in `beta`, live su test |
 | `needs-fix` | Reject, rework in corso |
+| `qa-approved` | Approvata da Ascanio (la mette Claudio dopo aver letto i commenti); è ciò che `approva-promote.ts` promuove |
 | `deployed-prod` | Live in produzione |
 
 ---
@@ -465,11 +533,17 @@ thread prima di rimettere mano al codice
 
 | Skill | Quando si usa |
 |-------|--------------|
-| `create-issue` | Fase 1 — creazione issue leggera |
-| `issue-validate` | Fase 2 — validazione completa + research + piano |
-| `issue-implement` | Fase 3 — implementazione con auto-gate |
-| `issue-pr-ready` | Fase 4 — checklist pre-PR, apertura PR, notifiche |
-| `issue-approve` | Fase 5a — merge + chiusura dopo /approva |
+| `claudio` | Chi sei in ogni sessione: ruolo, comandi, Kanban, card di Ascanio |
+| `8020-workflow` | Regola cardinale + indice operazioni |
+| `create-issue` | Fase 1 — creazione issue leggera (non su MaestroWeb per Ascanio: lì c'è la card) |
+| `ascanio` | Fase 1 — issue già validate scritte dall'agente di Ascanio (progetti diversi da MaestroWeb) |
+| `triage` | Fase 1.5 — screening batch del Backlog → Definition of Ready → Todo |
+| `issue-validate` | Fase 2 — AC verificabili (loop Sonnet↔Opus), research, piano |
+| `issue-run` | Fase 3 — porta unica: loop sulla Definition of Done fino alla PR verso `beta` |
+| `issue-implement` | Fase 3 — fasi implementative dentro `issue-run` (build, security audit, RLS smoke, auto-gate) |
+| `issue-pr-ready` | Fase 4 — check locali, apertura PR verso `beta`, notifiche |
+| `beta-release` | Fase 4/5a — merge in `beta` a CI verde, deploy test, promozione `beta`→`main` dopo `/approva` |
+| `issue-approve` | Fase 5a — guardia beta su `/approva`, poi `beta-release` |
 | `issue-reject` | Fase 5b — rework dopo reject semplice |
 | `issue-research-rework` | Fase 5b — research approfondita per reject complessi |
 | `security-audit` | Pre-push — gate di sicurezza obbligatorio |
@@ -477,7 +551,12 @@ thread prima di rimettere mano al codice
 | `create-prd` | Creazione PRD da brief |
 | `prd-to-issues` | Breakdown PRD in issue |
 | `preparazione-repo` | Setup iniziale repo per workflow 8020 |
+| `repo-maintenance` | Manutenzione file di progetto |
 | `pdf-to-md` | Converti PDF in Markdown prima di leggerli (obbligatoria per tutti) |
+| `beachcrer-sync-group` | BeachCRER — gruppo mail «arbitri beach» ↔ arbitri attivi |
+
+Skill che vivono nel repo del progetto, non qui: `dev-loop-opus-sonnet` (MaestroWeb,
+implementazione Fase 3). Skill ritirate: `skills/RETIRED.txt`.
 
 ---
 
@@ -487,16 +566,21 @@ Usa sempre gli script in `scripts/` invece di comandi inline:
 
 | Script | Cosa fa |
 |--------|---------|
-| `kanban-move.sh` | Sposta card Kanban (legge ID da config.json) |
+| `sync.ps1` | Avvio sessione: copia le skill in `~/.claude/skills`, ritira quelle in `skills/RETIRED.txt` |
+| `kanban-move.sh` → `gh-kanban-move.sh` | Sposta card Kanban (legge ID da config.json; usato anche dalla GitHub Action `kanban-automation.yml`) |
 | `generate-pr-body.sh` | Genera body PR dal template |
 | `security-audit.sh` | Check automatici sicurezza pre-push |
+| `parse-checkpoint.sh` | Estrae i checkpoint dai commenti di una issue (legacy) |
+
+Nel repo MaestroWeb: `npm run issue:precheck N`, `npx tsx scripts/approva-promote.ts [--dry-run]`,
+`npm run deps:schede`.
 
 ---
 
 ## 📝 Convenzioni
 
-- **Branch:** `feature/issue-N-slug`, `fix/issue-N-slug` — creato da `origin/<default-branch>` dentro un **worktree isolato** (mai `checkout -b` nella working dir condivisa)
+- **Branch:** `feature/issue-N-slug`, `fix/issue-N-slug` — creato da `origin/<default-branch>` dentro un **worktree isolato** (mai `checkout -b` nella working dir condivisa). Flusso: `feature/*` → `beta` (test) → `main` (prod)
 - **Commit:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
-- **Niente commit su main/master**
+- **Merge:** sempre `--merge`, mai `--squash`
+- **Niente commit su `beta`/`main`** (né su `master` nel repo workflow)
 - **PROJECT.md** aggiornato prima di ogni PR
-- **Weekly tracking:** dopo ogni merge, riga in `memory/weekly/current.md`

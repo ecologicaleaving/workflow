@@ -13,20 +13,20 @@ description: >
 Use when all acceptance criteria for an issue are complete
 and the branch is ready for pull request and review.
 
-## ⛔ MaestroWeb — appena è su `beta`, la card va in Revisione
+## ⛔ MaestroWeb — la card di Ascanio va in Revisione SOLO dopo la prova dal vivo
 
 Se la issue nasce da una segnalazione di Ascanio: CI verde → merge in `beta` →
-**card in «Revisione»**, subito.
+**la provi tu** su test-maestro.8020solutions.org → **solo allora** card in
+«Revisione», con le `review_notes` che dicono cosa provare, poi
+`npm run deps:schede`.
 
-Non si aspetta di provarla prima: **a testare è Ascanio**, è il suo lavoro, ed è
-l'unico che la guarda su impianti veri. Trattenere una card «finché non la
-controllo io» è tempo perso due volte (Davide, 16/08/2026).
+La CI verde dice che i test passano, non che la cosa funziona. La variante «va
+in Revisione appena è su `beta`, testa Ascanio» è **superata**: la regola vera è
+in `WORKFLOW.md` → «Il flusso, come gira davvero», punto 4.
 
-Quando la sposti, **scrivi cosa provare** nelle note di revisione della card
-(form di modifica). Quella è la parte che non si salta: senza, Ascanio non sa
-cosa guardare e la card torna indietro per il motivo sbagliato. Si scrivono per
-chi apre l'app — cosa aprire, cosa deve succedere, e i casi strani da provare
-apposta. Se il lavoro tocca dati veri, dillo.
+Le note si scrivono per chi apre l'app — cosa aprire, cosa deve succedere, e i
+casi strani da provare apposta. Se il lavoro tocca dati veri, dillo: l'ambiente
+di test scrive in produzione.
 
 Nessun automatismo lo fa al posto tuo: la sezione è un dato che scriviamo noi.
 
@@ -93,7 +93,10 @@ gh pr create \
   --body "$PR_BODY"
 ```
 
-### Step 2 — Sposta Card Kanban → Test
+### Step 2 — Card Kanban → Test (al merge in `beta`)
+
+La card va in **Test** quando la PR è mergiata in `beta` (`beta-release` Step 1), non
+all'apertura della PR:
 
 ```bash
 ./scripts/kanban-move.sh "$ISSUE_NUMBER" "$REPO" Test

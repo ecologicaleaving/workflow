@@ -66,7 +66,7 @@ e riporti i risultati.
 |---------|---------|
 | Descrizione libera di bug/feature | Crei issue → spawni subagente |
 | `/vai #N` | Spawni subagente per issue esistente |
-| `/approva #N` | ⛔ Prima verifica il flusso beta (Step 0 di `issue-approve`): se il repo ha branch `beta`, feature approvata → merge in `beta` (skill `beta-release`), MAI in main. Prod solo approvando la beta. Altrimenti leggi skill `issue-deploy-prod` |
+| `/approva #N` | ⛔ Prima la guardia beta (Step 0 di `issue-approve`): `/approva` = promozione `beta`→`main` delle issue approvate da Ascanio (label `qa-approved`, skill `beta-release` Step 5). Se il repo non ha `beta`, merge classico della PR in `main` (`beta-release`, flusso senza beta) |
 | `/reject #N "feedback"` | Leggi skill `issue-reject` |
 | `/stato` | Mostra issue in corso e stato |
 | `/create-issue` | Leggi skill `create-issue` |
@@ -84,7 +84,8 @@ Agente valida issue (skill issue-validate) → Todo
          ↓
 Agente spawna subagente developer (worktree isolato) → In Progress
          ↓
-(Subagente) implementa, testa, commit, PR (skill issue-resolver)
+(Subagente) implementa, testa, commit, PR verso `beta` (skill issue-run;
+ su MaestroWeb: dev-loop-opus-sonnet del repo)
          ↓
 Agente verifica CI → deploy test → Test
          ↓
@@ -116,7 +117,7 @@ Lavori in un worktree isolato. PRIMO step, prima di toccare codice:
 Leggi l'issue completa:
   gh issue view {N} --repo {owner/repo}
 
-Poi segui ESATTAMENTE la skill issue-resolver, fase per fase.
+Poi segui ESATTAMENTE la skill issue-run, fase per fase.
 Non saltare fasi. Non chiedere conferma. Lavora in autonomia.
 
 Al termine posta un commento sull'issue con:
@@ -149,7 +150,8 @@ Al termine posta un commento sull'issue con:
    gh run list --repo {owner/repo} --limit 3
    ```
 
-3. Leggi skill **`issue-deploy-test`** per deploy su ambiente test
+3. CI verde → merge in `beta` con `--merge`, label `deployed-test`, card → Test
+   (skill **`beta-release`**, Step 1-3): è il push su `beta` che deploya su test
 
 4. Notifica Davide:
    ```
@@ -181,7 +183,7 @@ Al termine posta un commento sull'issue con:
 > **497** (di cui 387 `Done`). Con un limite più basso `item-list` ne restituisce
 > solo i primi N **senza segnalare nulla**: la issue che cerchi sembra non
 > esistere, e le conclusioni che ne trai sono false. Successo davvero — con
-> `--limit 300` risultavano «zero issue in Review Ascanio» mentre ce n'erano tre.
+> `--limit 300` risultavano «zero issue in Revisione» mentre ce n'erano tre.
 > Se il numero non torna, alza il limite e ricontrolla prima di concludere.
 
 ```bash
@@ -223,8 +225,8 @@ Prima di dare per scontato che manchi un board, controlla con
 Segnalalo a Davide una volta e prosegui.
 
 > Gli ID dei campi cambiano da board a board. Se ti servono per un board che
-> non è in tabella, ricavali invece di cercarli: la skill `issue-start`
-> (STEP 3) contiene una query che li deriva dalla card stessa e funziona
+> non è in tabella, ricavali invece di cercarli: la skill `issue-run`
+> (Step 0) contiene una query che li deriva dalla card stessa e funziona
 > ovunque.
 
 ---
@@ -242,18 +244,19 @@ card è l'embrione dell'epica; le issue tecniche che ne nascono restano nostre.
 |--------|---------------|-----|
 | Prendi in carico la sua segnalazione | **In Lavorazione** | tu, appena parti |
 | Serve una sua decisione o una prova sul campo | **To Do ASCANIO** | tu |
-| CI verde e mergiato in `beta` | **Revisione** + cosa provare | tu, subito |
-| Approvata | **BackLog** | lui, dal pannello |
+| In `beta` **e provata dal vivo da te** su test-maestro | **Revisione** + `review_notes` con cosa provare, poi `npm run deps:schede` | tu |
+| Approvata («✅ Approvata da Revisione a BackLog») | **BackLog** | lui, dal pannello |
 | Rimandata indietro | **In Lavorazione** | lui, con nota |
 
 **È obbligatorio e non c'è nessun automatismo.** La sezione non si deduce da
 GitHub, non si aggiorna da sola: se non la sposti, Ascanio vede lo stato di ieri
 e non ha modo di accorgersene.
 
-**Appena è su `beta`, va in Revisione.** Non aspettare di provarla: **a testare è
-Ascanio**, è il suo lavoro, ed è l'unico che la guarda su impianti veri.
-Trattenere una card «finché non la controllo io» è tempo perso due volte (Davide,
-16/08/2026). Quello che non si salta sono **le note su cosa provare**.
+**In Revisione SOLO dopo la prova dal vivo di chi ha lavorato.** La CI verde dice
+che i test passano, non che la cosa funziona: la provi tu su
+test-maestro.8020solutions.org, poi la sposti, con `review_notes` che dicono cosa
+provare, e lanci `npm run deps:schede`. (La variante «va in Revisione appena è su
+`beta`, testa Ascanio» è **superata**.) Quello che non si salta sono **le note**.
 
 Il lavoro che nasce strada facendo (bug nostri, refactor, issue tecniche) **non
 ha card**: sta su GitHub e basta, è propedeutico a ciò che lui conferma.
@@ -294,7 +297,7 @@ Dettaglio completo: `WORKFLOW.md` → «La card di Ascanio».
 |-----------|-----------------|
 | Creare issue | `create-issue` |
 | Validare issue con AC e piano | `issue-validate` |
-| Implementare (subagente) | `issue-resolver` |
-| Deploy su test | `issue-deploy-test` |
-| /approva → deploy prod | `issue-approve` (Step 0 guardia beta!) / `issue-deploy-prod` |
+| Implementare (subagente) | `issue-run` (su MaestroWeb: `dev-loop-opus-sonnet` del repo) |
+| Merge in `beta` + deploy test | `beta-release` (Step 1-3) |
+| /approva → promozione `beta`→`main` + deploy prod | `issue-approve` (Step 0 guardia beta!) → `beta-release` (Step 5) |
 | /reject → rework | `issue-reject` |

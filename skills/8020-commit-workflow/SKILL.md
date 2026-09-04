@@ -103,9 +103,9 @@ Verify that `PROJECT.md` exists and is up to date:
 ### 4. Commit Skin Status
 Check if commit skin is installed: `ls .commit-skin/project-config.json`
 - If installed: skin auto-updates PROJECT.md, builds, packages artifacts
-- If NOT installed: remind David to install it via:
+- If NOT installed: remind David to install it from the workflow repo:
   ```
-  curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
+  bash <path-to-workflow>/commit-automation/install.sh
   ```
 
 ---

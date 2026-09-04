@@ -146,7 +146,8 @@ Every project MUST have a `PROJECT.md` at root with these sections:
 
 ### Installation (per project)
 ```bash
-curl -sSL https://raw.githubusercontent.com/ecologicaleaving/workflow/master/scripts/install-claudio-skin.sh | bash
+# dal clone del repo workflow
+bash commit-automation/install.sh
 ```
 
 ### What it Does Automatically (pre-commit hook)
