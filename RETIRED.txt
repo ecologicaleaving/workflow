@@ -1,0 +1,25 @@
+# Skill ritirate con il workflow v2 (2026-09-04).
+# Una riga = una skill/tool. sync.ps1 le cancella da ~/.claude/skills/<nome> se presenti.
+issue-resolver # sostituita da dev-loop (planner/verificatore Fable, developer Sonnet)
+issue-done # assorbita nel loop dev-loop + skill approva
+issue-review # rework confluito in dev-loop (retry con feedback) + beta-release
+issue-deploy-test # assorbita in beta-release (punto 4 del flusso)
+issue-deploy-prod # assorbita in approva (punto 6 del flusso)
+issue-rework-fast # confluita in claudio (fix piccoli, worktree, PR verso beta)
+issue-start # assorbita in claudio (presa in carico, punto 2 del flusso)
+ciccio # ruolo assorbito da Gaia (ADR 0009, repo ecologicaleaving)
+create-feature-issue # confluita in create-issue
+prd-creator # non nel flusso in sette punti, fuori scope v2
+8020-workflow # sostituita da FLUSSO.md
+issue-implement # confluita in dev-loop
+issue-run # confluita in dev-loop
+issue-pr-ready # assorbita in dev-loop (apertura PR è passo del developer)
+issue-reject # confluita in beta-release (reject = commento + rientro in lavorazione)
+issue-research-rework # confluita in dev-loop (retry con feedback, max 4)
+create-prd # non nel flusso in sette punti, fuori scope v2
+prd-to-issues # non nel flusso in sette punti, fuori scope v2
+preparazione-repo # non nel flusso in sette punti, fuori scope v2
+repo-maintenance # non nel flusso in sette punti, fuori scope v2
+security-audit # non nel flusso in sette punti, fuori scope v2
+issue-approve # rinominata approva, riscritta sul punto 6 del flusso
+8020-commit-workflow # rinominata commit

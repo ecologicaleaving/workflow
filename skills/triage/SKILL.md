@@ -7,15 +7,15 @@ description: >
   decisioni che spettano a Davide. Trigger: /triage [repo] (tutto il Backlog) o /triage #N
   (singola). Usala quando arriva un'ondata di issue già scritte (es. create da Ascanio) e
   serve decidere quali sono davvero lavorabili senza fare una sessione interattiva per ognuna.
+version: 2.0.0
 ---
 
 # Skill: triage
 
 **Trigger:** `/triage [repo]` (batch su tutto il Backlog) · `/triage #N` (singola)
-**Agente:** Claude Code (Claudio)
-**Versione:** 1.0.0
+**Agente:** Claudio
 
-> Riferimento flusso: `WORKFLOW.md` — Fase 1.5 (tra `create-issue`/`ascanio` e `issue-validate`)
+> Riferimento flusso: `FLUSSO.md` — punto 1 (tra `create-issue`/`ascanio` e `issue-validate`)
 
 ---
 
@@ -41,10 +41,10 @@ Output della skill:
 | Issue **già scritta bene** (AC, edge case, riferimenti) — serve solo verificare che sia pronta | **`triage`** |
 | **Ondata** di issue da smaltire in un colpo (es. batch di Ascanio) | **`triage`** |
 | Issue **scarna/grezza** da costruire con Davide (domande + research + piano) | `issue-validate` |
-| Serve il **piano tecnico** come commento prima di implementare | `issue-validate` / la fase research di `issue-resolver` |
+| Serve il **piano tecnico** come commento prima di implementare | `issue-validate` / la fase Piano di `dev-loop` |
 
 `triage` **non** fa il piano tecnico. Le issue che passano il gate vanno in Todo; il
-research/piano avviene in fase di implementazione (`issue-resolver`).
+research/piano avviene in fase di implementazione (`dev-loop`).
 
 ---
 
@@ -227,9 +227,9 @@ gh issue comment <N> --repo ecologicaleaving/<repo> --body "🔴 Blocked: dipend
 > | `ecologicaleaving` | Development Hub | `2` | `PVT_kwHODSTPQM4BP1Xp` |
 > | `80-20Solutions` | TunedIn | `3` | `PVT_kwDODt_H1s4BhfqB` |
 >
-> Per un board non in tabella non cercare gli ID a mano: la skill `issue-start`
-> (STEP 3) ha una query che li ricava dalla card stessa. E un repo senza board
-> non blocca il triage — segnalalo e prosegui.
+> Per un board non in tabella non cercare gli ID a mano: recuperali via GraphQL
+> (`issue.projectItems`, vedi `FLUSSO.md` punto 2). E un repo senza board non
+> blocca il triage — segnalalo e prosegui.
 
 ---
 
@@ -270,9 +270,3 @@ Quando Davide risponde alle domande del blocco:
   al massimo un S/M/L indicativo nel report se utile a decidere l'ordine.
 
 ---
-
-## Changelog
-
-- **v1.2.0** (2026-07-13): Test UI vincolati a Chrome (`claude-in-chrome`). Aggiunto gotcha spostamento card (Project >300 item → `--limit 2000` + verifica status; move falliva in silenzio). Emerso dal collaudo sulle 11 issue di Ascanio.
-- **v1.1.0** (2026-07-13): Aggiunta Definition of Done standard iniettata su ogni issue → Todo: test automatici **e** web interface entrambi obbligatori.
-- **v1.0.0** (2026-07-13): Prima versione — screening batch DoR, classi ready/decision/split/blocked, ready→Todo.

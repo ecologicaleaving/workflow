@@ -6,15 +6,15 @@ description: >
   che `beta` sia pubblicato sull'ambiente test su dati reali, e avvisa Davide che è pronta da
   testare. Il merge finale `beta`→`main` (prod) resta SEMPRE dietro `/approva` di Davide.
   Trigger: /beta-release [repo], o a fine di un'ondata di issue lavorate.
+version: 2.0.0
 ---
 
 # Skill: beta-release
 
-**Trigger:** `/beta-release [repo]` · fine ondata (dopo `issue-run` sulle issue ready)
-**Agente:** Claude Code (Claudio) — orchestra; delega implementazione/QA a subagenti
-**Versione:** 1.0.0
+**Trigger:** `/beta-release [repo]` · fine ondata (dopo `dev-loop` sulle issue ready)
+**Agente:** Claudio — orchestra; delega implementazione/QA a subagenti
 
-> Riferimento flusso: `WORKFLOW.md` — Fase 4 (integrazione beta → test → prod).
+> Riferimento flusso: `FLUSSO.md` — punto 4 (su beta).
 
 ---
 
@@ -22,7 +22,7 @@ description: >
 
 Portare un'ondata di feature **già testate** (ciascuna in PR verso `beta`, con CI verde) fino a
 una **beta pubblicata su test su dati reali**, pronta perché Ascanio la provi. Poi consegnare a
-Davide per il gate prod. È l'anello tra `issue-run` (sviluppo per-issue) e il rilascio.
+Davide per il gate prod. È l'anello tra `dev-loop` (sviluppo per-issue) e il rilascio.
 
 ## Il pipeline completo (dove sta questa skill)
 
@@ -30,7 +30,7 @@ Davide per il gate prod. È l'anello tra `issue-run` (sviluppo per-issue) e il r
 Ascanio crea issue (skill `ascanio`)
    │
    ▼  on-demand: Davide/Claudio "sviluppa le ready"
-triage → issue-run (dev in worktree, test, PR verso beta)     ← per-issue
+triage → dev-loop (dev in worktree, test, PR verso beta)      ← per-issue
    │
    ▼  ◀────────────── beta-release (QUESTA skill) ──────────────▶
 1. merge autonomo delle PR verdi in `beta` (dopo CI)
@@ -72,6 +72,40 @@ Il push su `beta` (dai merge dello Step 1) triggera `deploy-test.yml` che pubbli
 curl -s -o /dev/null -w "%{http_code}\n" https://test-maestro.8020solutions.org
 ```
 Atteso 200. (Setup infra e protezioni: vedi issue #1302/#1303 e `docs/test-environment.md`.)
+
+### Step 3.5 — Prova dal vivo, poi sposta la card di Ascanio (obbligatoria, non delegabile)
+
+**Mai in Revisione senza averla provata tu.** Per ogni issue appena
+mergiata in `beta`:
+
+1. Verifica se ha una card `qa_tasks` collegata (issue tecniche non ne
+   hanno, e qui lo step finisce):
+   ```bash
+   curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?github_issue_number=eq.<N>&select=id,title,stage" \
+     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+   ```
+2. Provala dal vivo su `test-maestro.8020solutions.org` — login, impianto
+   vero, il comportamento descritto dagli AC. Non a occhio sul diff. Se
+   restano AC `[Campo]`/`[Azione]` aperti, la card **non** si sposta: sono
+   lavoro di Ascanio, non prova tua.
+3. Solo dopo aver visto che funziona:
+   ```bash
+   curl -s -X PATCH "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?id=eq.<id>" \
+     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"stage":"revisione","review_notes":"<cosa provare, in italiano comune>"}'
+   ```
+4. Lancia `npm run deps:schede` — calcola gli avvisi di dipendenza tra
+   schede non ancora in produzione. Va lanciato **in questo momento**: è un
+   giro notturno più esecuzioni a mano, e se non lo lanci qui l'avviso non
+   compare proprio quando serve (l'incidente che l'ha introdotto).
+
+Non rimandare "al prossimo giro" — l'8 issue rimaste mergiate ma mai provate
+né spostate il 02/09/2026 sono nate esattamente da questo rimando, ondata
+dopo ondata.
+
+Il **reject** di Ascanio è un commento sulla card + rientro in `lavorazione`
+(non uno stato separato).
 
 ### Step 4 — Avvisa Davide (una volta, a ondata completa)
 ```
@@ -141,11 +175,3 @@ assicurati che fossero additive e già applicate (vincolo beta→prod, vedi
 - Se il repo ha `scripts/approva-promote.ts`: **mai** mergiare l'intero `beta` in un colpo solo —
   usa sempre lo script, sempre con `--dry-run` prima, sempre `--merge` mai `--squash` sul merge
   finale della PR generata.
-
-## Changelog
-- **v1.1.0** (2026-07-24): Step 5 riscritto per il flusso di promozione selettiva
-  (`scripts/approva-promote.ts`, maestroweb issue #1478) — con merge-diretto-in-beta, l'intero
-  `beta` non è più sicuro da mergiare in blocco perché contiene sempre un mix di issue
-  approvate/non approvate. Documentato anche il fail-safe su commit orfani e il vincolo
-  `--merge` mai `--squash`.
-- **v1.0.0** (2026-07-14): Prima versione — integrazione beta + re-test + deploy test su dati reali + avviso + gate prod. Estratta dal ciclo collaudato sulle 9 issue Ascanio.

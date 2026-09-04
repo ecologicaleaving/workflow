@@ -4,14 +4,17 @@ description: >
   Crea una issue GitHub leggera su ecologicaleaving e la aggiunge al Kanban in Backlog.
   Skill standalone — non richiede altri file del workflow.
   Trigger: utente descrive un bug/feature/improvement oppure scrive /create-issue.
+version: 2.0.0
 ---
 
 # Skill: create-issue
 
 **Trigger:** `/create-issue` o descrizione libera di un bug/feature/improvement
-**Agente:** Claude Code
-**Versione:** 4.0.0
-**Standalone:** sì — non richiede workflow repo, config.json o script esterni
+**Standalone:** sì — non richiede altri file del workflow
+
+> ⚠️ **Su MaestroWeb Ascanio non apre issue** — vedi `FLUSSO.md` punto 1 e
+> skill `ascanio`. Questa skill serve per Davide/Claudio su MaestroWeb e per
+> tutti gli altri progetti.
 
 ---
 

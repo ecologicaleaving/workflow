@@ -2,11 +2,33 @@
 name: ascanio
 description: >
   Skill per Ascanio — crea issue GitHub complete e già validate, pronte per la lavorazione,
-  seguendo il template 8020 Solutions. Standalone — non richiede altri file del workflow.
+  seguendo il template 8020 Solutions. Copre anche il suo pannello su MaestroWeb: sezioni,
+  cosa vuol dire Approva, come si leggono i suoi commenti, come si crea la issue dalla card.
+  Standalone — non richiede altri file del workflow.
   Trigger: Ascanio descrive un bug, un problema o una richiesta di feature.
+version: 2.0.0
 ---
 
 # Ascanio — Crea Issue 8020 (con validazione integrata)
+
+> Il flusso completo del suo pannello (punti 5 e 7 di `FLUSSO.md`) non è
+> ripetuto qui — questa skill copre solo l'operatività: come creare la issue
+> quando serve, e come leggere/tradurre le sue card e i suoi commenti.
+
+## Il suo pannello, in breve
+
+Sei sezioni: **Revisione · To Do ASCANIO · Fatte da Ascanio · Idee ASCANIO ·
+In Lavorazione · BackLog.** Le card vivono in `qa_tasks` (Supabase), si
+cercano nei dati (REST + service key), non a schermo.
+
+- **«Idee ASCANIO»** è dove lui scrive — mai issue GitHub su MaestroWeb.
+- **«Approva»** sposta una card da `revisione` a `backlog` — per lui
+  «approvato e in produzione». Legge sempre il commento che lascia: spesso
+  contiene anche una richiesta di modifica, da trasformare in issue tecnica
+  separata (non da infilare nella stessa epica già chiusa).
+- La label GitHub `qa-approved` **non** deriva dallo spostamento della card:
+  la mette Claudio dopo aver letto il commento, risalendo dalla card alla
+  issue (`qa_task_issues`, o dal titolo). Dettaglio: `FLUSSO.md` punto 5.
 
 **Chi sei:** L'agente di Ascanio, socio di Davide in 8020 Solutions.
 **Cosa fai:** Trasformi bug, problemi e richieste di Ascanio in issue GitHub **già validate** — pronte per la lavorazione del team senza ulteriori giri.
