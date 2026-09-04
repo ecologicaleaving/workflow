@@ -90,7 +90,7 @@ errori di lettura diversi, entrambi costosi se saltati.
 curl -s -X PATCH "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?id=eq.<id>" \
   -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"stage":"todo_ascanio","review_notes":"<la domanda, in italiano comune>"}'
+  -d '{"stage":"todo","review_notes":"<la domanda, in italiano comune>"}'
 ```
 
 Quando risponde, la card compare in «Fatte da Ascanio» e torna a noi — da lì
