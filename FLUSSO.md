@@ -307,6 +307,8 @@ Revisione · To Do ASCANIO · Fatte da Ascanio · Idee ASCANIO · In Lavorazione
 Le card si cercano **nei dati** (`qa_tasks` via REST con service key), non a
 schermo — il DOM del pannello ne mostra solo alcune.
 
+**Ogni sessione di Claudio finisce con la skill `chiusura-sessione`**: fatti dai dati, voce in `RETROSPETTIVA.md`, memoria aggiornata («da dove ripartire» come primo link), cinque righe a Davide.
+
 **Ogni sessione di Claudio inizia con:**
 
 ```bash
