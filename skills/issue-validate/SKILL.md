@@ -18,7 +18,8 @@ version: 2.0.0
 ## Obiettivo
 
 Trasformare una issue Backlog leggera in una issue completa e pronta per la lavorazione.
-Fase interattiva con Davide → poi research + piano → card → **Todo** → aspetta `/vai`.
+Fase interattiva con Davide → poi research + piano → resta in **Backlog**, pronta:
+il loop parte con `implementa #N` (skill `dev-loop`).
 
 ---
 
@@ -321,22 +322,26 @@ gh issue comment <N> --repo ecologicaleaving/<repo> \
 
 ---
 
-### Step 7 — Sposta card → Todo
+### Step 7 — La issue è pronta
 
-```bash
-./scripts/kanban-move.sh <N> <repo> Todo
-```
+Resta in **Backlog**, con la sezione Acceptance Criteria e il piano postato
+come commento (Step 6). Non c'è una colonna "Todo" nel flusso reale — il
+Kanban GitHub passa direttamente da Backlog a **In Progress** quando parte
+il loop di implementazione (`FLUSSO.md` punto 2), non a un passaggio
+intermedio qui.
 
 ---
 
-### Step 8 — Notifica Davide e aspetta `/vai`
+### Step 8 — Notifica Davide
 
 ```
-✅ [Issue #N] Piano pronto — <titolo>
+✅ [Issue #N] Pronta — <titolo>
 📌 <summary piano in 2-3 righe>
-⏭️ Scrivi /vai per avviare l'implementazione
+✓ precheck verde
+⏭️ Parte con "implementa #N"
 ```
 
-⚠️ **L'agente NON avvia mai l'implementazione senza `/vai` esplicito di Davide.**
+Il comando di Davide che avvia il loop è **`implementa #N`** (o `risolvi
+issue #N`), non `/vai` — vedi skill `dev-loop`.
 
 ---

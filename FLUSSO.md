@@ -38,6 +38,27 @@ Ogni issue ha una sezione `## Acceptance Criteria` con checkbox, AC atomici
 | `[Campo]` | Richiede scrivere su un impianto reale | Solo Ascanio, mai un agente |
 | `[Azione]` | Richiede che Ascanio faccia qualcosa (non solo confermi) | Solo Ascanio |
 
+### Come si scrive un AC
+
+1. **Atomico** — una "e" che unisce due comportamenti indipendenti si
+   spezza in due AC.
+2. **Input concreto → esito osservabile**, mai un obiettivo generico
+   ("migliora le performance" ✗ → "la query su `historical_readings` per
+   30 giorni risponde in una chiamata, non N+1" ✓).
+3. **Verificabile** leggendo il diff, una risposta API o lo schermo — mai
+   giudizio soggettivo ("interfaccia più chiara" ✗ → "il pulsante è
+   raggiungibile senza scroll a 1280×800" ✓).
+4. Include il **caso limite** quando è quello il punto della issue ("campo
+   null → il derivato `*_pct` è null, non 0").
+5. Se l'AC dice **"grep → zero occorrenze"**, il grep si esegue **prima**
+   di scriverlo, non dopo (episodio #1758 — un AC scritto sulla fiducia
+   che poi il grep smentiva).
+6. **Tag obbligatorio** su ogni AC — un AC senza tag non è completo.
+7. **Formato**: `- [ ] [Tag] ACn — testo`.
+
+Il loop che genera e verifica gli AC (Draft↔Critica, con il tier di rigore
+da scegliere prima di partire) è nella skill `issue-validate`.
+
 Prima del loop di implementazione:
 
 ```bash
@@ -180,6 +201,23 @@ migration che ri-schedula un cron cambia l'header dello schedule, non decide
 da sola cosa gira.
 
 Dettaglio completo: skill `approva`.
+
+---
+
+## Le verifiche, in ordine
+
+| # | Quando | Cosa | Chi | Comando / esito atteso |
+|---|---|---|---|---|
+| 1 | Prima del loop | Precheck della issue | Claudio | `npm run issue:precheck N` → exit 0 |
+| 2 | Fase 1 (validazione) | Grep del meccanismo prima di scrivere gli AC | Claudio | vedi punto 1, "Come si scrive un AC" #5 |
+| 3 | Dopo ogni tentativo del loop | Il verificatore Fable giudica OGNI AC sul `gh pr diff`, esegue lui stesso lint/test/build/audit su un checkout del branch — `[Campo]`/`[Azione]` restano `pending` | Verificatore (Fable) | pass/fail per AC |
+| 4 | Sulla PR | CI verde: type check, test unitari, schema da zero, E2E dove gira | CI | verde. Un "fail" può essere un `cancelled` di concorrenza — controlla sempre `.conclusion` via API prima di trattarlo come rosso vero |
+| 5 | Dopo il merge in `beta` | Deploy test verde, prova dal vivo su `test-<repo>` con dati veri, poi card in Revisione | Claudio | vedi punto 4 |
+| 6 | Dopo `/approva` | Dry-run pulito, CI della PR verso `main`, deploy prod verde, smoke `tests/curl-tests.sh`, sonde specifiche dell'issue in prod (es. 401 senza auth, CORS, query SQL) | Claudio | poi chiusura issue |
+| 7 | — | Prova sul campo degli AC `[Campo]`/`[Azione]`, approvazione dal pannello | Ascanio | card `revisione` → `backlog` |
+
+**Verde ≠ verificato: la CI dice che i test passano, non che la cosa
+funziona; a dati fermi la verifica è cieca.**
 
 ---
 
