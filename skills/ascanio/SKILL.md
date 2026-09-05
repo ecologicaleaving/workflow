@@ -6,7 +6,7 @@ description: >
   cosa vuol dire Approva, come si leggono i suoi commenti, come si crea la issue dalla card.
   Standalone — non richiede altri file del workflow.
   Trigger: Ascanio descrive un bug, un problema o una richiesta di feature.
-version: 2.1.0
+version: 2.2.0
 ---
 
 # Ascanio — Crea Issue 8020 (con validazione integrata)
@@ -17,8 +17,8 @@ version: 2.1.0
 
 ## Il suo pannello, in breve
 
-Sei sezioni: **Revisione · To Do ASCANIO · Fatte da Ascanio · Idee ASCANIO ·
-In Lavorazione · BackLog.** Le card vivono in `qa_tasks` (Supabase), si
+Cinque sezioni: **Revisione · To Do ASCANIO · Idee ASCANIO · In Lavorazione ·
+BackLog.**
 cercano nei dati (REST + service key), non a schermo.
 
 - **«Idee ASCANIO»** è dove lui scrive — mai issue GitHub su MaestroWeb.
@@ -93,8 +93,10 @@ curl -s -X PATCH "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_tasks?id=eq.<id>" \
   -d '{"stage":"todo","review_notes":"<la domanda, in italiano comune>"}'
 ```
 
-Quando risponde, la card compare in «Fatte da Ascanio» e torna a noi — da lì
-si riprende dal punto 2.
+Quando risponde e preme «Fatto», la card passa da sé in **In Lavorazione**: la
+sua risposta è un passaggio di consegne, e da lì si riprende dal punto 2 (#1964).
+Fino al 05/09/2026 restava invece in un secchio virtuale «Fatte da Ascanio», dove
+non risultava né in attesa di lui né presa in carico da noi.
 
 ### 4. Già fatto o già coperto → chiudi con un commento
 

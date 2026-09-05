@@ -44,7 +44,8 @@ Le segnalazioni di Ascanio nascono come **card in «Idee ASCANIO»**
    non promosso».
 3. Se serve una decisione o una prova sua → card in **To Do ASCANIO** con
    la domanda scritta in `review_notes`, in italiano comune. Quando
-   risponde, la card compare in «Fatte da Ascanio» e torna a noi.
+   risponde e preme «Fatto», la card passa da sé in **In Lavorazione**: la
+   sua risposta è un passaggio di consegne, e da lì tocca a noi (#1964).
 4. Se è già fatto o già coperto da un'altra issue → chiudi la card con un
    commento che dice dove sta.
 5. Altrimenti scrivi la issue.
@@ -301,8 +302,14 @@ funziona; a dati fermi la verifica è cieca.**
 
 ## 7. Sezioni del pannello di Ascanio
 
-Revisione · To Do ASCANIO · Fatte da Ascanio · Idee ASCANIO · In Lavorazione
-· BackLog.
+Cinque: Revisione · To Do ASCANIO · Idee ASCANIO · In Lavorazione · BackLog.
+
+Erano sei fino al 05/09/2026: c'era anche «Fatte da Ascanio», un secchio
+**virtuale** (status done + stage todo) dove cadevano le card a cui Ascanio
+aveva risposto. Non era una sezione vera — non esisteva nel database — e le
+card che ci finivano non risultavano né in attesa di lui né prese in carico da
+noi: il 04/09 ce n'erano quattordici ferme, la più vecchia da dieci giorni.
+Ora il suo «Fatto» le porta in «In Lavorazione» (#1964).
 
 Le card si cercano **nei dati** (`qa_tasks` via REST con service key), non a
 schermo — il DOM del pannello ne mostra solo alcune.
