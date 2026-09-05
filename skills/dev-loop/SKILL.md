@@ -8,7 +8,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: dev-loop
