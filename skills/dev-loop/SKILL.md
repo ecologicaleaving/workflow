@@ -8,7 +8,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: dev-loop
@@ -155,12 +155,20 @@ PR aperta (gh pr diff), non contro la descrizione del commit. Esegui tu
 stesso lint/test/build su un checkout del branch, non fidarti del developer.
 Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
 
-  verdict = await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label: `verify-${attempt}` })
-  if (!verdict) {
-    verdict = await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label: `verify-${attempt}-retry` })
+  // Il verificatore puo cadere in DUE modi, e vanno gestiti entrambi (vedi sotto).
+  const giudica = async (label) => {
+    try {
+      return await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label })
+    } catch (e) {
+      log(`Verificatore caduto (${label}): ${e?.message?.slice(0, 160) ?? e}`)
+      return null
+    }
   }
+
+  verdict = await giudica(`verify-${attempt}`)
+  if (!verdict) verdict = await giudica(`verify-${attempt}-retry`)
   if (!verdict) {
-    log(`Verificatore: nessuna risposta dopo 2 tentativi (probabile 529) — tentativo ${attempt} non giudicato, si ritenta l'intero giro`)
+    log(`Verificatore: nessun verdetto dopo 2 tentativi — tentativo ${attempt} non giudicato, si ritenta l'intero giro`)
     verdict = { allPassed: false, results: [] }
     continue
   }
@@ -212,15 +220,29 @@ const VERDICT_SCHEMA = {
 }
 ```
 
-**Perché il retry è un ciclo `for`/controllo di `null`, non un `try/catch`.**
-Nel `Workflow` tool, `agent()` su un errore API (529, sovraccarico) **non
-lancia un'eccezione**: restituisce `null`. Un `withRetry529` costruito
-attorno a un `catch` non intercetterebbe mai nulla — il retry va scritto
-controllando esplicitamente `if (!risultato)` e riprovando, come nello
-script sopra (planner: fino a 3 tentativi, poi `blocked: true`;
-verificatore: un secondo tentativo con label `-retry`, poi si passa al giro
-successivo del loop senza far cadere l'intero workflow).
+**Il verificatore cade in due modi diversi, e servono due difese.**
 
+Nel `Workflow` tool `agent()` **non** lancia su un errore API (529,
+sovraccarico): restituisce `null`. Per quello serve il controllo esplicito
+`if (!risultato)` — un `try/catch` da solo non intercetterebbe niente.
+
+Ma esiste un secondo modo di cadere, e quello **lancia**: il subagente finisce
+senza chiamare `StructuredOutput`, cioè risponde in prosa invece che nello schema
+chiesto. Lì `agent()` solleva un'eccezione che, senza `catch`, **uccide l'intero
+workflow**.
+
+Il 05/09/2026 è successo su #1799: il piano era fatto, l'implementazione era fatta
+e la PR era già aperta: tutto buttato via perché un verdetto non era formattato
+bene. Un giudizio mancante deve costare un giro, non il lavoro di tre ore.
+
+Quindi il verificatore va avvolto in una funzione che fa **entrambe** le cose —
+`catch` che ritorna `null`, più il controllo su `null` a valle — come nello script
+sopra. Il planner ha lo stesso problema e la stessa cura.
+
+**Se un workflow muore così, il lavoro non è perso:** la PR è già su GitHub e i
+risultati degli agenti completati sono in cache. Si corregge lo script e si
+riprende con `Workflow({scriptPath, resumeFromRunId})` — chi ha già finito replica
+dalla cache, riparte solo chi è caduto.
 ---
 
 ## Gli AC `[Campo]`/`[Azione]` non entrano nel criterio di uscita
