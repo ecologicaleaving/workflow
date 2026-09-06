@@ -8,6 +8,68 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-06 — Ventisei ore: sette issue in beta, e cinque documenti che dicevano il falso
+
+**In produzione:** nulla di nuovo dal codice. Applicate a mano due migration di
+catalogo allarmi (`MAE-BIZ-07` di #1822 e i sei orfani di #1967): il catalogo passa da
+46 a 53 righe e `alert_events` non ha più codici senza descrizione.
+**In beta, aspetta:** #1930, #1822, #1978 (Ascanio, card S70 in Revisione · S36/S48 in
+Lavorazione) · #1968, #1967, #1964, #1972, #1977, #1799 (nessuna card, lavoro tecnico) ·
+#1988 e #1989 pronte ma non mergiate (noi: una misura di connessioni, un ordine da
+concordare).
+**Aperto:** #1990 (fix dentro migration già applicate — nessuno sa quanti casi ci sono),
+#1982/#1983/#1984/#1985 (le quattro figlie di #1976), #1973/#1974/#1975 (le spie),
+#1915 (expand/contract, non lanciata: il suo merge accende scritture automatiche in prod).
+
+**Ha funzionato:** nove loop, sette convergono (mediana 2 tentativi, uno al primo giro).
+Il reset del worktree introdotto a metà sessione ha fatto centro subito: le tre PR
+successive hanno tutte base sulla punta di `beta`, contro i 150 commit di ritardo che
+avevano bruciato 811k token. La bonifica e2e di #1972 ha smesso di accumulare da sola:
+da ~8 schede l'ora a zero. Il verificatore dei tre diff finali: 29 AC verdi, **zero fail**,
+8 in sospeso e tutti `[Campo]`/`[Azione]`, cioè non nostri.
+
+**Non ha funzionato → regola nuova:**
+- Un verdetto mal formattato uccideva l'intero workflow (`agent()` lancia, non torna
+  `null`): guardia doppia nel template → skill `dev-loop` 2.1.0.
+- Il worktree del developer si dà per allineato e non lo è → reset esplicito + verifica
+  del merge-base come prima istruzione, skill `dev-loop` 2.2.0.
+- `/approva` significava due cose: ora `/approva` = beta, `/promuovi` = produzione →
+  `FLUSSO.md` sezione nuova, skill `approva` → `promuovi` (PR #54, da mergiare).
+- Le migration di dati legate al codice sono una terza categoria fra espansive e
+  distruttive: viaggiano col merge, e il criterio non è il tipo di istruzione ma se il
+  codice ancora in produzione regge il nuovo stato → #1915.
+
+**Decisioni di Davide:** «togli continue-on-error quando l'inventario è pulito» ·
+«se maestro rule evaluator è monitorato e sicuro, riattiviamolo» (resta acceso) ·
+«dividi i difetti» (#1976 → quattro figlie) · «mantieni il periodo fetchato» (#1799) ·
+«sostituiamo Fable con Opus dappertutto» · «/approva riguarda ciò che portiamo in beta,
+promuovi ciò che promuoviamo a main» · «aspettiamo Ascanio» sul filone Alert.
+
+**Errori miei:** cinque diagnosi sbagliate scritte da me nelle issue e corrette dai piani
+— la perdita e2e attribuita ai run cancellati (era un token letto con la chiave di
+produzione dal 30/08, quindi **nessuna** pulizia mai), la codifica data per Latin-1 (era
+Windows-1252, e il fix ovvio avrebbe prodotto un terzo strato di danno), un codice orfano
+dove erano sei, un percorso troncato «qualche volta» che lo è **sempre**, e due AC
+irraggiungibili come li avevo scritti. Poi: tre errori in un giorno sullo stesso job di
+migration (ref sbagliato, workflow sbagliato, ordine sbagliato) senza mai aprire
+`FLUSSO.md`, dove l'ordine giusto era scritto. E un'affermazione inventata in una skill
+condivisa — «Opus consuma di più» — smentita dai dati appena Davide l'ha contestata.
+
+**Numeri:** 0 issue in produzione, 7 mergiate in beta, 14 issue nuove aperte, 9+3 loop,
+~9,4 milioni di token nei subagenti, 4.400 chiamate a strumenti, limite di sessione
+esaurito 3 volte. Backend: 200 in 0,58 s. Connessioni DB nelle 15 ore misurate: mediana
+12 su 60, massimo 33, zero avvisi.
+
+**Il filo di tutta la sessione:** quasi tutto il valore è venuto da **documenti che
+mentivano**, non da codice scritto bene. Un cron dichiarato in pausa e acceso da quattro
+giorni (#1968). Sei sezioni scritte dove ce n'erano cinque (PR #50). Una skill che
+consigliava esattamente l'errore poi costato tre ore (PR #51). Un limite di PostgREST
+scoperto mesi fa, annotato in un file e mai propagato (#1984). Un aggregato fermo dal 24
+marzo con il cron che gira e riesce ogni notte (#1982). Una migration «applicata» il cui
+fix non è mai arrivato in produzione (#1990). Il filo comune: **niente diventava rosso**.
+La CI verde, il cron riuscito, la pulizia che non lasciava tracce fallite ma assenti, il
+grafico che mostrava una curva — falsa, ma una curva.
+
 ## 2026-09-03/04 — Audit sicurezza in prod, 28 issue promosse, nasce il workflow v2
 
 **In produzione:** #1937 (edge function e RPC della coda QA chiuse a chiunque), #1938 (CI senza testo iniettabile, host key VPS fissa), #1939 (isolamento fra aziende su note, POD e credenziali; audit RLS con quattro controlli nuovi; CORS allowlist), #1949 (SQL in prod solo con conferma scritta), #1956 (numero corto S123 su ogni card), #1960 (campionatore delle connessioni DB ogni minuto); 15 issue approvate da Ascanio e nostri fix (#1816, #1818, #1817, #1820, #1920, #1934, #1873, #1875, #1877, #1878, #1879, #1889, #1898, #289, #1941) e 7 nel secondo giro (#1917, #1919, #1921, #1928, #1933, #1887, #1888).
