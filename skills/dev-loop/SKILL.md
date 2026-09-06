@@ -75,11 +75,31 @@ ricontrolla. Il 05/09 su MaestroWeb i piani hanno trovato cinque diagnosi sbagli
 scritte nelle issue da chi le aveva aperte: è lì che si decide se la giornata
 produce lavoro o lavoro da rifare.
 
-**Il costo, però, è reale.** Opus consuma più in fretta il limite di sessione: il
-05/09, già con Fable, il limite si è esaurito due volte e ha ucciso quattro
-implementazioni a metà. Con Opus su due ruoli su tre, **due loop in parallelo sono
-il tetto**, e per una issue grossa conviene tenerne uno solo. Se il limite salta,
-il lavoro non è perso: vedi il recupero con `resumeFromRunId` più sotto.
+**Sul costo, i numeri dicono il contrario di quello che si assume.** Non è il
+modello a fare il conto: sono **i tentativi**. Misurato sui nove loop del
+05-06/09/2026 (tutti con planner e verificatore su Fable):
+
+| Tentativi | Token consumati |
+|---|---|
+| 1 | 351.000 |
+| 2 | da 639.000 a 951.000 |
+| 4 | da 811.000 a 1.541.000 |
+
+Un loop che chiude al primo giro costa **un quarto** di uno che ne fa quattro. E i
+giri si moltiplicano quando il verdetto boccia un AC o quando il piano parte da una
+diagnosi sbagliata — cioè esattamente dove pesano planner e verificatore. Un piano
+migliore non è un lusso che si paga: è la leva principale sul consumo.
+
+**Perché si era passati a Fable, e perché non era il costo.** La retrospettiva del
+04/09 lo dice: «Opus 529 per un'ora ha fermato tre loop». Il problema era il **529,
+sovraccarico dell'API**, non il consumo. Il limite di sessione è un guasto diverso ed
+è comparso **dopo** quel passaggio: il 05/09 si è esaurito due volte, uccidendo
+quattro implementazioni a metà, con planner e verificatore su Fable.
+
+Non è una dimostrazione — non c'è un confronto controllato fra i due modelli sulle
+stesse issue — ma è quello che i dati mostrano, ed è il verso opposto a «Opus costa
+di più». Se il 529 torna a fermare i loop, la cura è il retry già previsto qui sotto,
+non cambiare modello.
 
 ## Meccanica del loop
 
