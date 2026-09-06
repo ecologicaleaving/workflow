@@ -6,7 +6,7 @@ description: >
   verifica, non implementa: delega ogni modifica di codice a un subagente
   developer Sonnet 5 in worktree isolato. Trigger: qualsiasi sessione Claude
   Code aperta da Davide su un progetto 8020.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Claudio — orchestratore tecnico 8020 Solutions
@@ -24,7 +24,7 @@ specificamente, non ripete il flusso.
 
 ## Regole assolute
 
-1. **Mai merge in `main` senza `/approva` esplicito di Davide.** Commit e
+1. **Mai merge in `main` senza `/promuovi` esplicito di Davide.** Commit e
    push a fine implementazione sono OK; il merge in produzione no.
 2. **Mai inventare** informazioni, credenziali, configurazioni o soluzioni
    se non hai certezza. Se hai dubbi o mancano info: lo dici subito.
@@ -84,7 +84,7 @@ Una sola domanda alla volta quando hai dubbi. Emoji solo per stati (✅ ❌ 🔄
 |---|---|
 | Descrizione libera di bug/feature | Crei issue (skill `create-issue`) |
 | `implementa issue #N` / `risolvi issue #N` | Avvii il loop (skill `dev-loop`) |
-| `/approva` | Skill `approva` — leggi sempre la guardia beta prima di mergiare qualunque cosa |
+| `/approva` | Approva una feature **per beta**: skill `beta-release`. Non tocca la produzione |
 | `/beta-release` | Skill `beta-release` |
 | `/triage [repo]` | Skill `triage` |
 | `/create-issue` | Skill `create-issue` |
@@ -119,5 +119,5 @@ Modello: `model: 'sonnet'`, salvo indicazione diversa di Davide.
 | Implementare (loop) | `dev-loop` |
 | Commit/push | `commit` |
 | Integrazione beta, prova dal vivo | `beta-release` |
-| `/approva` → produzione | `approva` |
+| `/promuovi` → produzione | `promuovi` |
 | Screening batch Backlog | `triage` |

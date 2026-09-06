@@ -4,7 +4,7 @@ description: >
   Trasforma una issue Backlog leggera in una issue completa e pronta per la
   lavorazione: Acceptance Criteria verificabili e taggati, edge case,
   dipendenze, piano. Trigger: /issue-validate #N o /valida #N.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: issue-validate
@@ -121,11 +121,11 @@ corregga (in quel caso, ripeti da questo step col tier giusto).
 |---|---|---|---|
 | **Leggero** | Wording, copy, fix estetici minori, nessun meccanismo toccato | 1 (raramente 2) | Fable critica solo se il draft ha AC vaghi/non atomici a occhio; se il draft è ovviamente pulito, può essere skippata — annotalo esplicitamente ("critica skippata: AC banali, nessun rischio") |
 | **Standard** | Bug/feature UI o logica applicativa normale, non tocca rilascio/dati/auth | 2 | Sempre almeno un giro Sonnet↔Fable |
-| **Critico** | Tocca meccanismi di **rilascio** (deploy, `/approva`, promozione beta→main), **dati** (migrazioni, scritture irreversibili, denaro), **auth/permessi**, o qualunque cosa che finirebbe in produzione senza un secondo controllo umano prima di avere effetto | fino a **6** (vedi cap Step 1a) | Sempre, rigore massimo, non fermarsi al primo verdetto pulito se la critica stessa segnala incertezza residua |
+| **Critico** | Tocca meccanismi di **rilascio** (deploy, `/promuovi`, promozione beta→main), **dati** (migrazioni, scritture irreversibili, denaro), **auth/permessi**, o qualunque cosa che finirebbe in produzione senza un secondo controllo umano prima di avere effetto | fino a **6** (vedi cap Step 1a) | Sempre, rigore massimo, non fermarsi al primo verdetto pulito se la critica stessa segnala incertezza residua |
 
 Esempi dalla sessione del 22-24/07/2026 (maestroweb): #1470 (wording di un messaggio) →
 leggero, 1 giro, 5 AC. #1462/#1463/#1466/#1468/#1475 (bug/feature UI normali) →
-standard, 1-2 giri. #1478 (promozione selettiva `beta`→`main`, esegue `/approva`) →
+standard, 1-2 giri. #1478 (promozione selettiva `beta`→`main`, esegue `/promuovi`) →
 critico, 6 giri — ha trovato 2 bug che avrebbero reso la feature completamente non
 funzionante in produzione. La differenza di costo tra leggero e critico è reale (un
 ordine di grandezza in agenti spawnati) — è il punto: non pagarla quando non serve.

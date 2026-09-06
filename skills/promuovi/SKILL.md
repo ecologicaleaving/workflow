@@ -1,45 +1,56 @@
 ---
-name: approva
+name: promuovi
 description: >
-  Procedura completa di /approva di Davide — label qa-approved, promozione
-  selettiva beta→main via approva-promote.ts (o la procedura manuale a
-  gruppi quando serve), CI, merge, deploy, smoke test, chiusura issue.
-  Assorbe la guardia beta: un /approva su una feature significa beta, non
-  produzione, finché Davide non approva esplicitamente la beta.
-  Trigger: Davide scrive /approva.
-version: 2.0.0
+  Procedura completa di /promuovi: porta in PRODUZIONE (main) cio che Ascanio ha
+  approvato e che vive in beta — label qa-approved, promozione selettiva
+  beta→main via approva-promote.ts (o la procedura manuale a gruppi quando
+  serve), CI, merge, deploy, smoke test, chiusura issue.
+  NON confondere con /approva, che porta una feature in beta e non tocca la
+  produzione.
+  Trigger: Davide scrive /promuovi.
+version: 3.0.0
 ---
 
-# Skill: approva
+# Skill: promuovi
 
-**Trigger:** Davide scrive `/approva`
+**Trigger:** Davide scrive `/promuovi`
 
 > Riferimento flusso: `FLUSSO.md` — punto 6
 
 ---
 
-## ⛔ Step 0 — Guardia beta (obbligatoria, sempre per prima)
+## Le due parole, e perche sono due
 
-Un `/approva` su una **feature** significa che è approvata per andare in
-`beta`, **non** in produzione. La produzione si tocca solo quando Davide
-approva **la beta stessa**, con contesto esplicito: "approva beta", "porta
-in prod", oppure `/approva` dato **dopo** l'avviso "✅ Beta pronta da
-testare" della skill `beta-release`.
+Dal 06/09/2026, per decisione di Davide:
 
-**In dubbio su cosa Davide stia approvando → chiedi prima di mergiare.** Un
-merge in `beta` è reversibile a costo quasi zero; un deploy prod sbagliato
-no.
+| Comando | Cosa approva | Dove va il codice |
+|---|---|---|
+| **`/approva`** | una feature, una PR | in **`beta`** — la produzione non si tocca |
+| **`/promuovi`** | cio che e in beta ed e approvato da Ascanio | in **`main`**, deploy, produzione |
 
-> Incidente di riferimento: 21/07/2026, MaestroWeb #1426/PR #1429 —
-> `/approva` su una feature interpretato come ok prod → merge in `main` +
-> deploy da cancellare + revert. Da allora questo step è il primo, sempre.
+Prima era una parola sola per due cose, e la skill doveva indovinare quale.
+Indovinare andava male: **21/07/2026, MaestroWeb #1426/PR #1429** — un `/approva`
+su una feature letto come ok per la produzione, con merge in `main`, deploy da
+cancellare e revert. Da quell'incidente nacque una «guardia beta» come primo
+passo obbligatorio, cioe' un controllo che esisteva solo perche' la parola era
+ambigua.
 
-Se il repo **non** ha branch `beta` → flusso diretto, salta al resto di
-questa skill trattando `beta` come "la PR aperta" e `main` come target
-diretto. Se **ha** `beta` (es. MaestroWeb) → procedi con gli step sotto,
-che presuppongono `beta` già pronta (skill `beta-release` completata).
+Con due parole distinte la guardia diventa piu' semplice, ma **non sparisce**:
+
+- Se Davide scrive **`/approva`**, questa skill **non c'entra**: si porta la
+  feature in `beta` (vedi `beta-release`) e ci si ferma li'.
+- Se scrive **`/promuovi`**, si procede con gli step qui sotto.
+- **Nel dubbio si chiede.** Un merge in `beta` si annulla quasi gratis, un deploy
+  sbagliato in produzione no. Il costo di una domanda in piu' e' trenta secondi;
+  quello di un deploy da revertare l'abbiamo gia' pagato.
+
+**Nota sui nomi dei file:** lo script si chiama ancora `approva-promote.ts` e la
+label ancora `qa-approved`. Non si rinominano: il primo e' referenziato da
+documenti e comandi, la seconda vive su decine di issue gia' etichettate. La
+terminologia nuova vale per **come parliamo**, non per come si chiamano i file.
 
 ---
+
 
 ## Step 1 — Label `qa-approved`
 
