@@ -8,7 +8,7 @@ sono in disaccordo, vince questo file.
 
 | Chi | Cosa fa |
 |---|---|
-| **Davide** | Decide, testa, approva (`/approva`) |
+| **Davide** | Decide, testa, approva verso beta (`/approva`) e promuove in produzione (`/promuovi`) |
 | **Ascanio** | Co-fondatore. Prova sul campo, approva dal suo pannello (`/qa`) |
 | **Claudio** | Orchestratore — gira su **Fable 5** (alias `model: 'fable'`). Pianifica, verifica, coordina. Non implementa. |
 | **developer** | Subagente **Sonnet 5** (alias `model: 'sonnet'`), in worktree isolato. Implementa. |
@@ -22,7 +22,7 @@ feature/issue-N-slug  →  beta  →  main
 ```
 
 Merge sempre `--merge`, **mai `--squash`**. Nessun merge in `main` senza
-`/approva` di Davide.
+`/promuovi` di Davide.
 
 ---
 
@@ -253,7 +253,7 @@ Dettaglio, sezioni del pannello, come si crea la issue dalla card: skill
 
 ---
 
-## 6. `/approva` di Davide
+## 6. `/promuovi` di Davide
 
 1. Claudio mette la label `qa-approved` sulle issue approvate (e sui fix
    tecnici che Davide include esplicitamente).
@@ -292,11 +292,47 @@ Dettaglio completo: skill `approva`.
 | 4 | Sulla PR | CI verde: type check, test unitari, schema da zero, E2E dove gira | CI | verde. Un "fail" può essere un `cancelled` di concorrenza — controlla sempre `.conclusion` via API prima di trattarlo come rosso vero |
 | 5 | Dopo il merge in `beta` | Deploy test verde, prova dal vivo su `test-<repo>` con dati veri, poi card in Revisione | Claudio | vedi punto 4 |
 | 5b | Dopo il merge in `beta`, se la PR ha migration additive | Applicate in prod via `run-migration.yml` (ref beta, `conferma=PRODUZIONE`) e verificate con una query REST sulla colonna nuova; prima della prova dal vivo | Claudio | 200, non 42703 — vedi punto 4b |
-| 6 | Dopo `/approva` | Dry-run pulito, CI della PR verso `main`, deploy prod verde, smoke `tests/curl-tests.sh`, sonde specifiche dell'issue in prod (es. 401 senza auth, CORS, query SQL) | Claudio | poi chiusura issue |
+| 6 | Dopo `/promuovi` | Dry-run pulito, CI della PR verso `main`, deploy prod verde, smoke `tests/curl-tests.sh`, sonde specifiche dell'issue in prod (es. 401 senza auth, CORS, query SQL) | Claudio | poi chiusura issue |
 | 7 | — | Prova sul campo degli AC `[Campo]`/`[Azione]`, approvazione dal pannello | Ascanio | card `revisione` → `backlog` |
 
 **Verde ≠ verificato: la CI dice che i test passano, non che la cosa
 funziona; a dati fermi la verifica è cieca.**
+
+---
+
+## Le due parole: `/approva` e `/promuovi`
+
+Dal 06/09/2026 sono **due comandi distinti**, perche' erano due cose distinte
+che condividevano una parola sola.
+
+| Comando | Cosa approva Davide | Dove va il codice | Reversibile? |
+|---|---|---|---|
+| **`/approva`** | una feature, una PR | in **`beta`** | si', quasi gratis |
+| **`/promuovi`** | cio' che e' in `beta` ed e' approvato da Ascanio | in **`main`**, deploy, produzione | no |
+
+**Perche' due.** Il 21/07/2026 un `/approva` su una feature fu letto come ok per
+la produzione: merge in `main`, deploy da cancellare, revert (MaestroWeb #1426,
+PR #1429). Da li' era nata una «guardia beta» come primo passo obbligatorio della
+skill — un controllo che esisteva solo per compensare l'ambiguita' della parola.
+Con due parole la guardia si semplifica, ma la regola di fondo resta: **nel dubbio
+si chiede**, perche' un merge in `beta` si annulla e un deploy sbagliato no.
+
+**Da non confondere con `qa-approved`,** che non e' un comando di Davide ma la
+label che segna **l'approvazione di Ascanio**: gliela mettiamo noi quando lui
+sposta una card da «Revisione» a «BackLog». E' il ponte fra il suo giudizio e la
+promozione — `approva-promote.ts` porta in `main` solo i gruppi di commit le cui
+issue hanno quella label.
+
+Quindi la catena completa e':
+
+```
+Ascanio approva la card  →  noi mettiamo qa-approved  →  Davide /promuovi  →  in produzione
+```
+
+**I nomi dei file restano quelli.** Lo script si chiama ancora
+`approva-promote.ts` e la label ancora `qa-approved`: il primo e' citato in
+documenti e comandi, la seconda vive su decine di issue gia' etichettate.
+La terminologia nuova vale per **come parliamo**, non per come si chiamano i file.
 
 ---
 

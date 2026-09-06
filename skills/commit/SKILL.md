@@ -4,7 +4,7 @@ description: >
   Convenzioni di commit e PR per i progetti 8020 Solutions — Conventional
   Commits, versioning semantico, dove va il "Closes #N", trailer di
   attribuzione. Trigger: qualunque commit o push in un progetto 8020.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: commit
@@ -129,5 +129,5 @@ presenti).
 ## Dopo il push
 
 CI deploya automaticamente su `test-*.8020solutions.org` (branch `beta`) o
-in produzione (branch `main`, solo dopo `/approva`). Non pushare mai codice
+in produzione (branch `main`, solo dopo `/promuovi`). Non pushare mai codice
 rotto o non testato — vedi il check pre-push sopra.

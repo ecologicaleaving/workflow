@@ -7,7 +7,7 @@ description: >
   ripartire»), chiude ciò che è rimasto a metà e lascia a Davide cinque righe
   per ripartire. Trigger: /chiusura, «chiudiamo», «chiusura sessione»,
   «aggiorna retrospettiva e memoria».
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: chiusura-sessione
@@ -62,7 +62,7 @@ Template, tutto obbligatorio, righe vuote dove non c'è niente:
 ## <YYYY-MM-DD> — <titolo di una riga>
 
 **In produzione:** #… (cosa cambia per chi usa), …
-**In beta, aspetta:** #… (chi: Ascanio card S… / Davide /approva / noi)
+**In beta, aspetta:** #… (chi: Ascanio card S… / Davide /promuovi / noi)
 **Aperto:** #… — e cosa lo sblocca
 
 **Ha funzionato:** 2-4 righe, con i numeri (tentativi del loop, tempi, AC)
@@ -120,7 +120,7 @@ git push origin <branch>      # master è protetto: se serve, PR
 Il messaggio finale ha esattamente questa forma, senza altro:
 
 1. cosa è andato in produzione oggi
-2. cosa aspetta lui (con il comando: `/approva #N`, un secret, una decisione)
+2. cosa aspetta lui (con il comando: `/approva #N` per beta o `/promuovi` per la produzione, un secret, una decisione)
 3. cosa aspetta Ascanio (card S…)
 4. cosa riprendo io domani per primo
 5. il rischio aperto, se c'è

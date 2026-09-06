@@ -4,9 +4,9 @@ description: >
   Orchestrazione del ciclo di release beta: integra le feature testate nel branch `beta`
   (merge autonomo dopo CI verde, gestione conflitti), esegue il re-test aggregato, verifica
   che `beta` sia pubblicato sull'ambiente test su dati reali, e avvisa Davide che è pronta da
-  testare. Il merge finale `beta`→`main` (prod) resta SEMPRE dietro `/approva` di Davide.
+  testare. Il merge finale `beta`→`main` (prod) resta SEMPRE dietro `/promuovi` di Davide.
   Trigger: /beta-release [repo], o a fine di un'ondata di issue lavorate.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: beta-release
@@ -39,7 +39,7 @@ triage → dev-loop (dev in worktree, test, PR verso beta)      ← per-issue
 4. avviso a Davide: "beta pronta da testare"
    │
    ▼  Ascanio testa su test-maestro (banner + conferma scritture) → dà l'ok a Davide  ← UMANO
-   ▼  Davide `/approva`                                                                ← UMANO
+   ▼  Davide `/promuovi`                                                                ← UMANO
 merge `beta` → `main` → deploy PRODUZIONE
 ```
 
@@ -129,11 +129,11 @@ Il **reject** di Ascanio è un commento sulla card + rientro in `lavorazione`
 ✅ Beta pronta da testare — https://test-maestro.8020solutions.org
    Include: #NNNN, #NNNN, … (N feature)
    Dati REALI di produzione · banner + conferma scritture attivi
-⏭️ Ascanio la testa → ti dà l'ok → tu /approva per il merge in prod.
+⏭️ Ascanio la testa → ti dà l'ok → tu /promuovi per il merge in prod.
 ```
 La conferma di Ascanio arriva **fuori sistema** (a voce/Telegram) e la recepisce Davide.
 
-### Step 5 — Gate prod (SOLO con /approva di Davide)
+### Step 5 — Gate prod (SOLO con /promuovi di Davide)
 
 **⚠️ Cambiato il 24/07/2026 (maestroweb, issue #1478/#1483 — vedi `dev-loop-opus-sonnet` per
 il contesto):** con il flusso merge-diretto-in-beta (Ascanio/Davide revisionano DOPO il merge,
@@ -167,7 +167,7 @@ gh pr merge <PR> --repo ecologicaleaving/<repo> --merge
 ```
 
 **Se il repo NON ha lo script** (repo diversi da maestroweb, o prima che venga esteso):
-resta il flusso precedente — **Non** mergiare `beta`→`main` senza `/approva` esplicito (legge
+resta il flusso precedente — **Non** mergiare `beta`→`main` senza `/promuovi` esplicito (legge
 assoluta):
 ```bash
 gh pr create --base main --head beta --title "release(beta): …" --body "…Closes #…"
@@ -185,7 +185,7 @@ assicurati che fossero additive e già applicate (vincolo beta→prod, vedi
 ---
 
 ## Vincoli assoluti
-- **Merge in prod solo con `/approva` di Davide.** Il merge autonomo vale SOLO per `beta`.
+- **Merge in prod solo con `/promuovi` di Davide.** Il merge autonomo vale SOLO per `beta`.
 - Su test i dati sono **reali di produzione**: il codice beta ci scrive davvero. Le protezioni
   (banner + conferma scritture, #1303) riducono il rischio ma NON coprono i bug del codice beta.
 - Una feature con **migration** non può andare in beta→prod se la migration non è già in prod.
