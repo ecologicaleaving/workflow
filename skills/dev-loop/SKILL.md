@@ -2,13 +2,13 @@
 name: dev-loop
 description: >
   Implementazione di una issue con pianificazione e verifica AC affidate a
-  Fable 5, scrittura del codice affidata a Sonnet 5 in worktree isolato.
+  Opus 5, scrittura del codice affidata a Sonnet 5 in worktree isolato.
   Loop automatico: pianifica → implementa → verifica ogni Acceptance
   Criterion → se qualcuno fallisce, riprova con il feedback, finché non sono
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.1.0
+version: 3.0.0
 ---
 
 # Skill: dev-loop
@@ -19,7 +19,7 @@ version: 2.1.0
 
 Separare chi pianifica/giudica da chi scrive il codice riduce il rischio che
 un'implementazione si autocertifichi "fatta" senza aver davvero soddisfatto
-ogni Acceptance Criterion. Fable 5 pianifica e verifica con un giudizio più
+ogni Acceptance Criterion. Opus 5 pianifica e verifica con un giudizio più
 affidabile su corner case e AC ambigui; Sonnet 5 scrive il codice.
 
 ## ⛔ Prima di lanciare il loop: `npm run issue:precheck <N>` — obbligatorio
@@ -62,10 +62,44 @@ worktree, sempre con PR verso `beta`, senza loop).
 
 | Ruolo | Modello | Fa cosa |
 |---|---|---|
-| Claudio (sessione corrente) | Fable 5 | Orchestra il loop via `Workflow` tool, riporta a Davide |
-| Planner | Fable 5 (`model: 'fable'`) | Legge la issue, scompone in piano concreto (file, approccio, edge case) — non scrive codice |
+| Claudio (sessione corrente) | Opus 5 | Orchestra il loop via `Workflow` tool, riporta a Davide |
+| Planner | Opus 5 (`model: 'opus'`) | Legge la issue, scompone in piano concreto (file, approccio, edge case) — non scrive codice |
 | Developer | Sonnet 5 (`model: 'sonnet'`, worktree isolato, base `origin/beta`) | Implementa secondo il piano (+ feedback se è un retry), commit, push, apre/aggiorna la PR verso `beta` |
-| Verificatore | Fable 5 (`model: 'fable'`) | Confronta il **diff reale della PR** con OGNI Acceptance Criterion della issue, pass/fail + motivazione puntuale — non si fida del messaggio di commit, esegue lui stesso lint/test/build su un checkout del branch |
+| Verificatore | Opus 5 (`model: 'opus'`) | Confronta il **diff reale della PR** con OGNI Acceptance Criterion della issue, pass/fail + motivazione puntuale — non si fida del messaggio di commit, esegue lui stesso lint/test/build su un checkout del branch |
+
+**Perché Opus 5 e non Fable per pianificare e giudicare** (Davide, 06/09/2026). Il
+planner e il verificatore sono i due ruoli in cui un errore non si vede subito: un
+piano che parte da una diagnosi sbagliata manda il developer a costruire la cosa
+giusta sul problema sbagliato, e un verdetto indulgente fa passare AC che nessuno
+ricontrolla. Il 05/09 su MaestroWeb i piani hanno trovato cinque diagnosi sbagliate
+scritte nelle issue da chi le aveva aperte: è lì che si decide se la giornata
+produce lavoro o lavoro da rifare.
+
+**Sul costo, i numeri dicono il contrario di quello che si assume.** Non è il
+modello a fare il conto: sono **i tentativi**. Misurato sui nove loop del
+05-06/09/2026 (tutti con planner e verificatore su Fable):
+
+| Tentativi | Token consumati |
+|---|---|
+| 1 | 351.000 |
+| 2 | da 639.000 a 951.000 |
+| 4 | da 811.000 a 1.541.000 |
+
+Un loop che chiude al primo giro costa **un quarto** di uno che ne fa quattro. E i
+giri si moltiplicano quando il verdetto boccia un AC o quando il piano parte da una
+diagnosi sbagliata — cioè esattamente dove pesano planner e verificatore. Un piano
+migliore non è un lusso che si paga: è la leva principale sul consumo.
+
+**Perché si era passati a Fable, e perché non era il costo.** La retrospettiva del
+04/09 lo dice: «Opus 529 per un'ora ha fermato tre loop». Il problema era il **529,
+sovraccarico dell'API**, non il consumo. Il limite di sessione è un guasto diverso ed
+è comparso **dopo** quel passaggio: il 05/09 si è esaurito due volte, uccidendo
+quattro implementazioni a metà, con planner e verificatore su Fable.
+
+Non è una dimostrazione — non c'è un confronto controllato fra i due modelli sulle
+stesse issue — ma è quello che i dati mostrano, ed è il verso opposto a «Opus costa
+di più». Se il 529 torna a fermare i loop, la cura è il retry già previsto qui sotto,
+non cambiare modello.
 
 ## Meccanica del loop
 
@@ -87,11 +121,11 @@ prima di lanciarlo):
 ```js
 export const meta = {
   name: 'issue-dev-loop',
-  description: 'Fable pianifica e verifica AC, Sonnet implementa — loop fino a verde',
+  description: 'Opus pianifica e verifica AC, Sonnet implementa — loop fino a verde',
   phases: [
-    { title: 'Piano', model: 'fable' },
+    { title: 'Piano', model: 'opus' },
     { title: 'Implementazione', model: 'sonnet' },
-    { title: 'Verifica AC', model: 'fable' },
+    { title: 'Verifica AC', model: 'opus' },
   ],
 }
 
@@ -121,7 +155,7 @@ migration. NON scrivere codice, solo piano.`
 let plan = null
 for (let i = 0; i < 3 && !plan; i++) {
   if (i) log(`Planner: nessuna risposta (probabile 529), tentativo ${i + 1}/3`)
-  plan = await agent(PLANNER_PROMPT, { model: 'fable', schema: PLAN_SCHEMA, label: `planner-${i + 1}` })
+  plan = await agent(PLANNER_PROMPT, { model: 'opus', schema: PLAN_SCHEMA, label: `planner-${i + 1}` })
 }
 if (!plan) {
   return { blocked: true, reason: 'planner non ha risposto dopo 3 tentativi (errore API)' }
@@ -158,7 +192,7 @@ Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
   // Il verificatore puo cadere in DUE modi, e vanno gestiti entrambi (vedi sotto).
   const giudica = async (label) => {
     try {
-      return await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label })
+      return await agent(VERIFIER_PROMPT, { model: 'opus', schema: VERDICT_SCHEMA, label })
     } catch (e) {
       log(`Verificatore caduto (${label}): ${e?.message?.slice(0, 160) ?? e}`)
       return null
