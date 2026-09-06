@@ -8,7 +8,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.1.0
+version: 2.2.0
 ---
 
 # Skill: dev-loop
@@ -142,7 +142,12 @@ while (!verdict.allPassed && attempt < 4) {
   await agent(`Implementa la issue #${args.issueNumber} (repo ${REPO}) secondo questo piano:
 ${JSON.stringify(plan)}
 ${feedback ? `Il tentativo precedente non ha soddisfatto questi AC:\n${feedback}\nCorreggi.` : ''}
-Branch da origin/beta aggiornato. Segui CLAUDE.md del repo. Apri o aggiorna
+PRIMA DI TOCCARE QUALUNQUE FILE, allinea il worktree — non fidarti di com'e':
+  git fetch origin && git checkout -B <branch> origin/beta
+e verifica di essere davvero sulla punta di beta:
+  git rev-list --count $(git merge-base HEAD origin/beta)..origin/beta   # deve dare 0
+Se non da' 0, fermati e dillo invece di procedere.
+Segui CLAUDE.md del repo. Apri o aggiorna
 la PR verso beta con "Closes #${args.issueNumber}" nel body, commit e push.`,
     { model: 'sonnet', label: `dev-attempt-${attempt}`, isolation: 'worktree' })
 
@@ -244,6 +249,43 @@ risultati degli agenti completati sono in cache. Si corregge lo script e si
 riprende con `Workflow({scriptPath, resumeFromRunId})` — chi ha già finito replica
 dalla cache, riparte solo chi è caduto.
 ---
+
+## Il worktree del developer va allineato, non dato per allineato
+
+Il primo comando del developer deve essere un allineamento esplicito a
+`origin/beta`, seguito dalla verifica che il merge-base sia la punta:
+
+```bash
+git fetch origin && git checkout -B <branch> origin/beta
+git rev-list --count $(git merge-base HEAD origin/beta)..origin/beta   # deve dare 0
+```
+
+**Perché non basta scrivere «parti da beta aggiornata».** Il 06/09/2026 su
+MaestroWeb #1984 il developer ha lavorato in un worktree fermo a `31a04367`, una
+promozione vecchia di **150 commit**. La PR si è aperta lo stesso, la CI è passata,
+e il difetto si è visto solo perché qualcuno ha guardato il conteggio dei file: 250
+file e +16.716 righe per un fix di paginazione.
+
+Il danno non era il rumore nel diff. Quel branch conteneva la versione **vecchia e
+corrotta** di `overlay-chart.tsx`, cioè il file che #1977 aveva appena sistemato:
+mergiarlo avrebbe **reintrodotto in silenzio un bug chiuso il giorno prima**, dentro
+una PR il cui titolo parlava d'altro. Sono 811.000 token buttati e una trappola
+evitata per un pelo.
+
+La verifica del merge-base conta quanto il `fetch`: un worktree può sembrare pulito
+(`git status` linda) ed essere indietro di mesi. «Pulito» e «aggiornato» sono due
+cose diverse, e il primo non implica il secondo.
+
+**Come accorgersene a valle**, quando il loop ha già finito e la PR è aperta:
+
+```bash
+git fetch origin <branch>
+MB=$(git merge-base origin/beta origin/<branch>)
+git rev-list --count $MB..origin/beta        # quanto e indietro la base: deve essere 0
+```
+
+Un numero diverso da zero significa che la PR va rifatta, non aggiustata: il piano e
+il censimento si conservano (commentandoli sulla issue), il branch si chiude.
 
 ## Gli AC `[Campo]`/`[Azione]` non entrano nel criterio di uscita
 
