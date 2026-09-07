@@ -8,6 +8,25 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-07 — Sette PR in beta, zero in produzione: la divergenza beta↔main viene al pettine
+
+**In produzione:** niente. Quattro dry-run di promozione, due PR verso `main` aperte e chiuse (#2008, #2009).
+**In beta, aspetta:** #1991, #1992, #1997, #1999, #1983, #1982, #1976, #2000 — tutte con `qa-approved`, bloccate dalla divergenza. Aspetta Davide: le 16 migration e la prova dal vivo di #1797 (card S50).
+**Aperto:** la riconciliazione `beta`↔`main` — 67 commit di divergenza, 31 file in conflitto. È il prossimo lavoro, deciso da Davide.
+
+**Ha funzionato:** cinque loop, tutti chiusi verdi (#1991 al 4° tentativo, #1997 al 2°, #1992 al 3°, #1999 al 2°, #2000 al 2°). Due si sono fermati da soli PRIMA di scrivere codice perché la root cause non reggeva — #2003 (recharts non esiste in questo progetto) e la diagnosi di #1976: la guardia «se la tua lettura contraddice gli AC, restituisci blocked» ha pagato due volte su cinque. Misure vere: /things da 104 a 37 richieste, `zcs-proxy` da 7 in crescita a 5 stabili, le 4 finestre `historical_readings` a 2.
+
+**Non ha funzionato → regola nuova:**
+- Le schede aperte dagli strumenti browser nascono `hidden` e Chrome non vi esegue `ResizeObserver`/`rAF`: ogni misura sul rendering è priva di significato, quelle di rete no → memoria `feedback_misure_browser_scheda_nascosta`. Due giorni di diagnosi su un difetto inesistente, tre issue scritte su numeri falsi.
+- La promozione selettiva può portare in `main` una migration senza il codice che la accompagna: #1967 inseriva `MAE-INV-08`/`MAE-BAT-13` nel catalogo DB mentre #1819 (che li definisce in TypeScript) cadeva per conflitto. Intercettata dalla CI, non da noi.
+- I cherry-pick delle promozioni selettive fanno divergere `main` da `beta`: 67 commit, e la divergenza si autoalimenta → memoria `project_riconciliazione_beta_main`.
+
+**Decisioni di Davide:** «promuovi comprese le tecniche» (11 issue senza card etichettate da noi); sul nuovo template impianti — password logger **in chiaro**, template adotta il vocabolario di #1916, un file solo per ora, colonnina e altri dispositivi fuori, POD/CENSIMP/CER solo conservati; «il prossimo step è la riconciliazione».
+
+**Errori miei:** ho concluso che un agente non avesse fatto il lavoro guardando un branch non ancora aggiornato, e ho rifatto la riconciliazione in parallelo producendo un commit che **non compilava** (import orfano) e con gli accenti scritti in ASCII; il suo era migliore e l'ho ripreso. Ho scritto #2003 due volte su prove inesistenti — la prima citando `recharts`, che in questo progetto non c'è. Ho dichiarato «la copertura del test è salva» su un test che in realtà era più debole di come l'avevo descritto.
+
+**Numeri:** 0 issue in produzione · 8 in beta pronte · 7 PR mergiate in beta · 5 loop, 2.6 tentativi medi · 6 issue nuove aperte (#1997, #1999, #2000, #2004, #2005, #2006) + 2 il giorno prima · 1 issue chiusa come inesistente (#2003) · backend 200 in 0.55s, connessioni max 33/60, zero episodi MAE-DB-CONN.
+
 ## 2026-09-06 — Ventisei ore: sette issue in beta, e cinque documenti che dicevano il falso
 
 **In produzione:** nulla di nuovo dal codice. Applicate a mano due migration di
