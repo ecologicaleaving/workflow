@@ -8,9 +8,46 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-08 — L'epica del caricamento in un giorno, e sette spie che non c'erano
+
+**In produzione:** #1996 (epica) con #2015, #2017, #2018, #2022, #2027, #2030 — PR #2034, fast-forward. Da oggi si caricano impianti in blocco col modulo di Ascanio, **proprietario compreso**: 30 colonne prese dal suo file, i dieci campi nuovi che arrivano a destinazione, POD/CENSIMP/CER/catasto/credenziali logger che hanno dove stare, e gli avvisi al posto dei blocchi dove lui li ha chiesti. Una migration additiva.
+**In beta, aspetta:** #2032 parte additiva (PR #2033, icona a `config`, `valori`, `telemetria`) — 2 commit avanti su `main`. Aspetta il prossimo giro.
+**Aperto:** #2035 (pannello problemi, loop ancora in corso) · #2023 (junction, verde, aspetta ok di Davide) · #2036 (dispositivi solo Zucchetti) · #2037 (nessun controllo di plausibilità) · #2038 (ricaricare aggiorna) · #2012 AC3/AC4 · #2014 · #2019 · #2020 · #2021 · #2026.
+
+**Ha funzionato:** cinque loop, **tutti chiusi al primo tentativo** (#2015 9/9 AC, #2017 10/10, #2018 9/9 al 2°, #2022 11/11, #2027 12/12). I verificatori hanno fatto il lavoro vero: si sono costruiti i piani da soli invece di usare gli helper delle PR, hanno battuto a mano intestazioni a 22 colonne invece di riusare le costanti, hanno cercato la password **per stringa** negli oggetti di errore invece di leggere il codice. Uno ha trovato che **il mio AC6 era sbagliato** (una provincia inventata non invalida la riga, è deliberato dal #1706) e l'ha documentato invece di far quadrare il numero. Due piani hanno **rifiutato di implementare**: #2032 perché togliere la scritta avrebbe nascosto gli «Alert Maestro», #2018 perché la RPC da estendere non era quella. Il precheck ha dato via libera 6 volte su 6.
+
+**Non ha funzionato → regola nuova:**
+- **Una junction rende `npm ci` distruttivo per la radice.** Un `npm ci` in un worktree collegato segue il link e svuota il `node_modules` **della radice**. È successo, e la causa scatenante è stata un'istruzione mia agli agenti che citava uno script non ancora in `beta`. La guardia impediva di *collegare* con lockfile diversi, non di *installare* dopo aver collegato → corretto in PR #2023 (marcatore + avviso + due test), scritto in CLAUDE.md e nella skill.
+- **`database.types.ts` si rigenera solo da produzione.** Una rigenerazione locale ha tolto in silenzio 167 righe, fra cui `commands.target_soc_pct` — colonna che esiste in prod e che **nessuna migration crea**. Da lì è nata #2026: nessun controllo confronta lo schema delle migration con quello vivo. Per i cron la spia esiste (`audit:cron-drift`), per lo schema no.
+- **`continue-on-error` spegne la spia per tutto, non solo per l'eccezione.** Il job «Cron vivi vs dichiarati» è uscito **verde con exit code 1** e sei scarti dentro, uno dei quali — `huawei-session-keepalive` dichiarato acceso e inesistente — non era concordato con nessuno → memoria `feedback_continue_on_error_spegne_la_spia`.
+- **Una scritta non è un controllo.** La colonna dice «(kWp)» e l'istruzione «Es. 8,2»: sono entrati sette impianti da 6500 kWp senza che niente fiatasse → #2037.
+- **Il caricamento non aggiorna, salta.** Ricaricare un file corretto non ripara niente: le righe già presenti vengono scartate → #2038, con il vincolo che **una cella vuota non deve mai cancellare**.
+- **Le prove a schermo non arrivano dove c'è un selettore file di sistema.** Il bottone «Importa da file» apre una finestra di Windows che blocca la scheda: l'anteprima dell'import resta l'unico pezzo che l'automazione non copre.
+
+**Decisioni di Davide:** retrocompatibilità — «entrambi i moduli restano caricabili»; junction adesso, pnpm quando c'è tempo; «promuovi» dato **due volte**, la seconda dopo essere stato informato che nessuna issue aveva `qa-approved`, che la scheda S110 non era passata da Ascanio e che l'anteprima non l'aveva vista nessuno; su S122 «diamogli un loghetto»; sul pannello — «le scritte in un pannello che si apre toccando uno qualsiasi dei loghetti»; su #2038 — «se ci sono già dati, un prompt deve chiedere che fare e se applicare a tutti».
+
+**Risposte di Ascanio (card S129):** «scriviamo monofase 230V e Trifase 400V» · «lo uso così, solo le celle con asterisco fermano il processo, sul singolo impianto non su tutti; se l'ordine delle colonne viene variato si deve fermare e dire quali colonne non vengono riconosciute» · «[password logger] può succedere: salva solo i dati che hai, dai un avviso ma non fermare nessun impianto». Due su tre **hanno rovesciato scelte nostre**: la regola severa sul logger l'avevamo scritta noi immaginando il caso.
+
+**Errori miei:** ho dato per bloccato l'intero browser dopo un solo tentativo — bastava una scheda nuova, come mi ha fatto notare Davide, e infatti funzionava. Ho poi bloccato **due** schede aprendo il selettore file, cosa prevedibile dal nome del bottone. Ho dato agli agenti un comando (`npm run worktree:link`) che su `beta` non esisteva, causando il terzo svuotamento di `node_modules`. Ho scritto un AC contro un comportamento che non avevo verificato (la provincia inventata). Ho consegnato un SQL con il `COMMIT;` commentato «per prudenza»: la transazione è rimasta aperta e la correzione è stata annullata — la prudenza si è mangiata l'operazione, e me ne sono accorto solo perché ho verificato invece di fidarmi del «ho fatto».
+
+**Numeri:** 7 issue in produzione (+26 il giorno prima) · 8 PR mergiate (7 in beta, 1 in main) · 5 loop, **1.2 tentativi medi** · 13 issue nuove · `main` e `beta` allineate a 0 commit dopo la promozione · 6213 test verdi · 4 svuotamenti di `node_modules` · 7 impianti caricati da Ascanio, 2 difetti trovati da lui in 15 minuti · backend 200 in 0.32s.
+
+---
+
 ## 2026-09-07 — Sette PR in beta, zero in produzione: la divergenza beta↔main viene al pettine
 
-**In produzione:** niente. Quattro dry-run di promozione, due PR verso `main` aperte e chiuse (#2008, #2009).
+> **Corretta l'08/09.** Questa voce era stata scritta a metà sessione e il suo
+> «In produzione: niente» è diventato falso poche ore dopo: la sessione è
+> proseguita e in serata sono andate in produzione **26 issue**. La
+> riconciliazione è stata fatta lo stesso giorno (#2010, PR #2011 alle 15:55) e
+> la promozione in blocco è seguita alle 18:32 (PR #2013). Il dettaglio è nella
+> voce dell'08/09.
+>
+> Lasciata la formulazione originale invece di riscriverla: una retrospettiva
+> che si corregge dichiarandolo è utile, una che si riscrive per sembrare
+> esatta è la cosa contro cui esiste la voce del 06/09.
+
+**In produzione:** niente *al momento della scrittura* — poi 26 issue in serata, vedi la nota sopra. Quattro dry-run di promozione, due PR verso `main` aperte e chiuse (#2008, #2009).
 **In beta, aspetta:** #1991, #1992, #1997, #1999, #1983, #1982, #1976, #2000 — tutte con `qa-approved`, bloccate dalla divergenza. Aspetta Davide: le 16 migration e la prova dal vivo di #1797 (card S50).
 **Aperto:** la riconciliazione `beta`↔`main` — 67 commit di divergenza, 31 file in conflitto. È il prossimo lavoro, deciso da Davide.
 
