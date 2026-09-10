@@ -10,7 +10,7 @@ sono in disaccordo, vince questo file.
 |---|---|
 | **Davide** | Decide, testa, approva (`/approva`) |
 | **Ascanio** | Co-fondatore. Prova sul campo, approva dal suo pannello (`/qa`) |
-| **Claudio** | Orchestratore — gira su **Fable 5** (alias `model: 'fable'`). Pianifica, verifica, coordina. Non implementa. |
+| **Claudio** | Orchestratore — gira su **Opus 5** (alias `model: 'opus'`). Pianifica, verifica, coordina. Non implementa. |
 | **developer** | Subagente **Sonnet 5** (alias `model: 'sonnet'`), in worktree isolato. Implementa. |
 | **Gaia** | Business e governance — vive nel repo `ecologicaleaving`. Citata qui solo per completezza dei ruoli. |
 
@@ -159,9 +159,9 @@ va in `lavorazione` appena si prende in carico la segnalazione.
 Workflow tool, tre fasi:
 
 ```
-phase Piano            planner    (model: 'fable')
+phase Piano            planner    (model: 'opus')
 phase Implementazione   developer  (model: 'sonnet', isolation: 'worktree', base: origin/beta)
-phase Verifica AC       verificatore (model: 'fable')
+phase Verifica AC       verificatore (model: 'opus')
 ```
 
 - Il **developer** crea il branch dalla base `origin/beta` aggiornata,
@@ -288,7 +288,7 @@ Dettaglio completo: skill `approva`.
 |---|---|---|---|---|
 | 1 | Prima del loop | Precheck della issue | Claudio | `npm run issue:precheck N` → exit 0 |
 | 2 | Fase 1 (validazione) | Grep del meccanismo prima di scrivere gli AC | Claudio | vedi punto 1, "Come si scrive un AC" #5 |
-| 3 | Dopo ogni tentativo del loop | Il verificatore Fable giudica OGNI AC sul `gh pr diff`, esegue lui stesso lint/test/build/audit su un checkout del branch — `[Campo]`/`[Azione]` restano `pending` | Verificatore (Fable) | pass/fail per AC |
+| 3 | Dopo ogni tentativo del loop | Il verificatore Opus giudica OGNI AC sul `gh pr diff`, esegue lui stesso lint/test/build/audit su un checkout del branch — `[Campo]`/`[Azione]` restano `pending` | Verificatore (Opus) | pass/fail per AC |
 | 4 | Sulla PR | CI verde: type check, test unitari, schema da zero, E2E dove gira | CI | verde. Un "fail" può essere un `cancelled` di concorrenza — controlla sempre `.conclusion` via API prima di trattarlo come rosso vero |
 | 5 | Dopo il merge in `beta` | Deploy test verde, prova dal vivo su `test-<repo>` con dati veri, poi card in Revisione | Claudio | vedi punto 4 |
 | 5b | Dopo il merge in `beta`, se la PR ha migration additive | Applicate in prod via `run-migration.yml` (ref beta, `conferma=PRODUZIONE`) e verificate con una query REST sulla colonna nuova; prima della prova dal vivo | Claudio | 200, non 42703 — vedi punto 4b |

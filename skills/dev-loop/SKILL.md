@@ -2,13 +2,13 @@
 name: dev-loop
 description: >
   Implementazione di una issue con pianificazione e verifica AC affidate a
-  Fable 5, scrittura del codice affidata a Sonnet 5 in worktree isolato.
+  Opus 5, scrittura del codice affidata a Sonnet 5 in worktree isolato.
   Loop automatico: pianifica → implementa → verifica ogni Acceptance
   Criterion → se qualcuno fallisce, riprova con il feedback, finché non sono
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.2.0
+version: 2.3.0
 ---
 
 # Skill: dev-loop
@@ -19,7 +19,7 @@ version: 2.2.0
 
 Separare chi pianifica/giudica da chi scrive il codice riduce il rischio che
 un'implementazione si autocertifichi "fatta" senza aver davvero soddisfatto
-ogni Acceptance Criterion. Fable 5 pianifica e verifica con un giudizio più
+ogni Acceptance Criterion. Opus 5 pianifica e verifica con un giudizio più
 affidabile su corner case e AC ambigui; Sonnet 5 scrive il codice.
 
 ## ⛔ Prima di lanciare il loop: `npm run issue:precheck <N>` — obbligatorio
@@ -62,10 +62,10 @@ worktree, sempre con PR verso `beta`, senza loop).
 
 | Ruolo | Modello | Fa cosa |
 |---|---|---|
-| Claudio (sessione corrente) | Fable 5 | Orchestra il loop via `Workflow` tool, riporta a Davide |
-| Planner | Fable 5 (`model: 'fable'`) | Legge la issue, scompone in piano concreto (file, approccio, edge case) — non scrive codice |
+| Claudio (sessione corrente) | Opus 5 | Orchestra il loop via `Workflow` tool, riporta a Davide |
+| Planner | Opus 5 (`model: 'opus'`) | Legge la issue, scompone in piano concreto (file, approccio, edge case) — non scrive codice |
 | Developer | Sonnet 5 (`model: 'sonnet'`, worktree isolato, base `origin/beta`) | Implementa secondo il piano (+ feedback se è un retry), commit, push, apre/aggiorna la PR verso `beta` |
-| Verificatore | Fable 5 (`model: 'fable'`) | Confronta il **diff reale della PR** con OGNI Acceptance Criterion della issue, pass/fail + motivazione puntuale — non si fida del messaggio di commit, esegue lui stesso lint/test/build su un checkout del branch |
+| Verificatore | Opus 5 (`model: 'opus'`) | Confronta il **diff reale della PR** con OGNI Acceptance Criterion della issue, pass/fail + motivazione puntuale — non si fida del messaggio di commit, esegue lui stesso lint/test/build su un checkout del branch |
 
 ## Meccanica del loop
 
@@ -87,11 +87,11 @@ prima di lanciarlo):
 ```js
 export const meta = {
   name: 'issue-dev-loop',
-  description: 'Fable pianifica e verifica AC, Sonnet implementa — loop fino a verde',
+  description: 'Opus pianifica e verifica AC, Sonnet implementa — loop fino a verde',
   phases: [
-    { title: 'Piano', model: 'fable' },
+    { title: 'Piano', model: 'opus' },
     { title: 'Implementazione', model: 'sonnet' },
-    { title: 'Verifica AC', model: 'fable' },
+    { title: 'Verifica AC', model: 'opus' },
   ],
 }
 
@@ -121,7 +121,7 @@ migration. NON scrivere codice, solo piano.`
 let plan = null
 for (let i = 0; i < 3 && !plan; i++) {
   if (i) log(`Planner: nessuna risposta (probabile 529), tentativo ${i + 1}/3`)
-  plan = await agent(PLANNER_PROMPT, { model: 'fable', schema: PLAN_SCHEMA, label: `planner-${i + 1}` })
+  plan = await agent(PLANNER_PROMPT, { model: 'opus', schema: PLAN_SCHEMA, label: `planner-${i + 1}` })
 }
 if (!plan) {
   return { blocked: true, reason: 'planner non ha risposto dopo 3 tentativi (errore API)' }
@@ -163,7 +163,7 @@ Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
   // Il verificatore puo cadere in DUE modi, e vanno gestiti entrambi (vedi sotto).
   const giudica = async (label) => {
     try {
-      return await agent(VERIFIER_PROMPT, { model: 'fable', schema: VERDICT_SCHEMA, label })
+      return await agent(VERIFIER_PROMPT, { model: 'opus', schema: VERDICT_SCHEMA, label })
     } catch (e) {
       log(`Verificatore caduto (${label}): ${e?.message?.slice(0, 160) ?? e}`)
       return null

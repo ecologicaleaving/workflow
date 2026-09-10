@@ -4,7 +4,7 @@ description: >
   Trasforma una issue Backlog leggera in una issue completa e pronta per la
   lavorazione: Acceptance Criteria verificabili e taggati, edge case,
   dipendenze, piano. Trigger: /issue-validate #N o /valida #N.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: issue-validate
@@ -119,8 +119,8 @@ corregga (in quel caso, ripeti da questo step col tier giusto).
 
 | Tier | Quando | Giri massimi | Critica |
 |---|---|---|---|
-| **Leggero** | Wording, copy, fix estetici minori, nessun meccanismo toccato | 1 (raramente 2) | Fable critica solo se il draft ha AC vaghi/non atomici a occhio; se il draft è ovviamente pulito, può essere skippata — annotalo esplicitamente ("critica skippata: AC banali, nessun rischio") |
-| **Standard** | Bug/feature UI o logica applicativa normale, non tocca rilascio/dati/auth | 2 | Sempre almeno un giro Sonnet↔Fable |
+| **Leggero** | Wording, copy, fix estetici minori, nessun meccanismo toccato | 1 (raramente 2) | Opus critica solo se il draft ha AC vaghi/non atomici a occhio; se il draft è ovviamente pulito, può essere skippata — annotalo esplicitamente ("critica skippata: AC banali, nessun rischio") |
+| **Standard** | Bug/feature UI o logica applicativa normale, non tocca rilascio/dati/auth | 2 | Sempre almeno un giro Sonnet↔Opus |
 | **Critico** | Tocca meccanismi di **rilascio** (deploy, `/approva`, promozione beta→main), **dati** (migrazioni, scritture irreversibili, denaro), **auth/permessi**, o qualunque cosa che finirebbe in produzione senza un secondo controllo umano prima di avere effetto | fino a **6** (vedi cap Step 1a) | Sempre, rigore massimo, non fermarsi al primo verdetto pulito se la critica stessa segnala incertezza residua |
 
 Esempi dalla sessione del 22-24/07/2026 (maestroweb): #1470 (wording di un messaggio) →
@@ -135,10 +135,10 @@ incidente in produzione.
 
 ---
 
-### Step 1a — Loop Sonnet (scrive) ↔ Fable (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
+### Step 1a — Loop Sonnet (scrive) ↔ Opus (giudica): genera e verifica gli Acceptance Criteria (obbligatorio)
 
 L'obiettivo grezzo raccolto allo Step 1 punto 1 (+ edge case dello Step 1 punto 2) va
-trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Fable 5
+trasformato in AC formali da un **loop Draft↔Critica**: Sonnet 5 scrive, Opus 5
 giudica — mai lo stesso agente/modello si autovaluta. Numero di giri governato dal
 **tier** scelto allo Step 0b.
 
@@ -184,7 +184,7 @@ critico fino a 6):
    - `attempt += 1`
    - **Draft** (`model: 'sonnet'` via `Agent` tool): genera/riscrive la lista AC da
      obiettivo + edge case + (se `attempt > 1`) il feedback della critica precedente
-   - **Critica** (`model: 'fable'` via `Agent` tool, agente separato dal draft) — su
+   - **Critica** (`model: 'opus'` via `Agent` tool, agente separato dal draft) — su
      tier leggero con draft ovviamente pulito, questo passo può essere skippato
      esplicitamente (vedi Step 0b): per ogni AC del draft, verdetto `pass/fail` + motivo
      puntuale sulla bar di qualità sopra; verdetto complessivo `clean = true` solo se
