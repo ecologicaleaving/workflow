@@ -255,8 +255,11 @@ Dettaglio, sezioni del pannello, come si crea la issue dalla card: skill
 
 ## 6. `/approva` di Davide
 
-1. Claudio mette la label `qa-approved` sulle issue approvate (e sui fix
-   tecnici che Davide include esplicitamente).
+1. Claudio mette la label `qa-approved` sulle issue approvate da Ascanio
+   **e, senza chiedere, su ogni issue tecnica già implementata e provata**
+   (decisione di Davide, 12/09/2026: le tecniche non hanno card, quindi
+   non hanno un'approvazione di Ascanio da aspettare — entrano nel giro da
+   sé). Il `/promuovi` di Davide riguarda le schede di Ascanio, non loro.
 2. `npx tsx scripts/approva-promote.ts --dry-run` — sempre prima del run
    reale. Se esclude gruppi «per conflitto»: quasi sempre è
    `package.json`/`PROJECT.md` (versione/changelog), non un conflitto reale.

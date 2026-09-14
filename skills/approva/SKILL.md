@@ -44,8 +44,20 @@ che presuppongono `beta` già pronta (skill `beta-release` completata).
 ## Step 1 — Label `qa-approved`
 
 Metti la label sulle issue che Ascanio ha approvato dal pannello (card
-`revisione` → `backlog`, vedi `FLUSSO.md` punto 5) e su eventuali fix
-tecnici che Davide include esplicitamente in questo giro:
+`revisione` → `backlog`, vedi `FLUSSO.md` punto 5).
+
+⛔ **E su OGNI issue tecnica già implementata e provata, senza chiederlo a
+Davide.** Le issue tecniche (bug nostri, refactor, CI, smoke test) non hanno
+card, quindi non c'è nessuna approvazione di Ascanio da attendere: entrano
+nel giro da sé. Chiedere conferma ogni volta è il difetto che questa riga
+corregge — decisione di Davide del 12/09/2026, ripetuta il 14/09: «le issue
+tecniche, una volta che sono testate, possono sempre essere promosse; il
+`/promuovi` si riferisce solo a quelle di Ascanio».
+
+«Provata» vuol dire provata da Claudio dal vivo su `test-maestro`, non CI
+verde: il verde dice che i test passano, non che la cosa funziona.
+
+In entrambi i casi:
 
 ```bash
 gh issue edit <N> --repo ecologicaleaving/<repo> --add-label qa-approved
