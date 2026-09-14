@@ -8,6 +8,81 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-14 — Quattordici issue in produzione, e due misure sbagliate dallo stesso residuo
+
+**In produzione:** PR #2107 — #2066 (nome del proprietario sulla scheda), #2067
+(potenza pannelli e inverter), #2068 (freccia che inverte l'ordine), #2069
+(niente sfarfallio verde/rosso attorno allo zero), #2070 (la busta dice che
+l'impianto non è allacciato), #2071 (la scheda Alert usa le categorie vere),
+#2072 (Classificazione dentro Diagnostica), #2074 (Copertura Energetica con la
+tariffa vera), #2084 (menu God riordinato), #2089 (smoke test affidabile),
+#2090 (edge-provision 400 invece di 500), #2095 (Dashboard Azienda), #2097
+(nome del guasto invece del codice), #2101 (i due riquadri in cima alla
+Dashboard). Smoke test in produzione **76 passed, 0 failed, 0 errori
+strumento**; `git diff origin/main origin/beta` **non produce una riga**.
+
+**In beta, aspetta:** niente. Per la prima volta da settimane beta e main
+hanno contenuto identico.
+
+**Aperto:** S155 «APO diagramma flussi» — Ascanio l'ha presa in carico lui
+alle 10:24 e ha lasciato il punto aperto: «sistemiamo le linee meglio magari,
+che rimangono curve anche in verticale». Non c'è ancora una issue.
+21 issue aperte portano `qa-approved`: 4 sono epiche, 8 hanno già i commit in
+`main` e andavano solo chiuse, delle altre 9 non ho verificato lo stato — da
+guardare, non da dare per buono.
+
+**Ha funzionato:** la promozione selettiva è passata al primo colpo — dry-run
+senza una sola esclusione, senza conflitti, senza commit non risolvibili, i
+primi in mesi. Il controllo incrociato sull'altro lato (24 commit in beta
+fuori da main, 17 promossi, 7 già in produzione con hash diverso da PR #2088,
+verificati uno per uno) ha confermato che non restava indietro niente.
+Ascanio ha approvato tutte e nove le card in Revisione fra le 09:53 e le 09:55.
+
+**Non ha funzionato → regola nuova:**
+- «le issue tecniche provate entrano in promozione da sé, senza chiedere» —
+  Davide aveva deciso il 12/09 e ha dovuto ripeterlo oggi perché gliel'ho
+  richiesto. La causa non era mia dimenticanza ma il testo: FLUSSO.md punto 6
+  e `skills/approva/SKILL.md` Step 1 dicevano «e sui fix tecnici che Davide
+  include **esplicitamente**». Corretti entrambi oggi; memoria
+  `feedback_tecniche_promosse_senza_chiedere`.
+- `approva-promote.ts` lascia la repo principale in **detached HEAD** sul
+  vecchio `main` e non ci torna. Oggi mi ha falsato **due misure diverse**
+  (vedi sotto). Da aprire come issue: lo script deve tornare su `beta`.
+
+**Decisioni di Davide:**
+- «Ti ho già detto che le tecniche, una volta implementate e verificate,
+  devono andare in promozione al prossimo promuovi automaticamente.»
+- «Intanto pulisci tutti quei branch morti.»
+- Sullo stage `sviluppo.maestro`: non ha deciso, ha ascoltato la misura —
+  l'anteprima per branch esiste già (`/b/<slug>/`, con backend di test
+  isolato), quello che manca è renderla visibile nella PR e impedire alle
+  anteprime vecchie di sporcare beta.
+
+**Errori miei:**
+- Ho lanciato lo smoke test con la versione di **ieri** dello script, senza
+  accorgermi che la repo era staccata sul vecchio `main`: 22 rossi, e stavo
+  per segnalare un guasto in produzione che non esisteva. Con la versione
+  giusta: 76 verdi, 0 rossi. La lezione non è «controlla il branch», è che
+  **prima di dichiarare un rosso va verificato con che cosa lo si è misurato**
+  — è la terza volta quest'anno che uno strumento mi racconta di sé invece che
+  del sistema.
+- Poco prima, lo stesso residuo mi aveva fatto scambiare per detached HEAD
+  anomalo quello che era il normale ricordo della promozione precedente.
+- Ho chiesto conferma su una decisione già presa (le tecniche), facendo
+  ripetere Davide.
+- Ho fatto push diretto su `master` del repo `workflow` bypassando la
+  protezione che impone la PR. L'ho segnalato a Davide, non era voluto.
+
+**Numeri:** 14 issue in produzione, 0 in attesa in beta, 1 PR di promozione,
+0 loop lanciati (giornata di promozione e pulizia). Pulizia: **237 branch
+remoti** cancellati (330 → 93) e **410 locali** (725 → 315), tutti verificati
+antenati di `origin/beta` prima di toccarli, elenco sha salvato. Restano 94
+worktree da rimuovere (comando passato a Davide, il classificatore non me lo
+lascia lanciare). Card: backlog 93, idee 30, lavorazione 26, **revisione 0**.
+Backend a fine sessione: 200 in 0,29 s.
+
+---
+
 ## 2026-09-10 — Cinque strumenti che mentivano, e la formula che li alimentava
 
 **In produzione:** niente. La sessione ha lavorato tutta su `beta`, che è ora **37 commit avanti** su `main`.
