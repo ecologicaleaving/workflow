@@ -172,8 +172,14 @@ Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
 
   verdict = await giudica(`verify-${attempt}`)
   if (!verdict) verdict = await giudica(`verify-${attempt}-retry`)
-  if (!verdict) {
-    log(`Verificatore: nessun verdetto dopo 2 tentativi — tentativo ${attempt} non giudicato, si ritenta l'intero giro`)
+  // Un verdetto può arrivare anche SENZA `results`: schema rispettato a metà,
+  // cioè un oggetto che non porta l'elenco degli AC. Vale come «non giudicato»
+  // esattamente come il null, e va normalizzato qui — altrimenti
+  // `verdict.results.filter` più sotto esplode e porta giù l'INTERO workflow.
+  // Successo il 15/09/2026 su #2132: tre giri di lavoro già fatti, PR aperta,
+  // e il loop caduto sull'ultima riga invece di dire che gli AC erano 8 su 12.
+  if (!verdict || !Array.isArray(verdict.results)) {
+    log(`Verificatore: nessun verdetto utilizzabile dopo 2 tentativi — tentativo ${attempt} non giudicato, si ritenta l'intero giro`)
     verdict = { allPassed: false, results: [] }
     continue
   }
