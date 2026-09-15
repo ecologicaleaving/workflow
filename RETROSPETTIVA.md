@@ -8,6 +8,85 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-14/15 — Trenta idee ferme, nove schede in mano ad Ascanio in una notte
+
+**In produzione:** niente di nuovo stanotte. Resta la promozione delle 14 issue
+del pomeriggio (PR #2107, smoke 76/0).
+**In beta, aspetta:** #2110 batteria · #2117 stato errori · #2114 scheda impianto
+· #2112 comandi in fondo · #2116 flussi proporzionali · #2115 tab laterali
+· #2113 dashboard telefono · #2111 icone — tutte e otto aspettano **Ascanio**
+(card S143, S115, S138, S157, S112, S139, S158, S145, più S141 già in prod).
+**Aperto:** #2118 epica tensione — misura fatta, aspetta due risposte di Ascanio
+(dove ha visto mancare la tensione su Solarman; quale impianto è «Rossi
+Patrizia»). La parte Zucchetti è lavorabile subito. #2108 detached HEAD di
+approva-promote resta aperta.
+
+**Ha funzionato:** il triage delle 30 card in «Idee» ha prodotto 16 lavorabili
+subito, e nove sono passate per il loop in tre lotti da tre. Otto PR mergiate,
+zero rosse in CI. Tentativi: #2114 e #2113 al primo giro, le altre sei al
+secondo, nessuna al terzo. Il verificatore Opus ha bocciato AC veri, non per
+forma: su #2117 ha rifiutato una prova fatta su cinque righe sintetiche in
+locale quando l'AC chiedeva un errore vero, e su #2109 il planner si è fermato
+prima di scrivere una riga perché la scheda era superata da un'altra.
+Due difetti trovati da un developer senza che nessuno li cercasse: su Huawei un
+campo null cancellava lo stato batteria su tutta la flotta, e il rumore notturno
+Solarman faceva oscillare l'etichetta.
+
+**Non ha funzionato → regola nuova:**
+- Su MaestroWeb la prima renderizzazione mostra i **fallback** (badge «non
+  caricati», didascalia vecchia) e solo dopo arrivano i dati: due volte stanotte
+  ho letto la pagina troppo presto e stavo per aprire un difetto inesistente su
+  #2116 e su #2114. Si misura solo dopo aver atteso che i segnali di «dato
+  assente» spariscano → memoria `feedback_misura_dopo_che_i_dati_sono_arrivati`.
+- Il worktree lasciato da un loop può essere **indietro rispetto a origin**: il
+  mio primo merge di risoluzione conflitto avrebbe cancellato il commit con le
+  sei evidenze di #2116. Prima di mergiare in un worktree ereditato:
+  `git reset --hard origin/<branch>` e controllo dei parent del merge commit →
+  rafforza `feedback_worktree_stale_prima_di_mergiare`.
+- Un developer, per fare la prova a schermo che la DoD impone, ha copiato
+  `.env.local` nel worktree e passato **email e password in chiaro sulla riga di
+  comando** di Playwright: il classificatore ha alzato un avviso di sicurezza.
+  Nessuna fuga (`.env.*` è in .gitignore, diff e PR puliti, verificato), ma le
+  credenziali finiscono nei log. Le credenziali di prova vanno lette da file →
+  memoria `feedback_credenziali_di_prova_mai_in_riga_di_comando`.
+- `plant-dashboard/page.tsx` è toccato da **6 schede su 8**: ha generato
+  entrambi i conflitti della notte. Nei lotti paralleli, una sola issue per volta
+  su quella pagina.
+- Su #2124 i check sembravano verdi ma l'**E2E non era mai partito**: il run era
+  di evento `push`, dove l'E2E è `skipping`. Stessa famiglia di
+  `feedback_gh_run_watch_evento_sbagliato`: si guarda l'evento, non il colore.
+
+**Decisioni di Davide:**
+- Le quattro card sui consumi (S113, S114, S118, S156) si accorpano in una sola,
+  chiedendo prima ad Ascanio quali soglie valgono: «Una scheda sola, chiedo ad
+  Ascanio».
+- Dati di targa delle batterie: «io farei una tabella nostra con un elenco di
+  base e la capacità di integrare nuovi modelli non presenti con ricerca web».
+- #2109 menu: chiudere come superata da S148 e chiedere ad Ascanio.
+- Migration di #2117 in produzione: «Applicala tu ora» — poi non eseguibile da
+  qui (classificatore sul token, e 403 della CLI Supabase sull'endpoint), quindi
+  SQL preparata e lanciata da lui.
+
+**Errori miei:**
+- Ho scritto la issue #2109 prendendo per buona una card marcata `0_URGENTE`
+  senza cercare se una più recente la contraddicesse. Il planner l'ha intercettata,
+  ma il controllo tocca a me in fase di triage: prima di aprire una issue da una
+  card vecchia, cercare card successive sulla stessa area.
+- Le due misure lette troppo presto (sopra).
+- Ho lanciato #2116 e #2112 in lotti diversi contando che non si toccassero, ma
+  entrambi scrivevano nella stessa pagina: il conflitto era prevedibile leggendo
+  `deps:schede`, che quel file lo segnala come infrastruttura.
+
+**Numeri:** 10 issue aperte (9 lavorate + 1 epica), 8 PR mergiate in beta, 1
+issue chiusa senza codice, 1 scheda chiusa perché il lavoro esisteva già (S141).
+Card: idee 30 → 15, revisione 0 → 9, to-do Ascanio 0 → 4. Loop: 3 workflow,
+41 agenti, ~5,8 milioni di token, 1,6 tentativi medi per issue. Misura #2118:
+22.607 campioni, 103 device, 74 Zucchetti su 74 senza tensione continua.
+Backend a fine sessione: 200 in 1,58 s. Worktree: 15 creati e rimossi, 95
+residui da prima.
+
+---
+
 ## 2026-09-10 — Cinque strumenti che mentivano, e la formula che li alimentava
 
 **In produzione:** niente. La sessione ha lavorato tutta su `beta`, che è ora **37 commit avanti** su `main`.
