@@ -8,6 +8,34 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-16 — Un incidente di produzione, cinque strumenti ciechi, e il rollup vivo dopo sei mesi
+
+**In produzione:** #2128 (pannello «Aggiungi azienda», card S140) · #2131 (filtri di `/things` in un riquadro, S152) · #2138 (il cron del rollup riparato) · #2150 + #2151 (creazione e invito dei membri azienda: quattro Edge Function nuove) · #2152 (i picchi nel rollup). Più il **recupero dei 174 giorni** di rollup eseguito a mano: scarto da 4.173h a **21,05h**, righe da 2.766 a **81.144**.
+
+**In beta, aspetta la prossima promozione:** #2163 (picchi di tensione) · #2171 (estremi di SoC) · #2166 (calibrate-load-model sul rollup) · #2161 (`docs/capacita.md`) · #2155 (la deroga scritta, PR #2176).
+
+**Aperto:** epica **#2164** (i consumer a 90 giorni leggono il rollup) — restano #2165, #2167, #2168, #2169. Epica **#2142** (accesso del proprietario) — sei figlie, nessuna partita. **#2159** (il downsample che non cancella) aspetta la risposta di Ascanio sulla card **S162**. **#2118** (tensione Zucchetti) **ancora senza figlie**, terzo giorno.
+
+**Ha funzionato:** sei loop, cinque chiusi al **primo tentativo** (#2138, #2152, #2151, #2163, #2171), uno al quarto (#2150, dove il verificatore ha trovato un **bypass reale**: chi aveva il `token_hash` poteva chiamare `PUT /auth/v1/user` e saltare il controllo su scadenza e riuso). I verificatori hanno eseguito **mutazioni vere** per provare che le spie non fossero finte — su #2171 tre mutazioni, su #2163 due. Il recupero dei 174 giorni è durato **~2 minuti** di lavoro del database, con connessioni ferme a 14 e risposta fra 307 e 847 ms.
+
+**Non ha funzionato → regola nuova:**
+- *Un grafico con una finestra temporale non è una misura.* La dashboard segnava **CPU 98%** mentre la CPU reale era all'**11,26%** con `load1` 0,25: stavamo per riavviare la produzione una seconda volta per curare un numero. → `feedback_grafico_dashboard_non_e_una_misura`, e il comando per leggere le metriche vere in `docs/capacita.md`.
+- *Un'operazione che riesce può non fare quello che sembra.* Il primo lotto di backfill ha risposto `200` con `days_processed: 2` **senza far avanzare il watermark**: `p_max_days` non superava `p_tail_days`. Si guarda il `lag`, non il codice di risposta. → `docs/manutenzione-dati.md`.
+- *Prima di mergiare si aspetta la CI, anche quando si è convinti che il rosso sia flaky.* Ho mergiato #2175 con l'E2E `pending`, ed è finito rosso. → errore mio, sotto.
+
+**Decisioni di Davide:**
+- «*ogni azienda vede solo gli impianti della propria azienda*», con target dichiarato **15 aziende × 500-600 impianti, margine ×2**.
+- Fallback dei ruoli → **`client`**, non `company`. Invita **l'azienda**. «Il mio Maestro» **presente e non cliccabile**.
+- Creare e invitare sono **due passi distinti**; l'utente `auth` si crea subito senza password (via *a*).
+- «*io punterei ancora all'ottimizzazione*» invece della taglia dell'istanza.
+- **Deroga autorizzata**: Claudio può eseguire le RPC di manutenzione dati documentate, anche senza Davide presente, con guardie e resoconto obbligatori.
+
+**Errori miei:**
+- **Mergiata #2175 con l'E2E ancora in corso.** Finito rosso (flaky, ma l'ho saputo dopo). La regola è merge su CI verde: nessuna fretta la giustifica, tanto meno in una giornata passata a dimostrare che un rosso va provato e non assunto.
+- **AC2 di #2166 scritto male**: chiedeva una coincidenza dimostrabile solo dopo il deploy. Era un `[Azione]` e non l'avevo riconosciuto. Riclassificato.
+- Ho scritto `#1984`/`#1985` in una sezione «non è una dipendenza» e `issue:precheck` li ha letti come dipendenze bloccanti: ho tolto il cancelletto **dichiarandolo nella issue** invece di aggirare la spia in silenzio.
+
+**Numeri:** 9 PR mergiate (8 in `beta`, 1 in `main` con 6 issue promosse) · 22 issue aperte · 6 loop · ~40 minuti di produzione inutilizzabile · **5 strumenti che esistevano e non misuravano** (`db:ritardo-orario` senza GRANT · il controllo CI sugli overload con `GROUP BY` rotto · `db:recupero-orario` su trasporto read-only · la compensazione di `company-member-create` senza test · il downsample con soglia a 12 mesi su dati di 8).
 ## 2026-09-15 — Dieci schede di Ascanio in produzione, e un rollup fermo da sei mesi
 
 **In produzione:** 9 issue in due giri. #2110 batteria che diceva «scarica» mentre
