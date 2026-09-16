@@ -8,6 +8,66 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-15 — Dieci schede di Ascanio in produzione, e un rollup fermo da sei mesi
+
+**In produzione:** 9 issue in due giri. #2110 batteria che diceva «scarica» mentre
+caricava · #2117 stato di lavorazione degli errori · #2114 taglia nella scheda
+impianto · #2112 comandi in fondo · #2115 tab laterali con modello e potenza ·
+#2113 dashboard da telefono · #2111 icone di contatto in ordine · #2127 la
+configurazione mancante non colora più lista e mappa · #2116 schema flussi
+proporzionale alla taglia (recuperata a mano dal conflitto). Smoke 77/0 e 76/0.
+**In beta, aspetta:** #2128 aggiungi azienda (card S140) · #2131 filtri nel
+riquadro (S152) · #2130 chiusa come risolta da #2131 (S150) · #2132 parte A
+filtro unico — tutte provate dal vivo, aspettano **Ascanio**.
+**Aperto:** **#2138 rollup `historical_readings_hourly` fermo dal 26/03/2026** —
+blocca #2140 (preset giorno bello/brutto) · #2129 stato di allaccio alla rete,
+mai partita · #2118 tensione Zucchetti, ancora senza figlie.
+
+**Ha funzionato:** il loop ha chiuso #2127, #2128, #2131 e #2132-A **al primo
+tentativo**, con AC verificati sul diff reale. Due planner su sei si sono
+**fermati prima di scrivere codice** perché la issue era sbagliata (#2132, #2130):
+125k e 95k token spesi per non fare il danno. La promozione selettiva ha retto:
+8 gruppi su 9, il nono recuperato a mano in un'ora.
+
+**Non ha funzionato → regola nuova:**
+- *Un verdetto senza `results` non deve far cadere il workflow* — il loop di
+  #2132 è morto all'ultima riga dopo tre giri e 1,8M token, con la PR già aperta:
+  `verdict.results.filter` su un oggetto a schema dimezzato. Corretto nel template
+  della skill `dev-loop` (commit `9b73a60`): ora `!Array.isArray(verdict.results)`
+  vale come «non giudicato», si perde un giro e non il lavoro.
+- *Un AC che prescrive una fonte dati va verificato PRIMA che quella fonte abbia
+  dati* — ho scritto AC su `historical_series_bucketed` (legge un rollup fermo dal
+  26/03) e su `plant_daily_economics.produced_kwh` (colonna dichiarata e mai
+  scritta). Entrambe rispondono vuoto con HTTP 200.
+- *Il clic dell'automazione può non arrivare alla pagina* — ho creduto per venti
+  minuti a un difetto inesistente in #2127; un listener in capture ha registrato
+  **zero** eventi click. Prima di dichiarare rotta un'interazione, verifica che
+  l'evento arrivi davvero.
+- *Il service worker serve il bundle vecchio* — le prime misure su #2127 erano sul
+  commit precedente al merge: 5 SW e 7 cache, una ferma a `897da827`. Prima di
+  misurare a schermo: SW via, cache via, reload.
+
+**Decisioni di Davide:** «Creane una di prova, ma serve tutto il crudo, poi la devi
+anche cancellare» (S140: azienda completa, 35 campi verificati in DB, poi
+cancellata) · spezzare #2132 in due invece di rilanciare il loop · correggere la
+skill `dev-loop` nel repo workflow · su S150 «aspetta #2131, poi misura a 390px e
+decidi» · «dashboard utente» = `/plant-statistics`, seconda voce del menu impianto.
+
+**Errori miei:** ho scritto sei issue in un'ora con quattro affermazioni sbagliate
+sul codice (#2132: legacy scambiato per canonico, `plant-owner` che è un redirect,
+AC su lavoro già fatto, fonte dati inesistente) e una premessa falsa in #2130 (la
+mappa «sempre aperta», in realtà chiusa dal #2040). Ho dichiarato finito un deploy
+guardando un run `event=delete` — errore che avevo già in memoria. Ho letto come
+«push rifiutato» un avviso su un push riuscito. Ho ricostruito a memoria un
+`siteId` invece di leggerlo.
+
+**Numeri:** 9 issue in produzione · 4 in beta · 6 loop lanciati (4 chiusi al primo
+tentativo, 2 bloccati dal planner, 1 caduto per bug dello script) · ~4,6M token di
+subagenti · smoke 77/0 e 76/0 · card: backlog 103, lavorazione 33, idee 11,
+revisione 3 · backend 200 in 0,41s.
+
+---
+
 ## 2026-09-14/15 — Trenta idee ferme, nove schede in mano ad Ascanio in una notte
 
 **In produzione:** niente di nuovo stanotte. Resta la promozione delle 14 issue
