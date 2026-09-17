@@ -8,6 +8,30 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-17 — La radice svuotata tre volte, il primo invito reale, e la tensione che il portale non manda
+
+**In produzione:** #2179 #2180 #2182 #2183 #2185 #2189 #2190 (PR #2201) — il rollup orario torna a escludere i carichi negativi (verifica 3/3 device entro tolleranza, erano 3/3 fuori); il modulo impianti a 35 colonne con batterie, zona GME e Wp pannello; nessuno scrittore ZCS riscrive più a NULL tensione e SoC; lo stato di rete ha una funzione sola. Applicate a mano in prod anche le due migration dell'onboarding azienda (#2198) con `run-migration.yml`: con esse si chiude la falla #2202 (owner/admin potevano cambiare `tier` e `is_installer` della propria azienda).
+
+**In beta, aspetta:** #2181 #2132 #2116 (Ascanio: card S151 in «Revisione» — il conflitto di cherry-pick li tiene insieme) · #2195 #2198 #2202 #2203 #2204 (noi, prossima promozione) · #2203 aspetta anche il via di Davide per la bonifica dei dati.
+
+**Aperto:** #2118 tensione — #2181 la mostra «dedotta dal meter», ma il dato vero manca: serve una decisione fra insistere su Modbus e l'edge #230. Poi #2209 (frequenza col nome sbagliato), #2210 (Huawei al 50%), #2196 (invito segnato come inviato senza mail partita), #2205 (da riprodurre), #2159 (aspetta la risposta di Ascanio su S162).
+
+**Ha funzionato:** otto loop chiusi — #2180, #2181, #2183, #2189, #2203 al primo tentativo, #2182 al terzo, #2195 al quarto, #2198 al sesto. Il planner ha **bloccato due volte prima di scrivere codice**, e in entrambi i casi aveva ragione: su #2179 perché la via che gli avevo indicato (`zcs-proxy`) scrive in produzione, su #2205 perché il meccanismo che avevo descritto nella issue non esiste. Il verificatore ha trovato da solo la falla #2202 mentre giudicava altro.
+
+**Non ha funzionato → regola nuova:**
+- La junction dei worktree è distruttiva anche in **rimozione**: `git worktree remove --force` su un worktree collegato segue la junction e svuota la radice. Tre svuotamenti in due giorni (16/09 08:52, 17/09 06:59 e 08:29). Regola: `npm run worktree:unlink` prima di rimuovere, scritta in ogni prompt di loop; fix strutturale in #2190 (store separato che si ripara da solo) → memoria `feedback_junction_npm_ci_svuota_la_radice`.
+- Una funzione SQL riscritta per intero da branch paralleli perde le modifiche degli altri: #2166 cancellata da #2163/#2171, scoperta solo dalla verifica dopo il deploy (#2183) → memoria `feedback_funzione_riscritta_da_branch_paralleli`.
+- Una migration già registrata sul DB di test non si modifica: la correzione va in una migration **nuova**, altrimenti viene saltata («already in registry») e il difetto resta (#2198, tentativi 4-6).
+- Prima di dichiarare un difetto misurato a schermo: scheda **visibile**, service worker e cache tolti, e la variabile CSS letta sull'elemento giusto (in #2205 l'avevo letta su `documentElement`, dove c'è solo il valore di ripiego).
+
+**Decisioni di Davide:** «Non lanciare in produzione se non funziona, sistemiamolo» · seriali batteria «dove salvi il resto dei seriali, stesso schema» (device con `device_type='battery'`) · potenza batteria ricavata dal testo del modello: sì · righe sbagliate del file: importa il resto e scartale · anteprime `/b/` da togliere · «Pochi campi obbligatori, siamo ancora in fase di test» (onboarding: solo il nome azienda) · i 12 impianti nuovi del file sono già allacciati e in produzione · il caricamento del file lo fa Ascanio.
+
+**Errori miei:** ho indicato ai loop una via di lettura del portale (`zcs-proxy`) che in realtà **scrive**; l'ha intercettata il planner. Ho scritto #2205 su un meccanismo inesistente senza leggere il codice. Ho contato «tre test» invece di otto in #2182, bloccando un loop per un mio errore. Ho messo `qa-approved` a #2155, che non era risolta. Tutte corrette in giornata, nessuna finita in produzione.
+
+**Numeri:** 7 issue in produzione · 5 in beta · 13 issue aperte oggi · 16 PR mergiate · 8 loop. Budget Actions esaurito alle 09:04 UTC e sbloccato da Davide; misurati **3.104 minuti fatturabili in 7 giorni**, di cui il 55% E2E → #2195 punta a −40%. Ricalcolo rollup: 260 giorni in 258 s, connessioni max 24, sonda max 767 ms. Primo invito reale andato a buon fine solo dopo tre guasti in fila: secret mancante, chiave Brevo scaduta, blocco IP su Brevo. Backend a fine sessione: 200 in 0,97 s.
+
+---
+
 ## 2026-09-16 — Un incidente di produzione, cinque strumenti ciechi, e il rollup vivo dopo sei mesi
 
 **In produzione:** #2128 (pannello «Aggiungi azienda», card S140) · #2131 (filtri di `/things` in un riquadro, S152) · #2138 (il cron del rollup riparato) · #2150 + #2151 (creazione e invito dei membri azienda: quattro Edge Function nuove) · #2152 (i picchi nel rollup). Più il **recupero dei 174 giorni** di rollup eseguito a mano: scarto da 4.173h a **21,05h**, righe da 2.766 a **81.144**.
