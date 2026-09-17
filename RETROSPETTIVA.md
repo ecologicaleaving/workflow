@@ -29,6 +29,7 @@ qui restano la data e il perché.
 **Errori miei:** ho indicato ai loop una via di lettura del portale (`zcs-proxy`) che in realtà **scrive**; l'ha intercettata il planner. Ho scritto #2205 su un meccanismo inesistente senza leggere il codice. Ho contato «tre test» invece di otto in #2182, bloccando un loop per un mio errore. Ho messo `qa-approved` a #2155, che non era risolta. Tutte corrette in giornata, nessuna finita in produzione.
 
 **Numeri:** 7 issue in produzione · 5 in beta · 13 issue aperte oggi · 16 PR mergiate · 8 loop. Budget Actions esaurito alle 09:04 UTC e sbloccato da Davide; misurati **3.104 minuti fatturabili in 7 giorni**, di cui il 55% E2E → #2195 punta a −40%. Ricalcolo rollup: 260 giorni in 258 s, connessioni max 24, sonda max 767 ms. Primo invito reale andato a buon fine solo dopo tre guasti in fila: secret mancante, chiave Brevo scaduta, blocco IP su Brevo. Backend a fine sessione: 200 in 0,97 s.
+**Coda della giornata (Ascanio, 15:28-15:39):** ha approvato **S151** (sblocca #2132, #2116 e #2181, etichettate qa-approved) segnalando un difetto nuovo → **#2211** (la tendina di Note e Liste finisce sotto la barra del periodo), e ha **caricato lui il file a 35 colonne in produzione**: 12 impianti nuovi, 12 clienti, 15 device di cui **3 batterie** dalle celle « - Bat », 113 schede tecniche aggiornate. Prima di oggi 0 impianti avevano modello batteria e Wp pannello: ora 110 e 91. Sugli indirizzi ha tenuto i valori di Maestro invece del file, contro la decisione presa a tavolino: da ricontrollare.
 
 ---
 
