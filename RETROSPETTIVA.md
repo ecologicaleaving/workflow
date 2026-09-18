@@ -8,6 +8,18 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-18 — La tensione Zucchetti ha una causa nostra: tre frame nello stesso millisecondo
+
+**In produzione:** niente (sessione notturna di diagnosi, 17/09 sera → 18/09 04:30).
+**In beta, aspetta:** #2208/#2204 (etichetta anno, qa-approved) → Davide `/promuovi` col gruppo #2181+#2132+#2116, #2202 · #2203 + bonifica → decisione di Davide sul perimetro della deroga · #2195, #2198 → prova dal vivo.
+**Aperto:** #2212 (canale Modbus al 5%, disegno a catena via callback) — parte col `dev-loop` domattina · #2169/#2167/#2165/#2168 (consumer che leggono ancora la raw) — piano su #2164 · S144 in «To Do ASCANIO» (19 logger muti + 10 offline + richiesta a Zucchetti) · #2211, #2196, #2205, #2209, #2210 non ancora lavorate.
+
+**Ha funzionato:** misurare il denominatore. #2179 aveva concluso «vendor + intermittenza Modbus nota»; contando i token (~285 frame/ora) contro le callback (6-32/ora) il canale è risultato al 3-10% *anche per le letture a 1 registro*, quindi non è il registro. L'esperimento sul GE (60 frame, uno ogni 30 s, 30 min, poll fermo) ha dato **59/60 callback, mediana 3 s, max 12 s**: la causa è il poll che spara 3-7 frame insieme allo stesso logger. Diagnosi chiusa in una sessione, fix certo prima di scriverlo, e il disegno è stato rifatto perché scalasse (catena guidata dalla callback, cadenza per registro, zero sleep) dopo la domanda di Davide «scala col numero di device?».
+**Non ha funzionato → regola nuova:** «intermittente» non è una causa finché non si misurano tentativi e risposte — memoria `feedback_intermittente_non_e_una_causa`. Il classificatore della modalità auto blocca le `SELECT` in produzione lanciate dal Bash di Claudio («Production Reads») anche con l'ok verbale di Davide: le lancia lui con `!` — scritto in `project_modbus_zcs_canale_al_5_percento`. Il `!` gira in **bash**, non in PowerShell: `Start-Process` non esiste lì.
+**Decisioni di Davide:** «lancia» (le query in sola lettura) · «vai» (issue #2212, card S144, esperimento sul GE) · «è una soluzione che scala col n di devices?» → disegno rifatto · «crea la issue» · «fa il piano e chiudi la sessione».
+**Errori miei:** lo script dell'esperimento è partito con il login utente e2e e il proxy non trovava il `system_token` (10 frame persi, poi chiave service_role: il proxy risolve le credenziali dal thingKey); ho scritto la password in un file dello scratchpad prima di accorgermi che non serviva (rimosso). Ho fatto `git checkout origin/beta -- .` sulla radice in detached HEAD per leggere il codice: funziona ma sporca la working copy — meglio `git show origin/beta:<file>`.
+**Numeri:** 0 in prod, 1 issue aperta (#2212), 1 chiusa (#2173), 1 card mossa (S144 → To Do ASCANIO, 2 commenti), 3 commenti GitHub (#2118, #2212, #2164), 0 loop, backend 200 in 0,41 s.
+
 ## 2026-09-17 — La radice svuotata tre volte, il primo invito reale, e la tensione che il portale non manda
 
 **In produzione:** #2179 #2180 #2182 #2183 #2185 #2189 #2190 (PR #2201) — il rollup orario torna a escludere i carichi negativi (verifica 3/3 device entro tolleranza, erano 3/3 fuori); il modulo impianti a 35 colonne con batterie, zona GME e Wp pannello; nessuno scrittore ZCS riscrive più a NULL tensione e SoC; lo stato di rete ha una funzione sola. Applicate a mano in prod anche le due migration dell'onboarding azienda (#2198) con `run-migration.yml`: con esse si chiude la falla #2202 (owner/admin potevano cambiare `tier` e `is_installer` della propria azienda).
