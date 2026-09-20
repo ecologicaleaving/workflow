@@ -8,6 +8,28 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-19/20 — Il proprietario entra in Maestro, e la catena Modbus va un frame alla volta
+
+**In produzione:** epica #2142 per intero (#2145 #2146 #2147 #2148 #2149 #2225 #2229 #2231) più #2196 — il proprietario di un impianto ha un account, un menu suo e vede solo i suoi dati · #2212 catena Modbus serializzata (un frame per logger, la callback lancia il successivo) · #2209 frequenza letta da `gridFrequency`, già in Hz · #2203 segno di rete diviso all'origine, più bonifica di 193.957 righe · #2236 il fix che ha sbloccato il deploy di `command-scheduler-cron` · dal giro precedente #2132 #2181 #2204.
+**In beta, aspetta:** #2233 (dispatch del deploy — tecnica, si promuove da sé) · #2215 e #2202, in blocco con l'onboarding #2198 · #2218 salute del portale, da provare dal vivo e poi schedulare il campionatore (azione di Davide).
+**Aperto:** prova dell'invito vero in produzione (serve un indirizzo e-mail di Davide) · misura a 24 h del tasso di risposta Modbus (#2212 AC7) e della frequenza (#2209 AC5), dalle 08:00 del 20/09 · 89 worktree residui di sessioni vecchie, ~1,3 GB, non cancellati perché potrebbero contenere lavoro mai pushato.
+
+**Ha funzionato:** 8 loop, 13 issue implementate, quasi tutte verdi al primo o secondo tentativo; solo #2225 ha consumato i 4 tentativi. La verifica contro il diff reale ha intercettato due difetti che i test non vedevano: una race in `use-auth.ts` che avrebbe tolto l'accesso agli utenti d'azienda (#2145) e la falla di `sungrow-proxy` (sotto). La prova dal vivo con un proprietario di prova vero ha trovato in dieci minuti tre difetti che il codice verde non mostrava: fonte dati ferma dal 09/09, risparmio calcolato su righe vecchie, avvisi aziendali mostrati al cliente (#2231).
+
+**Non ha funzionato → regola nuova:**
+- Un loop, per chiudere un AC, può **aprire una falla**: il quarto tentativo di #2225 ha esteso il gate di `sungrow-proxy` al cliente lasciando raggiungibili `login` (scrittura di credenziali dentro l'azienda) e `syncPlantInfo`. L'ha visto il verificatore; ho revertato falla e revert insieme prima della promozione, così `main` non ha mai visto quella versione. Regola: quando un AC chiede di toccare una Edge Function con azioni di scrittura, il perimetro si riduce **prima** di lanciare il giro (memoria `feedback_loop_puo_aprire_una_falla_per_chiudere_un_ac`).
+- La ricognizione di una bonifica va fatta su **tutto lo storico**, non su una finestra comoda: la prima verifica di #2203 guardava 60 giorni e lasciava fuori 41.502 righe più vecchie (memoria `feedback_bonifica_ricognizione_su_tutto_lo_storico`).
+- Lo script di promozione lascia la **radice in detached HEAD** su `origin/main`: va riportata su `beta` a mano, altrimenti il lavoro dopo parte dal branch sbagliato (memoria `feedback_script_promozione_lascia_radice_detached`).
+- Su una PR verso `main` i check partono **solo dal push del branch**: chiudere e riaprire la PR non li rilancia, serve un branch nuovo. E i minuti di GitHub Actions si esauriscono: il sintomo è `startup_failure` su qualunque commit, con il messaggio fuorviante «problema in un file di workflow» (memoria `feedback_pr_verso_main_check_solo_dal_push`).
+
+**Decisioni di Davide:** «il proprietario NON entra in `company_members`» — misurato che `user_company_id()` e 57 policy non filtrano per ruolo, quindi una riga `client` avrebbe dato lettura su tutta l'azienda; #2144 chiusa di conseguenza · «#2212 e #2209 insieme come tecniche», poi #2203 con loro perché intrecciata su `zcs-historical.ts` · «promuovi ciò che puoi promuovere» · «lancia la bonifica» (deroga estesa alla RPC di #2203) · l'invito del cliente lo può fare qualunque ruolo d'azienda, e un'e-mail con account già esistente si ferma senza agganciare nulla.
+
+**Errori miei:** i primi cherry-pick della promozione manuale fatti con `-X theirs`, che risolve i conflitti in silenzio — rifatta da zero senza · `git pull origin main` lanciato sulla radice ferma su `beta` (non è partito, verificato prima di proseguire) · cinque file di appoggio scritti in `.claude/worktrees/` invece che nello scratchpad · l'output di un comando lungo incanalato in `tail`, che l'ha nascosto fino alla fine.
+
+**Numeri:** 13 issue in produzione, 1 in beta, 7 nuove aperte (#2215 #2218 #2225 #2229 #2231 #2233 #2236) · 8 loop, ~1,4 tentativi medi · 193.957 righe bonificate, 72 giorni di rollup ricalcolati, nessuna guardia scattata (connessioni 19-22 su 30, risposta 187-241 ms) · 112 worktree rimossi · CI ferma ~25 minuti per minuti Actions esauriti · backend a fine sessione 200 in 0,70 s.
+
+---
+
 ## 2026-09-18 — La tensione Zucchetti ha una causa nostra: tre frame nello stesso millisecondo
 
 **In produzione:** niente (sessione notturna di diagnosi, 17/09 sera → 18/09 04:30).
