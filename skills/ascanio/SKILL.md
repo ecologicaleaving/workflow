@@ -124,8 +124,10 @@ curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments" \
   curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_issues" \
     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
     -H "Content-Type: application/json" \
-    -d '{"task_id":"<id>","repo":"ecologicaleaving/maestroweb","issue_number":<N>}'
+    -d '{"task_id":"<id>","issue_number":<N>}'
   ```
+  (`qa_task_issues` non ha una colonna `repo`: con quel campo PostgREST
+  rifiuta l'inserimento — verificato il 21/09/2026.)
 - Label `ascanio`, Kanban Backlog, poi il precheck del punto 1.
 
 ### Una card = un'epica
