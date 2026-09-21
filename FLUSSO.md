@@ -152,6 +152,42 @@ lista item — su un board grande l'enumerazione può mancare l'item cercato.
 **Card di Ascanio** (`qa_tasks.stage`, solo MaestroWeb): se la card esiste,
 va in `lavorazione` appena si prende in carico la segnalazione.
 
+### ⛔ Le card non si dimenticano: tre momenti fissi in cui si guardano
+
+La regola «la card la spostiamo noi» c'era già, in questo file e nel
+`CLAUDE.md`. **Non è bastata**: il 21/09/2026 in «In Lavorazione» c'erano
+**38 card**, 21 delle quali senza nessuna issue collegata, ferme fino a 17
+giorni — e fra loro una «0_URGENTE» (S121) la cui issue era stata chiusa
+`NOT_PLANNED` una settimana prima senza che nessuno lo dicesse ad Ascanio.
+
+Una regola che dice «ricordati di spostarle» non funziona, perché ricordarsi
+è proprio la cosa che manca. Quindi la card si guarda in **tre momenti fissi**
+del flusso, non quando capita:
+
+1. **Quando una issue collegata va in `beta`** → prova dal vivo, poi la card
+   va in **Revisione** con scritto cosa provare (punto 4).
+2. **Quando una issue collegata si chiude** — in produzione **o** `NOT_PLANNED`
+   → la card si aggiorna **nello stesso momento**, con un commento che dice
+   cosa è successo. Una issue chiusa come «non si fa» va **spiegata ad
+   Ascanio**, non lasciata sparire: per lui la card è l'unica cosa che vede.
+3. **A ogni chiusura di sessione** (skill `chiusura-sessione`) → si passa
+   «In Lavorazione» e si sposta ciò che è fermo. Il controllo lo fa
+   `npm run audit:card-ferme` (#2277): esce 1 se trova card dimenticate.
+
+E due regole che il triage del 21/09 ha reso esplicite:
+
+- **Una card in «In Lavorazione» ha una issue collegata**, o non è in
+  lavorazione: se nessuno ci sta lavorando torna fra le **Idee**, se aspetta
+  una risposta va nei **To Do** di chi deve rispondere.
+- **Una domanda per Ascanio va nei suoi To Do, mai in «In Lavorazione»** —
+  lì non la legge. Il 21/09 c'erano domande «Serve a te: …» ferme da 17
+  giorni nella sezione sbagliata.
+
+**Attenzione alla data**: l'età di una card NON è `qa_tasks.updated_at` —
+lo aggiorna anche `deps:schede` ogni notte quando ricalcola le dipendenze, e
+fa sembrare «ferma da 0 giorni» una card immobile da settimane. L'età vera è
+quella dell'ultimo spostamento o commento.
+
 ---
 
 ## 3. Implementazione col loop

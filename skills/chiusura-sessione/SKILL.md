@@ -106,6 +106,30 @@ Agenti e workflow in background: fermali se non servono più. Schede Chrome
 aperte dalla sessione: chiudile. Card di Ascanio: ogni card toccata oggi è
 nella sezione giusta con `review_notes` aggiornate?
 
+**⛔ Le card ferme — non solo quelle toccate oggi** (FLUSSO.md → «Le card
+non si dimenticano», #2277). Controllare solo le card toccate in sessione
+non basta: quelle dimenticate sono per definizione quelle che **nessuno ha
+toccato**. Il 21/09/2026 in «In Lavorazione» ce n'erano 38.
+
+```bash
+npm run audit:card-ferme   # MaestroWeb — esce 1 se trova card dimenticate
+```
+
+Per ogni card segnalata, decidi adesso — non «alla prossima»:
+
+| la card… | va in |
+|---|---|
+| ha tutte le issue chiuse e il lavoro è provato | **Revisione**, con cosa provare |
+| ha una issue chiusa `NOT_PLANNED` | commento che **spiega ad Ascanio** perché, poi dove serve |
+| è una domanda per Ascanio | nei **suoi To Do**, mai in «In Lavorazione» |
+| non ha issue e nessuno ci lavora | torna fra le **Idee** |
+| è già risolta | **BackLog** + `status: done`, con una riga che dica cosa è successo |
+
+Finché #2277 non è in produzione, il controllo si fa a mano: tutte le card
+con `stage=lavorazione`, e per ciascuna lo stato delle issue collegate in
+`qa_task_issues`. L'età si legge dall'ultimo commento, **non** da
+`updated_at`, che `deps:schede` aggiorna ogni notte.
+
 ### 5. Commit e push della retrospettiva
 
 ```bash
