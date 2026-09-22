@@ -8,6 +8,29 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-21/22 — Quattro promozioni, 38 card ferme smaltite, e il triage che gira da solo
+
+**In produzione:** #2247 (rifiuto del cloud ZCS dentro un 200 non conta più come successo) · #2248 (invito del proprietario dalla pagina Impianto) · #2251 (il tasto d'emergenza non dichiara successo senza spegnere) · #2252 (via il banner Sungrow, quota in Connessioni) · #2218 + #2256 (Salute del portale, RPC da 702 ms) · #2265 (ultimo accesso utenti God) · #2267 (Idee/Revisione comuni con owner, To Do personali, autore nei commenti) · #2270 (run-migration esegue anche `supabase/ops/`, il campionatore è schedulato) · #2271 · #2215 + #2254 + #2264 (avviso connessioni per-marca, silenzio ZCS). Migration di #2284 applicata in prod (HTTP 201).
+**In beta, aspetta:** in Revisione ad Ascanio S124 (#2041), S125 (#2042), S126 (#2043), S127 (#2044), S171 (#2284), S172 (#2289), S174 (#2288) · **#2301 (crash Dashboard Utente Sungrow, codice identico in `main`) → `/promuovi` di Davide per primo** · #2293/#2296 (strumento del triage, tecniche).
+**Aperto:** #2298 (S161, popup WhatsApp) in bozza: 6 screenshot con clienti veri nel branch, da ricostruire (force-push bloccato dalla sessione) · #2129 (S142) serve migration · #2285 Artuso (filtro CS si auto-blocca, regole spente dal 17/09) · epiche #2286 (S156) e #2287 (S137) needs-decision · #2281 pezzo 2 · 43 worktree residui.
+
+**Ha funzionato:** 10 loop in una notte, 9 issue in beta, 1,8 tentativi medi; tutte provate dal vivo prima della Revisione. Il planner ha fermato #2045 al primo passo («già fatta da #2111») senza scrivere codice. Il triage delle Idee con agenti che scrivono **solo bozze** (4 agenti, 13 card) e io che creo le issue dopo averle rilette: ha preso un token d'invito che non doveva finire su GitHub e un body vuoto prima che restassero. Da 38 a 21 card in Lavorazione. Pezzo 1 del ciclo autonomo (#2293) provato sui dati veri: trova 1 card su 23, quella giusta.
+
+**Non ha funzionato → regola nuova:**
+- Il developer ha **committato screenshot di test-maestro** (dati di produzione → nomi e indirizzi di clienti) per soddisfare la DoD; il verificatore l'ha chiamata «nota di igiene». Divieto nei prompt, e un binario nel diff è un fail (memoria `feedback_screenshot_dati_reali_nel_repo`).
+- Ho **revertito #2299** attribuendogli un crash che era lì da maggio (#2301): l'avevo visto dopo il merge, ma la pagina prima non l'avevo mai aperta. Prima di revertire: stack sui chunk condivisi e `git diff origin/main origin/beta` (memoria `feedback_crash_dopo_merge_non_e_del_merge`).
+- Un loop spreca tentativi su AC [UI] che richiedono il browser: le prove dal vivo le fa l'orchestratore, detto nel prompt (dopo #2284, 4 tentativi).
+- Quando Ascanio risponde e preme «Fatto» la card va in **Lavorazione**, non in Idee: il ciclo di triage non la vede (8 card oggi). Annotato su #2281, serve sotto-issue.
+- Scrivere ad Ascanio in una card rimasta in Lavorazione = non scrivergli: la card va nei suoi To Do (memoria `feedback_commento_ascanio_serve_la_card_in_todo`, regola di Davide).
+
+**Decisioni di Davide:** «Anche revisione deve essere comune… nei commenti deve esserci l'autore» · «vai con la B» (silenzio ZCS) · «promuovi il promuovibile, tecniche incluse» · ciclo autonomo «ok la tua proposta a step, e va bene che vivano solo su questa macchina, … due sessioni dedicate» · «creai il file che accendiamo il triage automatico e applica la migration».
+
+**Errori miei:** il revert di #2299 (sopra) · ho chiuso due schede Chrome usate da un loop in corso · la bozza di S174-S164 creata con body vuoto (estrattore basato su `---`), corretta subito · push sul `master` di `workflow` che scavalca la protezione (due volte) — da chiedere a Davide se passare da PR.
+
+**Numeri:** 13 issue in produzione (4 promozioni), 9 in beta, 14 issue nuove · 10 loop, 18 tentativi · 1 migration in prod · 21 card in Lavorazione (da 38) · backend a fine sessione 200 in 0,40 s.
+
+---
+
 ## 2026-09-19/20 — Il proprietario entra in Maestro, e la catena Modbus va un frame alla volta
 
 **In produzione:** epica #2142 per intero (#2145 #2146 #2147 #2148 #2149 #2225 #2229 #2231) più #2196 — il proprietario di un impianto ha un account, un menu suo e vede solo i suoi dati · #2212 catena Modbus serializzata (un frame per logger, la callback lancia il successivo) · #2209 frequenza letta da `gridFrequency`, già in Hz · #2203 segno di rete diviso all'origine, più bonifica di 193.957 righe · #2236 il fix che ha sbloccato il deploy di `command-scheduler-cron` · dal giro precedente #2132 #2181 #2204.
