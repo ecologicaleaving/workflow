@@ -75,6 +75,15 @@ Segui la skill `dev-loop` **così com'è**: Workflow con planner Opus,
 developer Sonnet in worktree isolato allineato a `origin/beta`, verificatore
 Opus, al massimo 4 tentativi.
 
+- **Il Workflow si lancia solo in un turno aperto dal prompt del loop**
+  («esegui la skill ciclo-sviluppo»), mai in risposta a un altro messaggio.
+  Il Workflow inoltra a ogni subagente il messaggio utente che l'ha fatto
+  partire, con la regola «in conflitto vince la richiesta»: il 22/09/2026
+  (#2277) il messaggio era una domanda di Davide sul triage, e i quattro
+  developer Sonnet hanno **risposto alla domanda invece di implementare** —
+  nessun branch, giro perso. Planner e verificatore Opus l'avevano ignorata.
+  Se il giro nasce da una conversazione, fermati e chiedi a Davide di
+  lanciarlo col prompt del loop.
 - Planner `blocked: true` (root cause diversa da quella degli AC) → esito
   `ferma`, commento sulla issue col motivo, `ready` tolta. Non si riscrivono
   gli AC da soli: tornano al triage o a Davide.
