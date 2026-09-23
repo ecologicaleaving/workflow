@@ -126,7 +126,14 @@ Gli script:
 ```bash
 npm run -s triage:commenta -- --testo 'Testo del commento, anche su più righe'
 npm run -s triage:sposta -- --stage todo --assigned-to ascanio
-# stage ammessi: pronte | todo | parcheggiate | obsolete | backlog | lavorazione
+# stage ammessi: pronte | todo | parcheggiate | obsolete | backlog
+# Sono cinque, e il codice li rifiuta tutti gli altri (#2357). In particolare:
+#  - «revisione» NON è del triage: lì ci va una card PROVATA DAL VIVO, e la
+#    prova è di una persona (#1723);
+#  - «lavorazione» NON è del triage: la card ci arriva quando il ciclo di
+#    sviluppo prende la issue (`ciclo:card-presa`, #2335).
+# L'elenco vive in `TRIAGE_STAGE_AMMESSI` (src/lib/qa-tasks.ts): chi lo cambia
+# cambia prima quello, non questa riga.
 npm run -s triage:sposta -- --stage backlog --status done
 npm run -s triage:collega -- --issue 2345
 ```
