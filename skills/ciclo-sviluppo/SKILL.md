@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.4.0
+version: 1.5.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -58,12 +58,27 @@ accorgersi di un ciclo che gira a vuoto, non più un freno automatico.
 Da qui in poi, **qualunque uscita** passa dal punto 5 (lock rilasciato, riga
 nel log).
 
-### 1. Precheck e perimetro
+### 1. Precheck, presa della card, perimetro
 
 ```bash
 npm run -s ciclo:sviluppo -- --registra '{"issue":N,"esito":"avviata"}'
 npm run issue:precheck N
 ```
+
+**Se la issue ha una card collegata, la card è in «Pronte» — e prenderla
+significa spostarla (#2335):**
+
+```bash
+npm run -s ciclo:card-presa -- --task <uuid della card>
+```
+
+Sposta da **Pronte a In Lavorazione** e lascia un commento firmato dal ciclo. Il
+filtro è nel comando (`stage=eq.pronte`): se la card non era in Pronte non
+sposta niente, e zero righe toccate vuol dire che qualcun altro l'ha già presa —
+in quel caso **lascia stare quella issue** e chiudi il giro, non forzare.
+
+Dopo il merge la card **resta** In Lavorazione col commento «pronta da provare»:
+in Revisione la porta una persona che l'ha provata dal vivo (#1723).
 
 - precheck con exit 1 → non lanciare il loop. Commento sulla issue con il
   segnale del precheck, label `ready` **tolta**, esito `ferma`.

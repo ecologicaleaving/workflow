@@ -91,12 +91,26 @@ costosi se saltati.
 
 | la card… | cosa scrivi | dove va la card |
 |---|---|---|
-| è chiara e fattibile | issue con AC (punto 4), poi `triage:collega` | `triage:sposta -- --stage lavorazione` |
+| è chiara e fattibile | issue con AC (punto 4), poi `triage:collega` | `triage:sposta -- --stage pronte` |
 | ha un dubbio che solo chi l'ha scritta può sciogliere | `triage:commenta` con le domande | `triage:sposta -- --stage todo --assigned-to <proponente>` |
-| ripete una card già aperta | `triage:commenta` «Confluisce nella scheda S…» | resta in Idee (la capofila la segue) |
-| è già fatta / già in beta | `triage:commenta` che dice dove (issue, PR, comportamento) | `triage:sposta -- --stage backlog --status done` |
-| è un progetto grande o una scelta di priorità | `triage:commenta` che lo dice | resta in Idee, `--motivo` lo spiega, Davide la vede nel log |
+| ripete una card già aperta | `triage:commenta` «Confluisce nella scheda S…» | `triage:sposta -- --stage obsolete` |
+| è già fatta altrove / non più valida | `triage:commenta` che dice dove e perché | `triage:sposta -- --stage obsolete` |
+| è già fatta e **in beta** | `triage:commenta` che dice dove (issue, PR, comportamento) | `triage:sposta -- --stage backlog --status done` |
+| è sospesa dal proponente («teniamola in sospeso», «tra qualche mese») | `triage:commenta` che riporta le sue parole | `triage:sposta -- --stage parcheggiate` |
+| è un progetto grande o una scelta di priorità | `triage:commenta` che lo dice | `triage:sposta -- --stage parcheggiate`, `--motivo` lo spiega, Davide la vede nel log |
 | tocca il perimetro escluso (punto 5) | issue con l'analisi e label `needs-decision`, poi `triage:collega` | resta in Idee, `triage:commenta` «aspetta Davide» |
+
+**Perché «Pronte» e non «In Lavorazione» (#2335).** «In Lavorazione» vuol dire
+che qualcuno ci sta lavorando; una card triagiata non lo è ancora. Separarle
+è ciò che dà al ciclo di sviluppo una coda visibile anche ad Ascanio — e la
+spia delle card ferme (#2277) smette di contare come dimenticate le card che
+stanno solo aspettando il loro turno.
+
+**Parcheggiate e Obsolete non sono la stessa cosa (#2351).** «Parcheggiata» è
+valida ma non ora, e **può tornare**: una risposta del proponente la rimette in
+coda e il triage la rilegge. «Obsoleta» è superata e **non torna**: il seguito
+è sulla capofila, e una risposta lì non riaccoda niente. Se la card confluisce,
+il commento deve dire **in quale** scheda (`S<n>`), o il rimando si perde.
 
 **Domande:** in italiano comune, numerate, **con opzioni A/B/C e la tua
 raccomandazione**, poche (le 5 che bloccano davvero; il resto come «proposte se
@@ -111,7 +125,8 @@ Gli script:
 
 ```bash
 npm run -s triage:commenta -- --testo 'Testo del commento, anche su più righe'
-npm run -s triage:sposta -- --stage todo --assigned-to ascanio     # stage: lavorazione | todo | backlog
+npm run -s triage:sposta -- --stage todo --assigned-to ascanio
+# stage ammessi: pronte | todo | parcheggiate | obsolete | backlog | lavorazione
 npm run -s triage:sposta -- --stage backlog --status done
 npm run -s triage:collega -- --issue 2345
 ```
