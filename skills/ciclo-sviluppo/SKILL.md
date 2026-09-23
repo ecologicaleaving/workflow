@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -133,6 +133,20 @@ npm run -s ciclo:sviluppo -- --unlock
 In chat, **solo se è successo qualcosa**: la issue, l'esito, la PR, e le cose
 che aspettano Davide (migration, `needs-decision`, rossi). `noop: false` in
 quel caso.
+
+### 5b. Il giro dopo parte al merge, non al minuto tondo
+
+**Dopo un merge riuscito**, rilasciato il lock si ricomincia **subito** dal
+punto 0 con la issue successiva, finché la coda non è vuota. Il `/loop` a ora
+fissa resta come rete di sicurezza — serve a far ripartire il ciclo quando la
+catena si è interrotta, non è il ritmo normale (decisione di Davide,
+23/09/2026).
+
+**Si incatena SOLO dopo `mergiata`.** Un giro che esce `ferma` o
+`fuori-perimetro`, o una coda che risponde `null`, **chiude la catena** e
+aspetta il giro a ora fissa. Se qualcosa non va — un rosso che torna, un
+planner che si blocca, una issue scritta male — ripartire subito vuol dire
+ripetere lo stesso errore più in fretta, e senza che nessuno lo guardi.
 
 ## Divieti (non derogabili)
 
