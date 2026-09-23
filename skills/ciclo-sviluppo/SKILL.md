@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -133,6 +133,28 @@ Se la PR contiene una **migration additiva** passata dal piano con la riga
 dice a Davide che c'è una migration che aspetta lui.
 
 ### 4. Dopo il merge
+
+- **Firma del ciclo (#2332).** Tutto ciò che il ciclo scrive su una card si
+  firma **`Claudio · ciclo`**, non `Claudio`: chi legge la board deve
+  distinguere cosa ha fatto una macchina senza supervisione da cosa ha seguito
+  una persona. La stringa **non si ridigita mai**: si importa da
+  `CLAUDIO_FIRMA_CICLO` (`src/lib/qa-tasks.ts`), che è l'unica fonte delle
+  firme — il carattere in mezzo è un trattino tipografico e una codifica
+  sbagliata lo corromperebbe in silenzio.
+
+  ⛔ **Quella firma non si cambia da soli.** `isClaudio`
+  (`src/lib/qa-idee-triage.ts`) riconosce l'autore dei commenti di Claudio
+  interrogando quell'elenco, e su quel riconoscimento poggia la regola del
+  triage «se l'ultimo commento è di Claudio, la card non torna nel giro»
+  (#2293). Una firma nuova non prevista dall'elenco farebbe ricomparire quelle
+  card fra le «da triagiare» a ogni giro, per sempre. Chi cambia la firma
+  cambia prima l'elenco, e il test di regressione che lo protegge.
+
+- **Etichetta la issue su GitHub**, così il filtro esiste anche lì:
+
+  ```bash
+  npm run -s ciclo:etichetta -- --issue N
+  ```
 
 - Card collegata (`qa_task_issues`): resta **In Lavorazione**, con un commento
   «In beta dalla PR #…, pronta da provare: <cosa guardare>». **Mai** in
