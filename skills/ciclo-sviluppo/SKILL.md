@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -103,10 +103,27 @@ Opus, al massimo 4 tentativi.
 2. `npm run -s ciclo:sviluppo -- --verifica-pr <PR> --json` → exit 0 (il diff
    vero non tocca il perimetro);
 3. la PR punta a `beta` e il body ha `Closes #N` (skill `commit`);
-4. la merge-base del branch è la punta di `origin/beta` (skill `dev-loop`);
+4. **l'allineamento si verifica PRIMA di aspettare la CI, non dopo.** Un
+   dev-loop dura decine di minuti e `beta` intanto si muove: se aspetti la CI
+   e solo alla fine scopri che il branch è indietro, quella CI è da buttare —
+   sedici minuti di E2E per niente (successo tre volte il 23/09/2026).
+   Quindi, appena la PR è aperta:
+
+   ```bash
+   git fetch -q origin
+   git rev-list --count $(git merge-base origin/beta origin/<branch>)..origin/beta   # 0 = allineato
+   gh pr update-branch <PR>    # solo se il numero sopra non è 0
+   ```
+
+   Riallineare **fa ripartire la CI**: è il motivo per cui si fa prima. Non
+   costa nulla in più — quel commit di allineamento servirebbe comunque;
 5. `gh pr checks <PR> --watch` **tutto verde, E2E compresi**. Un rosso che
    sembra flaky **non** si ritenta a mano e non si mergia sopra: esito
    `ferma` col nome del job.
+6. **Prima del merge, l'allineamento si ricontrolla**: fra la CI verde e il
+   merge può essere entrato altro. Se è indietro, si torna al punto 4 — è il
+   prezzo di lavorare in parallelo, e la catena del punto 5b lo rende raro
+   perché i giri del ciclo sono in fila, non simultanei.
 
 Allora: `gh pr merge <PR> --merge` (mai `--squash`, mai `--admin`), esito
 `mergiata`.

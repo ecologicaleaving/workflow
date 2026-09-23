@@ -8,7 +8,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.3.0
+version: 2.4.0
 ---
 
 # Skill: dev-loop
@@ -290,8 +290,30 @@ MB=$(git merge-base origin/beta origin/<branch>)
 git rev-list --count $MB..origin/beta        # quanto e indietro la base: deve essere 0
 ```
 
-Un numero diverso da zero significa che la PR va rifatta, non aggiustata: il piano e
-il censimento si conservano (commentandoli sulla issue), il branch si chiude.
+Un numero diverso da zero **per il lavoro che il loop ha prodotto** significa che
+la PR va rifatta, non aggiustata: il piano e il censimento si conservano
+(commentandoli sulla issue), il branch si chiude. È il caso di #1984: il worktree
+era partito da una base vecchia di 150 commit.
+
+**Diverso è il caso normale in cui `beta` è avanzata mentre il loop lavorava.**
+Un giro dura decine di minuti; se nel frattempo entra un'altra PR, il branch
+risulta indietro di quei commit senza che il lavoro sia sbagliato. Lì si
+riallinea, non si butta:
+
+```bash
+gh pr update-branch <PR>
+```
+
+**E si fa PRIMA di mettersi ad aspettare la CI.** Aspettare la CI e scoprire
+dopo che il branch era indietro vuol dire buttare quel giro di verifiche — 16
+minuti di E2E per niente, successo tre volte il 23/09/2026. Riallineare fa
+ripartire la CI da sé, e quel commit di allineamento servirebbe comunque: farlo
+prima non costa nulla, farlo dopo costa un giro intero.
+
+Come si distinguono i due casi: guarda **da dove parte** il branch. Se la base è
+un commit che al momento dell'apertura della PR era la punta di `beta`, è il caso
+normale (riallinea). Se era già vecchia quando il loop è partito, è #1984
+(rifai).
 
 ## Gli AC `[Campo]`/`[Azione]` non entrano nel criterio di uscita
 
