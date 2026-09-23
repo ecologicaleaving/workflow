@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -47,9 +47,13 @@ npm run -s ciclo:sviluppo -- --json --lock
 | lo script non esiste (`Missing script`) | #2304 non è ancora in `beta`: fine, `noop`. Non improvvisare la selezione a mano |
 | `{"ciclo":"spento"}` | fine, `noop`. Interruttore: `~/.claude/ciclo-autonomo.json` → `"sviluppo": true` |
 | exit 2 «giro già in corso» | fine, `noop`. Il lock è di un altro giro: non toccarlo |
-| `{"ciclo":"tetto"}` | fine, `noop`: 4 issue avviate oggi, si riprende domani |
 | `"prossima": null` | `--unlock`, fine, `noop` |
 | `"prossima": {numero, ...}` | vai al punto 1 con quella, **solo quella** |
+
+Non c'è più un tetto giornaliero (decisione di Davide del 23/09/2026, #2325): il
+ciclo non esce mai con `{"ciclo":"tetto"}`. `npm run -s ciclo:log` mostra
+quanti giri di sviluppo sono partiti oggi e con quale esito — è il modo per
+accorgersi di un ciclo che gira a vuoto, non più un freno automatico.
 
 Da qui in poi, **qualunque uscita** passa dal punto 5 (lock rilasciato, riga
 nel log).
@@ -137,8 +141,7 @@ quel caso.
 - **Mai** lanciare workflow GitHub (`run-migration.yml`, `deploy*.yml`, `gh
   workflow run`), applicare migration, toccare secret, VPS, Edge Function in
   produzione.
-- **Mai** più di una issue per giro, mai due giri insieme (il lock), mai oltre
-  il tetto giornaliero.
+- **Mai** più di una issue per giro, mai due giri insieme (il lock).
 - **Mai** spostare una card in Revisione né in BackLog; mai mettere
   `qa-approved`.
 - **Mai** installare dipendenze nella radice del repo: i worktree si collegano
