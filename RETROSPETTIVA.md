@@ -8,6 +8,30 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-24 — Una PR preparatoria faceva sparire le issue dalla coda, in silenzio: sei ne erano ferme da luglio
+
+**In produzione:** #2324 (`approva-promote` rimette la radice su `beta` invece di lasciarla staccata), #2325 (via il tetto di 4 giri al giorno), #2355 (`gen:types` gira su Windows e non tronca mai i tipi). PR #2378, deploy verde, smoke test **82 pass / 0 fail / 12 SKIP con motivo**.
+**In beta, aspetta:** #2354, #2357, #2360, #2363 — `qa-approved` messa dopo prova dal vivo, ma **cadono per conflitto**: poggiano su file con 2-6 commit in `beta` non in `main` (il filone della coda di triage, #2293/#2334/#2348). Si promuovono in blocco con quel filone, non spezzati. Poi: le card di Ascanio (#2312, #2318, #2328, #2329, #2332, #2340, #2344) e #2319.
+**Aperto:** #2313 è in testa alla coda (scheda S119 portata in «Pronte» su richiesta di Davide) — la sblocca un giro del ciclo. I sette residui di sicurezza (#2366, #2367, #2368, #2370, #2371, #2373, #2374) aspettano azioni o decisioni di Davide; #2366 è il più urgente.
+
+**Ha funzionato:** due giri del ciclo, **entrambi verdi al primo tentativo** — #2363 (6 AC, 28 min) e #2355 (4 AC, 35 min). Ai verificatori è stato chiesto di provare i test **per mutazione**, e ha pagato: rimettendo il vecchio OR in #2363 cadono 7 test, rimettendo la scrittura incondizionata in #2355 ne cadono 4 su 16. Su #2355 il verificatore ha anche **riprodotto una parte della causa che la issue solo ipotizzava** (`cmd` apre le redirezioni prima di lanciare il comando, quindi `> file` azzera il bersaglio anche se il comando non parte). Le sei issue vecchie sono state chiuse ognuna sul suo AC1, con ogni residuo in una issue propria invece che in un contenitore aperto per sempre.
+
+**Non ha funzionato → regola nuova:**
+- **Un segnale comodo può diventare una prova falsa.** La coda riconosceva il legame PR↔issue anche dal `#N` nel titolo e dal `issue-N` nel branch (#2304, perché GitHub lascia vuoti i riferimenti di chiusura sulle PR verso `beta`). Una PR **preparatoria** — `prep(#2313)`, branch `prep/issue-2313-…`, body con `Refs` e non `Closes` — combaciava con entrambi, e #2313 è uscita dalla coda **senza risultare né fatta né bloccata**. Corretto in #2363/#2364: solo la parola di chiusura nel body è prova, titolo e branch scendono a conferma. Memoria: `feedback_segnale_comodo_diventa_prova_falsa.md`.
+- **Rimuovere il falso positivo fa emergere l'arretrato che nascondeva.** Sei issue (#1390, #1391, #1392, #1394, #1395, #1381) erano fuori dalla coda da luglio per lo stesso meccanismo: PR #1529 e #1408 le nominano nel titolo o nel branch senza `Closes`. Quando si corregge un riconoscimento sbagliato, **si guarda subito cosa riemerge**: qui era una di queste sei, non una novità.
+- **Un documento di audit non è un fix.** #1395 non ha nessun cambio di codice: l'inventario GDPR dice cosa è stato visto, e i due finding ALTI sono ancora aperti. Chiudere l'issue sull'AC1 è corretto **solo** se ogni finding non chiuso ha la sua issue. Vale anche per #1392: il codice è pulito ma le password restano nella history di git e sono ancora valide → #2366.
+
+**Decisioni di Davide:** «vai con 1 e 2, poi promuoviamo ciò che è pronto e chiudiamo la sessione» — chiudere #1381, chiudere le cinque di #634 sull'AC1 aprendo una issue per ogni residuo; «sposta s119» in «Pronte».
+
+**Errori miei:**
+- Ho preso #2355 in un turno **non aperto dal prompt del loop**: il Workflow avrebbe inoltrato ai developer il messaggio di ripresa della sessione invece della issue (l'incidente #2277). Visto prima di lanciare, giro chiuso `ferma` col motivo nel log, rifatto nel turno giusto. Costo: due minuti. La regola era già nella skill, scritta da me il giorno prima: averla scritta non basta a ricordarsela.
+- La mia PR preparatoria aveva lasciato su **#2313 la label `ciclo-autonomo`**, che significa «chiusa dal ciclo», su una issue mai implementata. Tolta. Una label applicata a un lavoro propedeutico dice il falso sul lavoro vero.
+- Ho provato a misurare l'exit code di `gen:types` dentro una pipe: `$?` era quello di `tail`. Rimisurato senza pipe (1 sul fallimento, 0 sul successo). Una misura sbagliata è peggio di una misura mancante.
+
+**Numeri:** 3 issue in produzione, 4 in `beta` approvate ma bloccate dall'intreccio, 9 issue chiuse (6 delle quali vecchie di due mesi), 11 aperte (7 mie, residui di sicurezza). 3 giri di ciclo: 2 `mergiata`, 1 `fuori-perimetro`. Tentativi medi del loop: **1,0**. Smoke test 82/0. Worktree: 72 → 70 (rimossi i due dei giri di oggi; gli altri sono accumulo storico e della sessione parallela, non toccati).
+
+---
+
 ## 2026-09-23/24 — Il triage delle card gira da solo sul VPS, e la prima card ha trovato il difetto che contava
 
 **In produzione:** migration `triage_queue`/`ciclo_config` (#2334) e otto stage delle card (#2335/#2351, dalla sessione parallela): il DB accoda ogni card nuova di «Idee» e il pannello ha Pronte, Parcheggiate, Obsolete. Codice in `beta`, non promosso.
