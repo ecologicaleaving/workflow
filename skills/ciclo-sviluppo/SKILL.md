@@ -3,11 +3,11 @@ name: ciclo-sviluppo
 description: >
   Ciclo autonomo, pezzo 2 (MaestroWeb #2281/#2304): a ogni giro prende LA PRIMA
   issue `ready` della coda e la porta fino a `beta` col flusso normale —
-  precheck, dev-loop (Opus pianifica e verifica, Sonnet scrive), PR verso beta,
+  precheck, dev-loop (Opus pianifica e verifica, un secondo Opus scrive), PR verso beta,
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.5.0
+version: 1.6.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -91,7 +91,7 @@ in Revisione la porta una persona che l'ha provata dal vivo (#1723).
 ### 2. Il dev-loop
 
 Segui la skill `dev-loop` **così com'è**: Workflow con planner Opus,
-developer Sonnet in worktree isolato allineato a `origin/beta`, verificatore
+developer Opus (dal 24/09/2026; prima Sonnet) in worktree isolato allineato a `origin/beta`, verificatore
 Opus, al massimo 4 tentativi.
 
 - **Il Workflow si lancia solo in un turno aperto dal prompt del loop**
