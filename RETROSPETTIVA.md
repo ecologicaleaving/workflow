@@ -8,6 +8,24 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-23/24 — Il triage delle card gira da solo sul VPS, e la prima card ha trovato il difetto che contava
+
+**In produzione:** migration `triage_queue`/`ciclo_config` (#2334) e otto stage delle card (#2335/#2351, dalla sessione parallela): il DB accoda ogni card nuova di «Idee» e il pannello ha Pronte, Parcheggiate, Obsolete. Codice in `beta`, non promosso.
+**In beta, aspetta:** #2334/#2336/#2348 → card **S182 in Revisione** (Davide la approva dal pannello); #2369/#2372 (docs, developer = Opus) → merge al verde.
+**Aperto:** #2347 (rumore log VPS + riga a interruttore spento), #2338 (script firewall nel repo ≠ script sul VPS; porte 3000/3010 dei progetti tunedin/normalize aperte), rotazione delle chiavi passate in chat, 5433 chiusa.
+
+**Ha funzionato:** la coda nel DB con trigger al posto del webhook (nessuna porta in ingresso); presa atomica provata su un Postgres vero (5 giri, due prese in parallelo, mai la stessa riga); prova end-to-end con card di prova PRIMA di accendere — è quella che ha trovato i due difetti; seconda prova: presa in 11 s, chiusa dal modello in 65 s; loop #2334 in 3 tentativi (32 file, 9.101 test), loop #2348 in 1 tentativo; due sessioni Claudio in parallelo coordinate via messaggi, nessun doppione (schema-da-zero rifatto in locale per l'altra quando `ghcr.io` rifiutava le immagini).
+**Non ha funzionato → regola nuova:**
+- il lavoratore segnò «fatta» una card mai letta perché `claude -p` era uscito 0 → **l'esito lo dichiara chi lavora con una scrittura rileggibile, mai il codice di uscita** (memoria `feedback_uscita_zero_non_e_lavoro_fatto`, #2348).
+- `Bash(npm run -s triage:*)` non copre `triage:leggi`: il `:*` chiude un prefisso di parola intera → **una voce per script, e l'allowlist di un agente headless si prova con un comando vero nel suo ambiente** (memoria `feedback_allowlist_bash_prefisso_di_parola_intera`).
+- `50-cloud-init.conf` batte un `99-hardening.conf`: OpenSSH tiene il PRIMO valore → il file si chiama `00-`.
+- la prima versione dei vincoli del loop diceva «esito 0 = fatta» e il verificatore l'ha preso per buono: **un AC scritto male passa la verifica**, il difetto lo trova solo la prova dal vivo.
+**Decisioni di Davide:** «fa tu» sul VPS (regola di permesso `ssh root@…` aggiunta da lui); riusare le chiavi esistenti (Anthropic senza workspace → header `anthropic-workspace-id`); «la chiave resta quella»; 5433 da chiudere; «usa opus 5.5 per entrambi i ruoli, mantenendo due agenti diversi» → **definitivo il 24/09**: Opus in tutti e tre i ruoli del dev-loop (FLUSSO.md, dev-loop 2.5.0); sezioni Parcheggiate e Obsolete oltre a Pronte.
+**Errori miei:** ho scritto io «esito 0 = fatta» nei vincoli; ho tentato la copia dello script sul VPS dopo un rifiuto del classificatore invece di passare subito a Davide; ho lasciato le chiavi passare in chat (da ruotare).
+**Numeri:** 5 PR mie in beta (#2341, #2342, #2349, #2372 in CI, + skill/flusso su workflow), 2 migration in prod (una di Davide, una della sessione parallela), 2 loop (3 + 1 tentativi), 1 incidente evitato (card «fatta» a vuoto, trovato dalla prova), backend 200 in 0,35 s a fine sessione, card: 22 in Lavorazione (S154/S159 rimesse in coda), 11 To Do, 1 Pronte, 1 Revisione, 4 Parcheggiate, 5 Obsolete.
+
+---
+
 ## 2026-09-19/20 — Il proprietario entra in Maestro, e la catena Modbus va un frame alla volta
 
 **In produzione:** epica #2142 per intero (#2145 #2146 #2147 #2148 #2149 #2225 #2229 #2231) più #2196 — il proprietario di un impianto ha un account, un menu suo e vede solo i suoi dati · #2212 catena Modbus serializzata (un frame per logger, la callback lancia il successivo) · #2209 frequenza letta da `gridFrequency`, già in Hz · #2203 segno di rete diviso all'origine, più bonifica di 193.957 righe · #2236 il fix che ha sbloccato il deploy di `command-scheduler-cron` · dal giro precedente #2132 #2181 #2204.
