@@ -353,6 +353,36 @@ un commit che al momento dell'apertura della PR era la punta di `beta`, è il ca
 normale (riallinea). Se era già vecchia quando il loop è partito, è #1984
 (rifai).
 
+
+## Un solo branch, una sola PR per giro (#2398)
+
+Il 24/09/2026 il loop ha aperto **due PR per la stessa issue tre volte**: #2313 →
+#2382 e #2383, #2389 → #2392 e #2396, più una terza. Il nome del branch era
+lasciato al developer (`<branch>` nel prompt); quando un push falliva, al
+tentativo successivo se ne inventava un altro (`-v2`, `-8`) e apriva una PR nuova.
+
+Finora è andata bene perché il verificatore dichiara quale PR ha giudicato e
+Claudio chiude l'altra a mano. Ma il margine era sottile, e su #2389 le due
+stesure **non erano equivalenti**: quella scartata aveva un test di isolamento
+che **sopravviveva alla mutazione** — toglieva il filtro per azienda e il test
+restava verde, cioè non provava quello che dichiarava di provare. Scegliere male
+non avrebbe perso del lavoro: avrebbe tenuto la versione con la garanzia finta.
+
+C'è anche un costo diretto: due branch, due CI complete (~16 minuti di E2E
+ciascuna), due PR da riconciliare.
+
+Da questa versione:
+
+- il nome del branch lo fissa **lo script** (`const BRANCH`), una volta sola;
+- il prompt del developer vieta di cambiarlo: se il push fallisce, **si ferma e
+  lo dice** invece di aprire un branch nuovo, e prima di aprire una PR guarda se
+  ne esiste già una per quel branch;
+- il verificatore riporta `prNumber` e segnala se ne trova più di una aperta;
+- lo script confronta `prNumber` fra un tentativo e l'altro: se cambia, il giro
+  si è sdoppiato e **si ferma**, invece di proseguire su due strade.
+
+Chi mergia usa il `prNumber` del verdetto, non «la PR che vedo aperta».
+
 ## Gli AC `[Campo]`/`[Azione]` non entrano nel criterio di uscita
 
 **`[Campo]`** — un AC la cui verifica comporta **scrivere su un impianto
