@@ -9,7 +9,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.5.0
+version: 2.6.0
 ---
 
 # Skill: dev-loop
@@ -101,6 +101,11 @@ export const meta = {
 
 const REPO = args.repo // es. 'ecologicaleaving/maestroweb'
 
+// #2398 — il nome del branch lo fissa lo SCRIPT, una volta sola, e il developer
+// non puo' cambiarlo. Prima era lasciato a lui («<branch>»), e al tentativo dopo
+// un push fallito se ne inventava un altro: due PR per la stessa issue.
+const BRANCH = args.branch ?? `feature/issue-${args.issueNumber}`
+
 phase('Piano')
 const PLANNER_PROMPT = `Leggi la issue #${args.issueNumber} del repo ${REPO}
 (gh issue view ${args.issueNumber} --repo ${REPO}).
@@ -139,6 +144,7 @@ if (plan.blocked) {
 let attempt = 0
 let verdict = { allPassed: false, results: [] }
 let feedback = null
+let prPrecedente = null   // #2398 — la PR del tentativo precedente, per accorgersi se il giro si sdoppia
 
 while (!verdict.allPassed && attempt < 4) {
   attempt++
@@ -151,6 +157,14 @@ PRIMA DI TOCCARE QUALUNQUE FILE, allinea il worktree — non fidarti di com'e':
 e verifica di essere davvero sulla punta di beta:
   git rev-list --count $(git merge-base HEAD origin/beta)..origin/beta   # deve dare 0
 Se non da' 0, fermati e dillo invece di procedere.
+
+UN SOLO BRANCH per tutto il giro: ${BRANCH}. Non cambiarlo, in nessun caso.
+Se il push fallisce — conflitto, storia divergente, qualunque motivo — FERMATI e
+dillo. NON aprire un branch nuovo (${BRANCH}-v2, -8, -bis) e NON aprire una
+seconda PR: e' il difetto #2398, successo tre volte il 24/09/2026.
+Prima di aprire una PR, guarda se ne esiste gia' una: gh pr list --head ${BRANCH}.
+Se c'e', si AGGIORNA quella.
+
 Segui CLAUDE.md del repo. Apri o aggiorna
 la PR verso beta con "Closes #${args.issueNumber}" nel body, commit e push.`,
     { model: 'opus', label: `dev-attempt-${attempt}`, isolation: 'worktree' })
@@ -162,7 +176,11 @@ la PR verso beta con "Closes #${args.issueNumber}" nel body, commit e push.`,
 sono lavoro esclusivo di Ascanio, mai un agente) — contro il diff reale della
 PR aperta (gh pr diff), non contro la descrizione del commit. Esegui tu
 stesso lint/test/build su un checkout del branch, non fidarti del developer.
-Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
+Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.
+
+Riporta anche prNumber: il numero della PR che hai davvero giudicato. Se per
+questa issue ne trovi PIU' DI UNA aperta, dillo esplicitamente col numero di
+tutte — e' il difetto #2398, e chi mergia deve sapere quale hai guardato.`
 
   // Il verificatore puo cadere in DUE modi, e vanno gestiti entrambi (vedi sotto).
   const giudica = async (label) => {
@@ -191,6 +209,18 @@ Per ogni AC: pass/fail/pending + motivazione puntuale e verificabile.`
   feedback = verdict.results.filter(r => !r.pass && r.status !== 'pending-campo' && r.status !== 'pending-azione')
     .map(r => `AC "${r.ac}": ${r.reason}`).join('\n')
   log(`Tentativo ${attempt}: ${verdict.results.filter(r => r.pass).length}/${verdict.results.length} AC verdi`)
+
+  // #2398 — una PR sola per giro. Il verificatore dichiara `prNumber`: se al
+  // tentativo N e' diversa da quella del tentativo N-1, il giro si e' sdoppiato
+  // e ci si ferma, invece di proseguire su due strade. Il 24/09/2026 e' successo
+  // tre volte, e le due stesure NON erano equivalenti: quella scartata su #2389
+  // aveva un test di isolamento che SOPRAVVIVEVA alla mutazione, cioe' non
+  // provava niente. Sceglierla sarebbe stato peggio che perdere il lavoro.
+  if (prPrecedente && verdict.prNumber && verdict.prNumber !== prPrecedente) {
+    log(`Il giro si e' sdoppiato: PR #${prPrecedente} al tentativo precedente, #${verdict.prNumber} adesso. Mi fermo.`)
+    return { blocked: true, reason: `due PR per la stessa issue (#${prPrecedente} e #${verdict.prNumber}) — difetto #2398`, verdict }
+  }
+  if (verdict.prNumber) prPrecedente = verdict.prNumber
 }
 
 if (!verdict.allPassed) {
@@ -219,6 +249,10 @@ const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
     allPassed: { type: 'boolean' },
+    // #2398 — il numero della PR giudicata. Serve a due cose: chi mergia usa
+    // QUESTO numero (non «la PR che vedo aperta»), e lo script se ne serve per
+    // accorgersi se il giro si e' sdoppiato fra un tentativo e l'altro.
+    prNumber: { type: 'number' },
     results: {
       type: 'array',
       items: {
