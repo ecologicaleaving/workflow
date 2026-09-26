@@ -8,6 +8,28 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-25/26 — Le prove dal vivo hanno trovato quattro difetti che i test non vedevano, e uno era nascosto da un altro
+
+**In produzione:** niente di nuovo. Una promozione (#2423) è stata **revertita** il 26/09 (#2425): portava #2420 senza #2389, e `main` non compilava. Il sito non è mai stato toccato — il deploy si ferma al type-check, prima di `Build` e di `Deploy via rsync`.
+**In beta, aspetta:** otto issue chiuse dal ciclo in due giorni — #2402, #2405, #2407, #2408, #2417, #2377, #2389, #2420 — più il lavoro del 24. **Sei schede in Revisione** (S117, S119, S168, S180, S181, S184): aspettano Ascanio.
+**Aperto:** #2415 (Solarman scrive righe vuote dal 22/09, quattro giorni, nessuna spia) · #2424 (la promozione non verifica che il risultato compili) · #2366 (credenziali da ruotare) · cinque schede in «Pronte» tutte fuori perimetro.
+
+**Ha funzionato:** il metodo che Davide ha chiesto il 25/09 — «serve un piano, non lasciare schede a metà». Con due account di prova veri (uno azienda, uno proprietario) le verifiche d'interfaccia sono diventate ripetibili: build del branch, sessione iniettata, DOM **misurato**. Le schede in Revisione sono passate da 1 a 6. Otto giri del ciclo mergiati, tre PR sbloccate a catena dopo #2407.
+
+**Non ha funzionato → regola nuova:**
+- **Un difetto può essere nascosto da un altro.** Il crash su un impianto senza device (#2420) esisteva da sempre, ma in produzione era irraggiungibile: l'utente veniva rimbalzato via prima (#2408). Togliendo il rimbalzo — cosa giusta — l'abbiamo reso visibile. Quando si valuta se una correzione «non ha effetti collaterali», va considerato anche cosa **scopre**.
+- **L'unità di approvazione non coincide con l'unità di funzionamento** (#2424). La promozione selettiva ha preso un commit che *usa* due variabili e lasciato fuori quello che le *definisce*: nessun conflitto di cherry-pick, nessuna spia, `main` rotta. Serve un `tsc --noEmit` sul branch temporaneo **prima** di aprire la PR.
+- **«Comparso con questa PR» è un indizio, non una causa.** Il 24/09 avevo attribuito un rosso E2E al riordino dei blocchi: undici run verdi prima, rosso con quella PR. Era una correlazione. Lo stesso test è poi caduto su una PR che toccava solo uno script del ciclo. #2379 è rimasta parcheggiata due giorni per la mia diagnosi. Una causa si dichiara quando una **seconda misura indipendente** la conferma.
+- **Una funzione pura giusta non garantisce una pagina giusta** (#2417). L'AC5 di #2376 era stato segnato verde «per codice e per test, con la conferma dal vivo che resta a Davide» — e dal vivo non reggeva. «La prova resta a qualcun altro» significa, nei fatti, che non la fa nessuno.
+
+**Decisioni di Davide:** «il god deve vedere tutto di tutti» (ribalta #2148) · nona sezione «Approvate» fra Revisione e produzione, con l'ordine delle sezioni dal lavoro da fare a quello finito · il passaggio in BackLog automatico, non un comando da ricordare · «non lasciare troppe schede a metà: le issue tecniche funzionali a finire una scheda si fanno, quelle generali vanno in coda» · account di prova creati da lui (QA azienda + proprietario).
+
+**Errori miei:** una promozione che ha rotto `main` (sopra) · tre misure sbagliate lette come fatti: un exit code preso da `tail`, un errore di colonna inesistente scambiato per «zero righe», un titolo cercato fra i soli nodi senza figli che mi ha fatto dichiarare «sparito» un riquadro che c'era — due volte · uno script di sostituzione che ha stampato «inserita» senza aver inserito niente (apici inversi mangiati dalla shell). **Quando la misura dice «non c'è», il primo sospetto è lo strumento.**
+
+**Numeri:** 8 issue chiuse dal ciclo in due giorni, 4 giri fermati (tutti con motivo scritto), 1 fuori perimetro. Schede: Revisione 1 → 6. In produzione: 0 (una promozione revertita). Quattro difetti trovati dal vivo che nessun test copriva: #2408, #2417, #2420, #2415.
+
+---
+
 ## 2026-09-24 — Una PR preparatoria faceva sparire le issue dalla coda, in silenzio: sei ne erano ferme da luglio
 
 **In produzione:** #2324 (`approva-promote` rimette la radice su `beta` invece di lasciarla staccata), #2325 (via il tetto di 4 giri al giorno), #2355 (`gen:types` gira su Windows e non tronca mai i tipi). PR #2378, deploy verde, smoke test **82 pass / 0 fail / 12 SKIP con motivo**.
