@@ -8,6 +8,35 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-26/27 — Il pulsante «Approva» sbloccato, quattro promozioni, Solarman spiegato, «In Lavorazione» svuotata
+
+**In produzione:** #2428 (24 issue: il pulsante «Approva» delle card, #2393, con le sezioni #2335/#2351/#2329, la coda del triage, #2424 il controllo di compilazione della promozione, e le tecniche verificate) · #2430 (colore pagina #2313+#2384, avatar, massivo dal «+», menu backtest, Road map, bottoni dashboard) · #2433 (gruppo statistiche: #2289 corretta con #2431, #2376, #2389, #2408, #2417, #2420) · #2440 (poller Solarman: niente più righe vuote, #2415). Smoke 82/0 su tutte e quattro.
+**In beta, aspetta:** #2312 (S117) e #2283 (S161) → Ascanio in «Revisione» · #2441 skill `stato-card` · #2043/#2044 approvate ma in conflitto solo sulla riga `version` → promozione a mano (via di Davide) · S119 già in prod → «Approva».
+**Aperto:** #2443 «Segnalazioni utenti» validata (85 AC, tier critico, migration da applicare in prod prima del merge in beta) · 5 card in «Pronte» con issue (#2444/#2445, #2159, #2290, #2449, #2450) · #2446 e #2285 decisioni di Davide · Solarman bloccato per quota → S189 Ascanio · #2432, #2434, #2435, #2437, #2439, #2447.
+
+**Ha funzionato:**
+- Il controllo di compilazione nella promozione (#2424, dev-loop verde al 1° giro) ha fermato due giri reali indicando la issue mancante: la rottura di `main` del 26 mattina non si è ripetuta.
+- Verifiche indipendenti in parallelo (agenti in sola lettura + prove nel browser con sessione iniettata) hanno sbloccato ~25 issue in un pomeriggio; tre non approvabili trovate con difetti veri (#2289, #2311, #2369).
+- Validazione a sei giri di #2443: ogni giro ha trovato buchi veri (RPC di creazione chiamabile dall'utente, Approva che accodava a vuoto, recinto anti-injection apribile dall'interno, verifica RLS che passava a vuoto).
+- Diagnosi Solarman in 15 minuti con una sola chiamata vera: `2101010 appId insufficient allowance`.
+
+**Non ha funzionato → regola nuova:**
+- 4-5 verificatori nel browser su test-maestro in parallelo, con periodi lunghi, sono coincisi con la caduta del DB di produzione (13:13-14:20, riavvio di Davide) → un agente alla volta, niente periodi lunghi, sonda autenticata (memoria `feedback_verifiche_browser_affossano_il_db`).
+- La mia sonda del backend usava la chiave anon: la RLS risponde 401 a DB sano, e ha continuato a dire «giù» a backend tornato → sonda sempre autenticata (stessa memoria).
+- Claude Code ha ucciso due comandi in background per memoria bassa, uno a metà di una promozione (radice lasciata sul branch temporaneo) → promozioni e vitest completo in primo piano.
+- La promozione selettiva scarta un gruppo intero quando l'unico conflitto è la riga `version` di package.json (#2043) → #2435.
+
+**Decisioni di Davide:** OpenEMS abbandonato, edge = app Node, perimetro lettura + OTA (#292) · «approvale tutte, le ho verificate io» (#2335, #2351, #2329) · «testa bene anche da browser e approva, non sviluppiamo cose nuove finché il tasto Approva non funziona» · segnalazioni utenti: sezione a parte vista da Davide e Ascanio, approvate da uno dei due, poi in Idee; l'utente vede lo stato ma non interagisce; solo utenti d'azienda; niente per i superadmin; 1 ogni 5 min e 10/giorno; sette stati; scarto senza motivo visibile; priorità scelta da chi approva, coda in ordine di arrivo · «svuotare In Lavorazione».
+
+**Errori miei:**
+- Ho rilanciato per la #2289 lo script del dev-loop scritto per la #2424 (contesto sbagliato): fermato in fase di piano, nessun danno → uno script di workflow per issue, mai riusato con un altro numero.
+- Ho detto a Davide che il tasto superadmin «crea issue GitHub» senza distinguere i due tasti god mode («Nuova idea» crea card) → prima di descrivere un comportamento, grep di tutti i punti d'ingresso.
+- Ho proposto come «accettato» che una segnalazione approvata da Ascanio andasse in testa alla coda: Davide l'ha corretta → un effetto sull'ordine del lavoro è una decisione sua, non un default mio.
+
+**Numeri:** 4 promozioni in `main` (≈ 40 issue in prod), 1 revert (quello del mattino, della sessione precedente) · dev-loop: #2424 (1 giro), #2289 (4), #2312 (3), #2415 (1) · 1 incidente DB (~70 min) · «In Lavorazione» da 17 card a 0.
+
+---
+
 ## 2026-09-25/26 — Le prove dal vivo hanno trovato quattro difetti che i test non vedevano, e uno era nascosto da un altro
 
 **In produzione:** niente di nuovo. Una promozione (#2423) è stata **revertita** il 26/09 (#2425): portava #2420 senza #2389, e `main` non compilava. Il sito non è mai stato toccato — il deploy si ferma al type-check, prima di `Build` e di `Deploy via rsync`.
