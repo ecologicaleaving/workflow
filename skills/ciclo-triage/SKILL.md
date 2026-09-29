@@ -98,7 +98,14 @@ costosi se saltati.
 | è già fatta e **in beta** | `triage:commenta` che dice dove (issue, PR, comportamento) | `triage:sposta -- --stage backlog --status done` |
 | è sospesa dal proponente («teniamola in sospeso», «tra qualche mese») | `triage:commenta` che riporta le sue parole | `triage:sposta -- --stage parcheggiate` |
 | è un progetto grande o una scelta di priorità | `triage:commenta` che lo dice | `triage:sposta -- --stage parcheggiate`, `--motivo` lo spiega, Davide la vede nel log |
-| tocca il perimetro escluso (punto 5) | issue con l'analisi e label `needs-decision`, poi `triage:collega` | resta in Idee, `triage:commenta` «aspetta Davide» |
+| tocca il perimetro escluso (punto 5) | issue con l'analisi e label `needs-decision`, poi `triage:collega`, `triage:commenta` «aspetta Davide» | `triage:sposta -- --stage todo --assigned-to davide` |
+
+**Regola ferrea (#2471, Davide 29/09/2026): una card triagiata non resta MAI in
+«Idee».** Idee = card mai toccata. Domanda o decisione aperta (anche una issue
+`needs-decision`) → `--stage todo --assigned-to <chi deve rispondere>`. Il
+codice lo fa rispettare: `triage:esito --esito fatta` rifiuta se la card è
+ancora in Idee, `triage:sposta --stage pronte` rifiuta se una issue collegata
+ha `needs-decision`, `--stage todo` senza `--assigned-to` è rifiutato.
 
 **Perché «Pronte» e non «In Lavorazione» (#2335).** «In Lavorazione» vuol dire
 che qualcuno ci sta lavorando; una card triagiata non lo è ancora. Separarle
@@ -171,7 +178,8 @@ virgolette singole, oppure via stdin con `--body-file -`.)
 ### 5. Perimetro escluso: qui il ciclo si ferma e lascia a Davide
 
 Se la card (o l'analisi) tocca uno di questi, la issue nasce `needs-decision`,
-**senza** `ready`, la card resta in Idee:
+**senza** `ready`, e la card va in «I miei To Do» di Davide
+(`triage:sposta -- --stage todo --assigned-to davide`) — mai lasciata in Idee (#2471):
 
 - `supabase/migrations/`, `supabase/functions/` (Edge Function), secret, cron;
 - automation engine (`src/lib/automation-*`), dispatch ai vendor, quote (Sungrow,
@@ -190,8 +198,9 @@ npm run -s triage:esito -- --esito ferma --motivo 'dati incoerenti: la card cita
 ```
 
 In locale aggiungi `--id <id> --presa <presa>` (li ha stampati `--prendi`); sul
-VPS li legge dall'ambiente. `fatta` vale per **ogni** esito del punto 3, anche
-«resta in Idee»: la coda registra che la card è stata guardata. `ferma` è per
+VPS li legge dall'ambiente. `fatta` vale per **ogni** esito del punto 3, ma
+**solo dopo** averla spostata: con la card ancora in Idee lo script rifiuta
+(exit 1, #2471). `ferma` è per
 quando **non hai potuto** decidere (errore, dati strani, `gh` che non risponde):
 la RPC scrive da sé sulla card «serve una persona» e Davide lo vede in
 `npm run ciclo:log`.
