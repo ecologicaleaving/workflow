@@ -44,6 +44,8 @@ curl -s -G "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/qa_task_comments" \
   -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
 # Loop lanciati oggi
 ls ~/.claude/projects/*/*/subagents/workflows/ 2>/dev/null | tail -20
+# Card ferme o nella sezione sbagliata (MaestroWeb) — SEMPRE, di default
+npm run audit:card-ferme   # exit 1 = card da sistemare al punto 4
 # Sonda finale del backend
 curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' \
   "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/sites?select=id&limit=1" \
@@ -121,8 +123,8 @@ Per ogni card segnalata, decidi adesso — non «alla prossima»:
 |---|---|
 | ha tutte le issue chiuse e il lavoro è provato | **Revisione**, con cosa provare |
 | ha una issue chiusa `NOT_PLANNED` | commento che **spiega ad Ascanio** perché, poi dove serve |
-| è una domanda per Ascanio | nei **suoi To Do**, mai in «In Lavorazione» |
-| non ha issue e nessuno ci lavora | torna fra le **Idee** |
+| aspetta una risposta, decisione o azione di una persona (Ascanio **o Davide**) | nei **To Do di quella persona** (`assigned_to`), mai in «Idee», «Pronte» o «In Lavorazione» |
+| non ha issue e nessuno ci lavora | **To Do** di chi deve decidere, o **Parcheggiate** col motivo — mai di nuovo in «Idee» («Idee» = mai toccata, decisione di Davide del 29/09/2026, MaestroWeb #2471) |
 | è già risolta | **BackLog** + `status: done`, con una riga che dica cosa è successo |
 
 Finché #2277 non è in produzione, il controllo si fa a mano: tutte le card
