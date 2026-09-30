@@ -8,6 +8,18 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
+
+**In produzione:** niente da questa sessione.
+**In beta, aspetta:** le 15 PR mergiate il 29/09 (#2472-#2490) sono del loop supervisionato, sessione parallela ancora attiva: le rendiconta lei.
+**Aperto:** sistema di pagamento aziende (poi proprietari) — nessuna issue, nessuna ADR: Davide ha detto «ci lavoreremo». Sblocca: la decisione sulla fattura elettronica SDI (commercialista) e sul modello di prezzo (Davide + Gaia).
+
+**Ha funzionato:** letto prima cosa c'è (tier `base<plus<gold`, gating in `access.ts`, trigger #1778 che lascia scrivere il tier al `service_role`) e la proposta si è appoggiata sull'esistente: un webhook può aggiornare il tier senza toccare la sicurezza. Proposta: Stripe Billing con Checkout/Portal ospitati, webhook come unica fonte di verità, pagante polimorfico da subito per la fase proprietari. Dettaglio in memoria `project_sistema_pagamento_aziende`.
+**Non ha funzionato → regola nuova:** nessuna.
+**Decisioni di Davide:** «carta, in abbonamento con pagamenti automatici»; prima le aziende, poi i proprietari; si riprende in una sessione dedicata.
+**Errori miei:** nessuno rilevato.
+**Numeri:** 0 issue, 0 loop, 0 incidenti · `audit:card-ferme` = nessuna card ferma · sonda backend 200 in 0,36 s.
+
 ## 2026-09-28 — Cinque card lavorate, un meccanismo nuovo per testare le Edge Function su beta, allowlist non denylist
 
 **In produzione:** #2470 (S161 popup WhatsApp via portal, S190 tour funzioni azienda, S164 alert temperatura inverter con distinzione notturno/diurno). Smoke: non misurato — nessuno step di smoke dedicato nel deploy (#2400 ancora aperta).
