@@ -8,6 +8,27 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-02 — Promozione con deploy fermo e sbloccato, comandi Huawei scritti spenti, sei card restituite da Ascanio recuperate
+
+**In produzione:** PR #2582 (21 issue, fra cui #2049 riflusso, #2285 Artuso, #2312 sommario energia, #2375 loghi, #2467 rete debole, #2493 God connessioni, #2538 tema a gradini). Il primo deploy è caduto su `42P16` (la migration di #2493 riscriveva una vista già estesa da #2560): fix #2583 (PR #2584 beta, #2585 main), secondo deploy verde, 82 Edge Function in linea, smoke 83/0 (12 SKIP per credenziali). Card della promozione in BackLog solo dopo #2586 (14/14).
+**In beta, aspetta:** Revisione per Ascanio: S188 (#2594 HYD 3600), S194 (#2465 diagnosi batteria), S208 (#2599 allegati, la rivede Davide che l'ha segnalata), S220 (#2592 Visualizzazione errori) · Approvata: S193 (#2596 report ENEL) · tecniche in beta senza card: #2586, #2589/#2590 (Huawei spento), #2600 (spia risposte).
+**Aperto:** #2597 (report ENEL al cliente, servirà migration) · #2598 (dopo) · #2587 (OAuth Huawei, serve il client Huawei) · S225/#2606 nei To Do di Davide (fuori perimetro autonomo per possibile migration) · S198 scelta servizio satellitare (Davide) · S144, S200, S211 e scheda HYD 10000 (Ascanio).
+
+**Ha funzionato:**
+- 10 dev-loop (developer Sonnet 5.5): 8 verdi al primo tentativo, 1 al terzo (#2586), 2 fermati dal planner su AC sbagliati scritti da me (#2517: comandi Huawei contro il manuale; #2599: «composer di /qa» inesistente) e ripartiti dopo una domanda a Davide.
+- Prove dal vivo con Playwright prima di ogni Revisione: hanno trovato due cose che la CI non vede (RLS di `battery_health_snapshots` che nasconde il SOH al God; card «Batteria» chiusa di default).
+- Pulizia worktree: 213 rimossi (~45 GB occupati prima), mai `--force`.
+
+**Non ha funzionato → regola nuova:**
+- Ascanio risponde e sposta la card fuori da «Idee»: nessuno se ne accorge (sei card ferme un giorno). → #2600: `audit:card-ferme` segnala l'ultima risposta senza seguito, anche spostamento muto e commento di solo allegato.
+- Il primo deploy di main fallito blocca per sempre `approva:card-in-produzione`. → #2586: conta il primo deploy verde che contiene il merge.
+- Migration applicata a mano e non registrata, rieseguita dal deploy dopo una migration più nuova → `42P16`. → memoria `feedback_migration_manuale_rieseguita_dal_deploy`.
+- Triage sul VPS fermo tutto il giorno (S220, S221, S225 «ferma» in 20 s): manca `CLAUDE_CODE_OAUTH_TOKEN`. Azione di Davide.
+
+**Decisioni di Davide:** «promuovi le cose pronte» · fix della migration invece di scritture sul registro · developer Sonnet 5.5 per i loop · #2517 «codice ora, spento» · executed Huawei = task in corso + telemetria · `auto` chiude prima la forzatura · durata forzature: «fa un todo per Ascanio e chiediglielo» · /qa resta senza composer · ok a migration #2517 e #2590 · ok pulizia worktree · memoria credenziali riscritta senza password (Ascanio e bicos già ruotate).
+**Errori miei:** AC di #2517 scritti contro il manuale (stop «telemetria ~0»: corretto in #2590) e AC di #2599 su un composer di /qa che non esiste: il planner li ha fermati entrambi. Script di prova: tre card [e2e] invece di una (assegnatario obbligatorio, filtro che bloccava la firma dei link), tutte cancellate. Usato per errore un filtro `-proxy` troppo largo nelle prove (bloccate letture innocue).
+**Numeri:** 21 issue in prod · 10 PR in beta oggi · 10 loop, tentativi medi 1,2 · 1 incidente (deploy prod fermo ~3 h) · migration applicate: 2 (#2517, #2590) · `audit:card-ferme` = nessuna card ferma · sonda backend 200 in 0,37 s.
+
 ## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
 
 **In produzione:** niente da questa sessione.
