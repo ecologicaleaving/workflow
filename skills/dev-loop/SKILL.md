@@ -2,14 +2,15 @@
 name: dev-loop
 description: >
   Implementazione di una issue con pianificazione e verifica AC affidate a
-  Opus 5, scrittura del codice affidata a un secondo agente Opus 5 in worktree isolato
-  (decisione di Davide del 24/09/2026: Opus per tutti e tre i ruoli, sempre tre agenti distinti).
+  Opus, scrittura del codice affidata a un agente Sonnet 5.5 in worktree isolato
+  (dal 03/10/2026 decisione di Davide: developer Sonnet 5.5; planner e verificatore
+  Opus, sempre tre agenti distinti).
   Loop automatico: pianifica → implementa → verifica ogni Acceptance
   Criterion → se qualcuno fallisce, riprova con il feedback, finché non sono
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.6.0
+version: 2.7.0
 ---
 
 # Skill: dev-loop
@@ -21,9 +22,11 @@ version: 2.6.0
 Separare chi pianifica/giudica da chi scrive il codice riduce il rischio che
 un'implementazione si autocertifichi "fatta" senza aver davvero soddisfatto
 ogni Acceptance Criterion. Opus 5 pianifica e verifica con un giudizio più
-affidabile su corner case e AC ambigui; dal 24/09/2026 anche il developer è
+affidabile su corner case e AC ambigui; dal 24/09/2026 anche il developer era
 Opus 5 (decisione di Davide, presa dopo #2334: la qualità del codice del loop
-vale più del risparmio). La separazione resta: chi scrive non è chi giudica,
+vale più del risparmio). Dal 03/10/2026 decisione di Davide: developer
+Sonnet 5.5 (`model: 'sonnet'`), «sempre, finché non dico di cambiare»; planner
+e verificatore restano Opus. La separazione resta: chi scrive non è chi giudica,
 tre agenti distinti con tre prompt distinti.
 
 ## ⛔ Prima di lanciare il loop: `npm run issue:precheck <N>` — obbligatorio
@@ -68,7 +71,7 @@ worktree, sempre con PR verso `beta`, senza loop).
 |---|---|---|
 | Claudio (sessione corrente) | Opus 5 | Orchestra il loop via `Workflow` tool, riporta a Davide |
 | Planner | Opus 5 (`model: 'opus'`) | Legge la issue, scompone in piano concreto (file, approccio, edge case) — non scrive codice |
-| Developer | Opus 5 (`model: 'opus'`, worktree isolato, base `origin/beta`) — agente **distinto** dal planner e dal verificatore | Implementa secondo il piano (+ feedback se è un retry), commit, push, apre/aggiorna la PR verso `beta` |
+| Developer | Sonnet 5.5 (`model: 'sonnet'`, dal 03/10/2026; dal 24/09 era Opus 5, prima Sonnet 5 — worktree isolato, base `origin/beta`) — agente **distinto** dal planner e dal verificatore | Implementa secondo il piano (+ feedback se è un retry), commit, push, apre/aggiorna la PR verso `beta` |
 | Verificatore | Opus 5 (`model: 'opus'`) | Confronta il **diff reale della PR** con OGNI Acceptance Criterion della issue, pass/fail + motivazione puntuale — non si fida del messaggio di commit, esegue lui stesso lint/test/build su un checkout del branch |
 
 ## Meccanica del loop
@@ -91,10 +94,10 @@ prima di lanciarlo):
 ```js
 export const meta = {
   name: 'issue-dev-loop',
-  description: 'Opus pianifica e verifica AC, un secondo agente Opus implementa — loop fino a verde',
+  description: 'Opus pianifica e verifica AC, Sonnet 5.5 implementa — loop fino a verde',
   phases: [
     { title: 'Piano', model: 'opus' },
-    { title: 'Implementazione', model: 'opus' },
+    { title: 'Implementazione', model: 'sonnet' },
     { title: 'Verifica AC', model: 'opus' },
   ],
 }
@@ -167,7 +170,7 @@ Se c'e', si AGGIORNA quella.
 
 Segui CLAUDE.md del repo. Apri o aggiorna
 la PR verso beta con "Closes #${args.issueNumber}" nel body, commit e push.`,
-    { model: 'opus', label: `dev-attempt-${attempt}`, isolation: 'worktree' })
+    { model: 'sonnet', label: `dev-attempt-${attempt}`, isolation: 'worktree' })
 
   phase('Verifica AC')
   const VERIFIER_PROMPT = `Verifica CIASCUN Acceptance Criterion della issue
