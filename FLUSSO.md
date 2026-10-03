@@ -11,7 +11,7 @@ sono in disaccordo, vince questo file.
 | **Davide** | Decide, testa, approva (`/approva`) |
 | **Ascanio** | Co-fondatore. Prova sul campo, approva dal suo pannello (`/qa`) |
 | **Claudio** | Orchestratore — gira su **Opus 5** (alias `model: 'opus'`). Pianifica, verifica, coordina. Non implementa. |
-| **developer** | Subagente **Opus 5** (alias `model: 'opus'`, dal 24/09/2026; prima Sonnet 5), in worktree isolato, **distinto** dal planner e dal verificatore. Implementa. |
+| **developer** | Subagente **Sonnet 5.5** (alias `model: 'sonnet'`; dal 03/10/2026 decisione di Davide: developer Sonnet 5.5, «sempre, finché non dico di cambiare»; planner e verificatore Opus. Dal 24/09/2026 era Opus 5; prima ancora Sonnet 5), in worktree isolato, **distinto** dal planner e dal verificatore. Implementa. |
 | **Gaia** | Business e governance — vive nel repo `ecologicaleaving`. Citata qui solo per completezza dei ruoli. |
 
 ## Branch e merge
@@ -196,7 +196,7 @@ Workflow tool, tre fasi:
 
 ```
 phase Piano            planner    (model: 'opus')
-phase Implementazione   developer  (model: 'opus', agente distinto, isolation: 'worktree', base: origin/beta)
+phase Implementazione   developer  (model: 'sonnet', agente distinto, isolation: 'worktree', base: origin/beta)
 phase Verifica AC       verificatore (model: 'opus')
 ```
 
