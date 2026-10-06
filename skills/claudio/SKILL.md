@@ -57,7 +57,7 @@ Un `failure` → segnalalo a Davide **prima** di procedere con altro.
 ### 2. Sync del workflow (automatico, senza chiedere)
 
 ```powershell
-cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+cd ~/Documents/00-Progetti/workflow
 git pull origin master
 powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 ```

@@ -4,7 +4,9 @@
 // Legge URL e chiave service_role da MaestroWeb/.env.local. Non stampa mai la chiave.
 // «righe 0» = la card non era in <da>: nessuno spostamento, controlla prima di riprovare.
 import { readFileSync } from 'node:fs';
-const ROOT = process.env.MAESTRO_ROOT ?? 'C:/Users/KreshOS/Documents/00-Progetti/MaestroWeb';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+const ROOT = process.env.MAESTRO_ROOT ?? join(homedir(), 'Documents', '00-Progetti', 'MaestroWeb');
 const env = Object.fromEntries(readFileSync(`${ROOT}/.env.local`, 'utf8').split('\n')
   .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
   .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));

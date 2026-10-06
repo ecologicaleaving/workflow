@@ -50,7 +50,7 @@ cercarne altre, e alla fine chiudi con `triage:esito`. **Non chiamare** mai
 ### 0. Giro locale: può partire? Prendi una card
 
 ```bash
-cd C:\Users\KreshOS\Documents\00-Progetti\MaestroWeb
+cd ~/Documents/00-Progetti/MaestroWeb
 git fetch -q origin beta                    # il codice da leggere è quello di origin/beta
 npm run -s idee:da-triagiare                # sola lettura: la coda in_attesa
 npm run -s idee:da-triagiare -- --prendi    # reclama UN elemento (stampa id, presa, task_id, card_no)

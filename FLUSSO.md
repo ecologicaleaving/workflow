@@ -366,7 +366,7 @@ for repo in maestroweb finn BeachRef-app StageConnect GridConnect AutoDrum smart
 done
 
 # 2. Sync del workflow
-cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+cd ~/Documents/00-Progetti/workflow
 git pull origin master
 powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 

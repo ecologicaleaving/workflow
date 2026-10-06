@@ -135,7 +135,7 @@ con `stage=lavorazione`, e per ciascuna lo stato delle issue collegate in
 ### 5. Commit e push della retrospettiva
 
 ```bash
-cd C:\Users\KreshOS\Documents\00-Progetti\workflow
+cd ~/Documents/00-Progetti/workflow
 git add RETROSPETTIVA.md
 git commit -m "docs(retrospettiva): <data> — <titolo>"
 git push origin <branch>      # master è protetto: se serve, PR

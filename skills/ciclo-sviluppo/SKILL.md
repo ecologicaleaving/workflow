@@ -37,7 +37,7 @@ dura di più tiene il lock, e il giro successivo esce `noop`.
 ### 0. Può partire?
 
 ```bash
-cd C:\Users\KreshOS\Documents\00-Progetti\MaestroWeb
+cd ~/Documents/00-Progetti/MaestroWeb
 git fetch -q origin beta
 npm run -s ciclo:sviluppo -- --json --lock
 ```

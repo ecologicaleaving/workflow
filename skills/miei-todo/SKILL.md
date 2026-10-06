@@ -15,7 +15,7 @@ spiegarmeli e darmi le opzioni tra cui scegliere, un todo alla volta»).
 ## 0. L'elenco
 
 ```bash
-cd C:\Users\KreshOS\Documents\00-Progetti\MaestroWeb
+cd ~/Documents/00-Progetti/MaestroWeb
 npm run -s card:stato -- --json
 ```
 
