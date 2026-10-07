@@ -8,6 +8,22 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-07 — Rollup orario ricalcolato e in produzione, un incidente di un'ora per una misura fatta come `postgres`
+
+**In produzione:** PR manuale #2727 (`main` = `1db667bf`, deploy verde 19:48 UTC): catena #2159 (rollup orario con `pv_energy_wh` e temperature, ricalcolato da gennaio 131.913/131.913; sweep per impianto/giorno con guardie, **SPENTO**, nessun cron), #2718, #2720 (`get_monthly_production` dal rollup: come utente 1,3–1,9 s a caldo, 3,9 s alla prima chiamata sul sito più denso, superadmin 0,2–0,5 s; 121/121 siti identici alla formula raw), #2395 (policy superadmin in sola SELECT sull'oraria), #2723, #2724, più #2703 (S231), #2707 (S257), #2666 (S252). Smoke a mano: 84 passati, 0 falliti, 12 non verificati (il deploy non ha lo step: #2400). Prima, #2717 selettiva (#2699 #2701 #2704 #2712).
+**In beta, aspetta:** #2661 (seriale Zucchetti, S248, PR #2716) — Davide ha scritto «credo sia ora di fare il test»: serve `qa-approved` per sua istruzione e mini-promozione di un commit.
+**Aperto:** DROP `get_monthly_production_v2` (Davide) · accensione sweep (dopo `audit:rollup-energia` a basso carico) · S198/#2469: manca un conto proprietario valido su Green Energie · 13 tabelle lette dal browser senza policy superadmin (elenco in #2395) · 5 card Approvate non ancora in produzione (S237, S238, S240, S246, S247) · 60 issue con `qa-approved` i cui commit risultano già in `main` da riconciliare.
+
+**Ha funzionato:** sei loop su sette al primo giro (#2718, #2720, #2395, #2723, #2724; #2715 a due giri dopo il primo piano); la promozione manuale con cherry-pick in ordine topologico e verifica «0 file diversi da beta non spiegati dai commit esclusi» quando `approva-promote` escludeva tre PR per conflitto; prove SQL in CI che mordono sulle varianti sbagliate.
+**Non ha funzionato → regola nuova:**
+- Misurata come `postgres`, la prima `get_monthly_production` oraria sembrava 1,5 s; come utente autenticato andava in 500/57014 a ~8,4 s, ed è stata viva in produzione circa un'ora. **Regola:** ogni misura di una RPC letta dal browser si fa col ruolo e la RLS di chi la chiama (memoria `feedback_misurare_come_utente_non_come_postgres`).
+- PostgREST taglia a 1000 righe: il primo controllo del ricalcolo vedeva metà del giorno. **Regola:** ogni confronto prima/dopo si pagina (memoria `feedback_postgrest_1000_righe_confronti_paginati`).
+- Il messaggio di Davide su S248 (14:42 UTC) l'ho letto ore dopo, perché guardavo il thread di lavoro e non le card. **Regola:** a fine giro si rileggono le card, non solo il thread (memoria `feedback_rileggere_le_card_a_fine_giro`).
+- Il template del `dev-loop` installato dice ancora Opus per il developer: l'ho copiato e il loop è partito con `model: 'opus'`. Fermato e ripreso con `resumeFromRunId`. **Regola:** developer = `sonnet`; da correggere la skill e il CLAUDE.md di MaestroWeb.
+**Decisioni di Davide:** «a» (policy superadmin sull'oraria, opzione A) · «b» (promozione in un'unica PR manuale) · «ok, andiamo avanti così» sul residuo ±0,1 kWh (7% dei mesi-impianto, float4 vs double) · «Gli agenti che implementano devono essere sonnet, devi scriverlo nel workflow e applicare sempre queste indicazioni» · sul PC di Ascanio «deve lavorare solo il loop automatico, le decisioni relative al supervisionato le prendo io».
+**Errori miei:** misura come `postgres` presentata come rappresentativa (incidente sopra) · migration 1 riproposta senza rileggere «Da dove ripartire» · commento di #2724 che dava per catturata la mutazione `<= LEAST` (lo era per caso, ~8%): corretto con un commento · S248 letta in ritardo.
+**Numeri:** 8 PR mergiate in beta/main, 18 issue chiuse, 1 incidente (~1 h, lettura mensile in errore per i soli utenti non superadmin), ~447k–1,23M token per loop · `audit:card-ferme` = nessuna card ferma (dopo 3 commenti e S248 nei To Do di Davide) · sonda backend 200 in 0,31 s · un blocco delle scritture GitHub 15:09–15:17 UTC, rientrato da solo.
+
 ## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
 
 **In produzione:** niente da questa sessione.
