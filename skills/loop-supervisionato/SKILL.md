@@ -3,12 +3,12 @@ name: loop-supervisionato
 description: >
   Ramo supervisionato del ciclo di sviluppo (MaestroWeb): lo avvia SOLO Davide
   quando è presente («/loop-supervisionato» o «/loop /loop-supervisionato») e
-  lavora TUTTE le card in «Pronte», anche quelle che il ciclo autonomo scarta
-  per perimetro (migration, Edge Function, cron, vendor). Porta ogni issue fino
-  a `beta`, applica le migration additive con Davide davanti, e lo avvisa
-  appena serve lui. Mai `main`. Trigger: «/loop-supervisionato», «loop
-  supervisionato», «macina le pronte, ci sono io».
-version: 1.0.0
+  lavora le card in «Pronte supervisionate» (quelle che il ciclo autonomo non
+  può prendere: migration, Edge Function, cron, vendor) e, dopo, anche quelle in
+  «Pronte auto». Porta ogni issue fino a `beta`, applica le migration additive
+  con Davide davanti, e lo avvisa appena serve lui. Mai `main`. Trigger:
+  «/loop-supervisionato», «loop supervisionato», «macina le pronte, ci sono io».
+version: 1.1.0
 ---
 
 # Skill: loop-supervisionato
@@ -27,10 +27,26 @@ skill non si attiva da sola.
 
 ## La coda
 
-1. Le card in **«Pronte»**, nell'ordine di `coda_pos` (`npm run -s card:stato
-   -- --json`), poi per numero. Per ogni card, le sue issue aperte con `ready`
-   (per un'epica: le sotto-issue `ready`, in ordine).
-2. Poi le altre issue `ready` senza card.
+Dal 10/10/2026 (#2754, decisione di Davide) «Pronte» è divisa in due sezioni,
+e la sceglie il triage: **«Pronte supervisionate»** (`pronte_sup`) è la coda
+di QUESTO loop; **«Pronte auto»** (`pronte_auto`) è quella del ciclo autonomo,
+che questo loop può riprendere quando Davide è presente. Ognuna ha la sua
+coda ordinabile (`coda_pos`, due code distinte).
+
+1. Le card in **«Pronte supervisionate»** (`pronte_sup`), nell'ordine di
+   `coda_pos` (`npm run -s card:stato -- --json`), poi per numero.
+2. Poi le card in **«Pronte auto»** (`pronte_auto`), nel loro ordine di
+   `coda_pos`. Prima di prenderne una, controlla che il ciclo autonomo non
+   l'abbia già presa (`npm run ciclo:log`, sezione «prese»): se è sua, saltala.
+3. Durante la transizione, le card ancora nella vecchia **«Pronte»**
+   (`pronte`, nel pannello «Pronte (da riclassificare)»), nel loro ordine di
+   `coda_pos`. Il ciclo autonomo non le prende: se non le prendi tu, restano
+   ferme finché una persona non le riclassifica.
+4. Per ogni card, le sue issue aperte con `ready` (per un'epica: le
+   sotto-issue `ready`, in ordine). Poi le altre issue `ready` senza card.
+
+Con un checkout **precedente** a #2754 esiste solo `pronte`: la coda è il
+punto 3 da solo.
 
 Si **salta** (e si segnala a Davide al punto 6) una issue con:
 - label `needs-decision`;
@@ -44,8 +60,14 @@ serve al ciclo autonomo, non a questo ramo.
 
 ## Il giro (una issue)
 
-1. **Card** → «In Lavorazione» (`npm run -s ciclo:card-presa -- --task <uuid>`
-   se è in Pronte). `npm run issue:precheck N`: exit 1 → salta, segnala.
+1. **Card** → «In Lavorazione» con
+   `npm run -s card:in-lavorazione -- --card S<n> --issue N` (o `--task <uuid>`,
+   #2752): parte da `pronte_sup`, `pronte_auto`, dalla `pronte` provvisoria, dai
+   To Do e da Revisione, e lascia il commento firmato «Claudio». **Mai**
+   `ciclo:card-presa`: è del ciclo autonomo, filtra `stage=eq.pronte_auto` e
+   su una card in `pronte_sup` non sposta niente (#2754). `card:in-lavorazione`
+   è in `beta` (non ancora in `main`): lancialo da un checkout allineato a
+   `origin/beta`. `npm run issue:precheck N`: exit 1 → salta, segnala.
 2. **Dev-loop** (skill `dev-loop`) col Workflow, con in più questo vincolo nei
    prompt di planner, developer e verificatore:
    > Modalità SUPERVISIONATA. Migration ed Edge Function si SCRIVONO nel

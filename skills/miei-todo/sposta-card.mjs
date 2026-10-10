@@ -11,8 +11,11 @@ const env = Object.fromEntries(readFileSync(`${ROOT}/.env.local`, 'utf8').split(
   .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
   .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
 const [n, da, a, who, note] = process.argv.slice(2);
-const AMMESSI = ['todo', 'idee', 'pronte', 'lavorazione', 'revisione', 'backlog', 'parcheggiate', 'obsolete'];
+// #2754: «Pronte» è divisa in pronte_auto (ciclo autonomo) e pronte_sup (loop supervisionato).
+// 'pronte' resta solo per un database senza la migration di #2754 (provvisorio).
+const AMMESSI = ['todo', 'idee', 'pronte_auto', 'pronte_sup', 'pronte', 'lavorazione', 'revisione', 'backlog', 'parcheggiate', 'obsolete'];
 if (!n || !da || !a) { console.error('Uso: node sposta-card.mjs <card_no> <da> <a> [assigned_to|-] [review_notes]'); process.exit(1); }
+if (a === 'pronte') console.warn('Attenzione: «pronte» è la sezione provvisoria (#2754). Usa pronte_auto o pronte_sup, se il database ha la migration.');
 if (!AMMESSI.includes(a) || a === 'revisione' || a === 'backlog') {
   console.error(`Destinazione «${a}» non ammessa da questa skill (mai Revisione, Approvate o BackLog).`); process.exit(1);
 }

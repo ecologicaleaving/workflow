@@ -94,7 +94,8 @@ faccio ora» (e gli dai i comandi **uno alla volta**, mai un segreto in chat),
 
    | Esito della decisione | Card in |
    |---|---|
-   | Lavoro sbloccato, issue `ready` | `pronte` |
+   | Lavoro sbloccato, issue `ready` che passa il perimetro del ciclo autonomo | `pronte_auto` (la prende il ciclo autonomo) |
+   | Lavoro sbloccato, issue `ready` che tocca migration, Edge Function, cron o vendor — o nel dubbio | `pronte_sup` (la lavora il loop supervisionato, con Davide presente) |
    | Lo iniziamo adesso, in questa sessione | `lavorazione` |
    | Serve una risposta di Ascanio | `todo` + `ascanio` |
    | Serve ancora un'azione di Davide (fatta dopo) | resta in `todo` + `davide`, con l'azione scritta |

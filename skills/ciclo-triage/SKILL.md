@@ -9,13 +9,14 @@ description: >
   «giro» (sessione locale con `/loop`) e «card singola» (lavoratore sul VPS,
   Claude Code headless). Trigger: «/loop ciclo-triage», «giro di triage»,
   «triage delle idee».
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: ciclo-triage
 
 > Riferimenti: `FLUSSO.md` punto 0 (triage), MaestroWeb #2281 (disegno),
 > #2334 (la coda condivisa e il lavoratore), #2336 (la macchina sul VPS),
+> #2754 («Pronte» divisa in «Pronte auto» e «Pronte supervisionate»),
 > `docs/triage-vps.md` nel repo MaestroWeb (operatività del servizio).
 > Questa skill è **autonoma**: sul VPS non c'è la skill `ascanio` né `curl`, quindi
 > il *come* di ogni passo sta qui dentro.
@@ -91,25 +92,59 @@ costosi se saltati.
 
 | la card… | cosa scrivi | dove va la card |
 |---|---|---|
-| è chiara e fattibile | issue con AC (punto 4), poi `triage:collega` | `triage:sposta -- --stage pronte` |
+| è chiara e fattibile, e la issue **passa il perimetro** del ciclo autonomo (punto 5) | issue con AC e `ready` (punto 4), poi `triage:collega` | `triage:sposta -- --stage pronte_auto` |
+| è chiara e fattibile, ma la issue **tocca il perimetro** (punto 5), o hai un dubbio | issue con AC e `ready` (punto 4), riga `RISCHIO:`, poi `triage:collega` | `triage:sposta -- --stage pronte_sup` |
 | ha un dubbio che solo chi l'ha scritta può sciogliere | `triage:commenta` con le domande | `triage:sposta -- --stage todo --assigned-to <proponente>` |
 | ripete una card già aperta | `triage:commenta` «Confluisce nella scheda S…» | `triage:sposta -- --stage obsolete` |
 | è già fatta altrove / non più valida | `triage:commenta` che dice dove e perché | `triage:sposta -- --stage obsolete` |
 | è già fatta e **in beta** | `triage:commenta` che dice dove (issue, PR, comportamento) | `triage:sposta -- --stage backlog --status done` |
 | è sospesa dal proponente («teniamola in sospeso», «tra qualche mese») | `triage:commenta` che riporta le sue parole | `triage:sposta -- --stage parcheggiate` |
 | è un progetto grande o una scelta di priorità | `triage:commenta` che lo dice | `triage:sposta -- --stage parcheggiate`, `--motivo` lo spiega, Davide la vede nel log |
-| tocca il perimetro escluso (punto 5) | issue con l'analisi e label `needs-decision`, poi `triage:collega`, `triage:commenta` «aspetta Davide» | `triage:sposta -- --stage todo --assigned-to davide` |
+| chiede una decisione di Davide (punto 5: cose che nemmeno il loop supervisionato può fare, o una scelta di prodotto) | issue con l'analisi e label `needs-decision`, poi `triage:collega`, `triage:commenta` «aspetta Davide» | `triage:sposta -- --stage todo --assigned-to davide` |
 
 **Regola ferrea (#2471, Davide 29/09/2026): una card triagiata non resta MAI in
 «Idee».** Idee = card mai toccata. Domanda o decisione aperta (anche una issue
 `needs-decision`) → `--stage todo --assigned-to <chi deve rispondere>`. Il
 codice lo fa rispettare: `triage:esito --esito fatta` rifiuta se la card è
-ancora in Idee, `triage:sposta --stage pronte` rifiuta se una issue collegata
-ha `needs-decision`, `--stage todo` senza `--assigned-to` è rifiutato.
+ancora in Idee, `triage:sposta --stage pronte_auto|pronte_sup` rifiuta se una
+issue collegata ha `needs-decision`, `--stage todo` senza `--assigned-to` è rifiutato.
+
+**«Pronte auto» o «Pronte supervisionate» (#2754, Davide 10/10/2026).** Dal
+10/10 «Pronte» è divisa in due, e la sezione la sceglie il triage:
+
+- **`pronte_auto`** — la lavora il **ciclo autonomo** (`ciclo-sviluppo`), da
+  solo, nell'ordine della coda. Solo se la issue collegata **passa il
+  perimetro** del ciclo (`ciclo-perimetro`: niente migration, Edge Function,
+  cron, vendor) e **non** ha `needs-decision`.
+- **`pronte_sup`** — la lavora il **loop supervisionato** (`loop-supervisionato`),
+  con Davide presente: migration additive, Edge Function, cron, vendor. **In
+  ogni altro caso, e nel dubbio, `pronte_sup`.**
+
+Non devi indovinare il perimetro: `triage:sposta --stage pronte_auto` lo
+verifica da sé sulla issue collegata e **rifiuta** (exit 1, con i motivi) se
+la issue è esclusa, se il perimetro non è verificabile, o se la card **non ha
+una issue collegata** (il ciclo lavora issue: una card senza issue resterebbe
+ferma lì per sempre). Al rifiuto per perimetro: scrivi i motivi nel commento e
+usa `--stage pronte_sup`. `pronte_sup` accetta le issue escluse dal perimetro
+(è il suo mestiere), ma rifiuta anche lei `needs-decision` e un perimetro non
+verificabile. **Mai** applicare la label `perimetro-verificato` per far passare
+una card in `pronte_auto`: la mette solo una persona.
+
+`--stage pronte` (la vecchia sezione unica) **non è più una destinazione**:
+il codice la rifiuta con un messaggio che nomina le due nuove. Le card rimaste
+lì compaiono in «Pronte (da riclassificare)» e le sposta a mano una persona.
+
+**Compatibilità con un checkout precedente a #2754.** Se `triage:sposta`
+risponde che `pronte_auto`/`pronte_sup` **non sono stage ammessi**, stai
+girando su un codice che non conosce la divisione: usa `--stage pronte` e
+scrivilo nel `--motivo` di `triage:esito`. Se rifiuta anche quello (codice
+nuovo, ma database senza la migration di #2754), **non** insistere:
+`triage:esito -- --esito ferma --motivo '…'`. Il lavoratore sul VPS segue
+`origin/beta` (#2654): il codice cambia al merge in `beta`, non in `main`.
 
 **Perché «Pronte» e non «In Lavorazione» (#2335).** «In Lavorazione» vuol dire
 che qualcuno ci sta lavorando; una card triagiata non lo è ancora. Separarle
-è ciò che dà al ciclo di sviluppo una coda visibile anche ad Ascanio — e la
+è ciò che dà ai due loop di sviluppo una coda visibile anche ad Ascanio — e la
 spia delle card ferme (#2277) smette di contare come dimenticate le card che
 stanno solo aspettando il loro turno.
 
@@ -133,12 +168,14 @@ Gli script:
 ```bash
 npm run -s triage:commenta -- --testo 'Testo del commento, anche su più righe'
 npm run -s triage:sposta -- --stage todo --assigned-to ascanio
-# stage ammessi: pronte | todo | parcheggiate | obsolete | backlog
-# Sono cinque, e il codice li rifiuta tutti gli altri (#2357). In particolare:
+npm run -s triage:sposta -- --stage pronte_auto   # o pronte_sup: punto 3
+# stage ammessi: pronte_auto | pronte_sup | todo | parcheggiate | obsolete | backlog
+# Sono sei (#2754: «pronte» è uscita), e il codice rifiuta tutti gli altri (#2357). In particolare:
 #  - «revisione» NON è del triage: lì ci va una card PROVATA DAL VIVO, e la
 #    prova è di una persona (#1723);
 #  - «lavorazione» NON è del triage: la card ci arriva quando il ciclo di
-#    sviluppo prende la issue (`ciclo:card-presa`, #2335).
+#    sviluppo prende la issue (`ciclo:card-presa` da pronte_auto, #2335;
+#    `card:in-lavorazione` nel loop supervisionato, #2752).
 # L'elenco vive in `TRIAGE_STAGE_AMMESSI` (src/lib/qa-tasks.ts): chi lo cambia
 # cambia prima quello, non questa riga.
 npm run -s triage:sposta -- --stage backlog --status done
@@ -165,7 +202,10 @@ questi script accetta una card diversa da quella presa.
 - Card = epica: se ne escono più issue, un'epica più sotto-issue con
   `(sub-issue di #N)` nel titolo; nella card si collega **solo l'epica**.
 - `npm run -s issue:precheck <N>`: label `ready` (con `gh issue edit --add-label
-  ready`) **solo** se verde **e** fuori dal perimetro escluso.
+  ready`) **solo** se verde **e** senza una decisione aperta (`needs-decision`).
+  Dal #2754 il perimetro non decide più la `ready`, decide la **sezione**
+  (punto 5): una issue `ready` con la card in `pronte_sup` il ciclo autonomo
+  non la prende mai (la scarta col motivo «la lavora il loop supervisionato»).
 
 ```bash
 gh issue create --repo ecologicaleaving/maestroweb --title "…" --label "origine:ascanio,feature,priorità:media" --body-file <file>
@@ -175,25 +215,34 @@ npm run -s triage:collega -- --issue <N>
 (In modalità card singola non puoi scrivere file: passa il body con `--body` e
 virgolette singole, oppure via stdin con `--body-file -`.)
 
-### 5. Perimetro escluso: qui il ciclo si ferma e lascia a Davide
+### 5. Il perimetro sceglie la sezione; una decisione va a Davide (#2754)
 
-Se la card (o l'analisi) tocca uno di questi, la issue nasce `needs-decision`,
-**senza** `ready`, e la card va in «I miei To Do» di Davide
-(`triage:sposta -- --stage todo --assigned-to davide`) — mai lasciata in Idee (#2471):
+**Perimetro del ciclo autonomo.** Se la issue tocca uno di questi, il ciclo
+autonomo non la può lavorare: la card va in **`pronte_sup`** (la lavora il loop
+supervisionato, con Davide presente), la issue ha `ready` se il precheck è
+verde e dichiara il tocco in una riga `RISCHIO:`:
 
-- `supabase/migrations/`, `supabase/functions/` (Edge Function), secret, cron;
+- `supabase/migrations/` (migration **additive e idempotenti**),
+  `supabase/functions/` (Edge Function), cron;
 - automation engine (`src/lib/automation-*`), dispatch ai vendor, quote (Sungrow,
-  ZCS, Solarman, Huawei), comandi agli inverter;
-- `deploy*.yml`, `run-migration.yml`, VPS, qualunque cosa di produzione.
+  ZCS, Solarman, Huawei);
+- in generale tutto ciò che `ciclo-perimetro` esclude: lo dice `triage:sposta
+  --stage pronte_auto` quando rifiuta.
 
-Una **migration additiva** in una feature non è di per sé esclusa, ma la issue lo
-dichiara in una riga `RISCHIO:` e la decisione di applicarla resta del ciclo di
-sviluppo (pezzo 2), non di questo.
+**Serve una decisione di Davide.** Se la card chiede una cosa che nemmeno il
+loop supervisionato può fare da sé — migration **non** additiva, secret,
+`deploy*.yml`/`run-migration.yml`, VPS, comandi a inverter reali, una scelta di
+prodotto o di priorità — la issue nasce `needs-decision`, **senza** `ready`, e
+la card va in «I miei To Do» di Davide (`triage:sposta -- --stage todo
+--assigned-to davide`) — mai lasciata in Idee (#2471).
+
+La decisione di applicare una migration additiva resta del loop supervisionato
+(Davide davanti), non di questo triage.
 
 ### 6. Chiudi l'elemento della coda: sempre
 
 ```bash
-npm run -s triage:esito -- --esito fatta --motivo 'S123 → issue #2345, card in Lavorazione'
+npm run -s triage:esito -- --esito fatta --motivo 'S123 → issue #2345, card in Pronte auto'
 npm run -s triage:esito -- --esito ferma --motivo 'dati incoerenti: la card cita un impianto che non esiste'
 ```
 
