@@ -8,6 +8,23 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-10 — Sweep delle misure eseguito, indici ricostruiti, negozio dagli allarmi progettato; sette lavori in beta
+
+**In produzione:** nulla è stato promosso (`main` resta `1db667bf`). Azioni dirette sul database di produzione, con via libera di Davide: DROP di `get_monthly_production_v2`; migration #2741 (registro spostamenti + funzione per l'azienda); **sweep della raw: circa 720.000 righe cancellate** (#2159); 5 indici ricostruiti (**database 873 → 640 MB**); job notturno acceso (id 139, 05:00-05:57 UTC).
+**In beta, aspetta:** #2731/#2732/#2734/#2736/#2743/#2744/#2746/#2747/#2749 · S236 e S260 in Revisione (prova di Davide dal telefono) · S244 approvata, candidata alla prossima promozione (/promuovi) · S248 in Revisione per Ascanio.
+**Aperto:** #2750 (verifica del primo giro notturno, mia) · #2737 + S262/S264 (negozio e pagamento: risposte di Ascanio e decisioni su percentuale e fatturazione) · #2739/S259 (mappa: prova di Ascanio, poi falde e pannelli) · #2740 (statistiche allarmi, in Pronte) · #2733 (S258, in Pronte) · S198 (password di Ascanio) · 119 worktree vecchi da censire.
+
+**Ha funzionato:** 9 PR in beta in tre giorni; il dev-loop ha trovato da solo i difetti veri (content-visibility che tagliava i menu, titolo dell'intestazione misurato contro la mia diagnosi sbagliata, due difetti nel job notturno). Lo sweep è andato a blocchi con verifica dopo ciascuno: aggregato orario e produzione dei mesi chiusi identici per tutti i 138 impianti.
+**Non ha funzionato → regola nuova:**
+- «Non è in produzione» non si dice con `git log --grep`: si controlla con `git merge-base --is-ancestor <commit> origin/main`. Il piano del 07/10 dava 5 card come non promosse: erano in `main` da #2698 (memoria).
+- `content-visibility: auto` implica `contain: paint` e taglia menu e tendine delle card: lo ha scoperto un E2E (#2735), non un test unitario (memoria).
+- Una prova che non trova niente non è un difetto dell'app finché non la riproduci a mano: il cursore sparisce dopo 1 s, e per mezz'ora ho sospettato una regressione che era del mio script (memoria).
+- La regola dei documenti «deleted = 0 = nessun avanzamento» fermava lo sweep su dispositivi interamente protetti: l'avanzamento è il cursore, non le righe cancellate (nota in #2748).
+- La logica scritta da me (il job notturno) va letta da un secondo agente prima dell'accensione: il planner ha trovato due difetti che la prova a vuoto non vedeva (#2748).
+**Decisioni di Davide:** «tutto insieme» (S259, un'epica) · «a scalare» (lista a caricamento progressivo) · «A: mergio e provo io dal telefono» (#2735) · «andiamo avanti con lo sweep, tanto abbiamo il backup di questa notte» · «fai il test anche del comando, basta che poi lo rimetti a posto» · «fatturazione, amministrazione e banca sono scelte di Ascanio» · «259 e 198 aspettano Ascanio, devono stare in todo Ascanio».
+**Errori miei:** piano del 07/10 sbagliato su tre punti (verificare prima di scrivere «da fare»); diagnosi di #2742 (Logout «circa 100 px») scritta senza misurare; parametro PowerShell dopo il codice (due script non partiti); attribuito a Gaia e Davide decisioni che erano di Ascanio; S259 e S198 lasciate in Lavorazione mentre aspettavano Ascanio.
+**Numeri:** 9 PR in beta · 4 loop interrotti dal login scaduto o dal limite settimanale (11-13 agenti persi ciascuno, ripresi dalla cache) · sweep 720.000 righe in 5 blocchi, 0 fermate, scarto non spiegato circa 0,2% sul conteggio · DB 873 → 640 MB · `audit:card-ferme` = nessuna card ferma · sonda backend 200 in 0,43 s.
+
 ## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
 
 **In produzione:** niente da questa sessione.
