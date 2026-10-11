@@ -8,7 +8,7 @@ description: >
   «Pronte auto». Porta ogni issue fino a `beta`, applica le migration additive
   con Davide davanti, e lo avvisa appena serve lui. Mai `main`. Trigger:
   «/loop-supervisionato», «loop supervisionato», «macina le pronte, ci sono io».
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Skill: loop-supervisionato
@@ -110,8 +110,9 @@ serve al ciclo autonomo, non a questo ramo.
    decisione di Davide dopo aver letto il codice: chiedila, non farlo da solo.
    Le funzioni che scrivono su hardware reale restano fuori.
 6. **Merge** `gh pr merge --merge` (mai `--squash`, mai `--admin`, mai
-   `main`). La card resta «In Lavorazione» col commento «in beta, pronta da
-   provare: …». In «Revisione» la porta chi l'ha provata dal vivo (#1723).
+   `main`). Poi `npm run -s card:in-test -- --pr <PR>` (prima con `--dry-run`): la card passa
+   da «In Lavorazione» a «In Test» solo con PR mergiata in `beta` e CI del merge verde
+   (#2772). In «Revisione» la porta chi l'ha provata dal vivo (#1723).
 7. Log: `npm run -s ciclo:sviluppo -- --registra '{"issue":N,"esito":"...","pr":P,"motivo":"supervisionato"}'`.
    Poi subito la issue successiva.
 
@@ -141,4 +142,4 @@ successiva che non dipende da quella risposta.
 
 Quando la coda è vuota, o Davide dice basta: `ScheduleWakeup stop`, riepilogo
 (mergiate, PR aperte in attesa di lui, saltate col motivo), e la card di ogni
-issue in `beta` resta in «In Lavorazione» pronta da provare.
+issue in `beta` va in «In Test», in attesa della prova dal vivo.
