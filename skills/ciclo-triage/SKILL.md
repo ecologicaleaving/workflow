@@ -9,7 +9,7 @@ description: >
   «giro» (sessione locale con `/loop`) e «card singola» (lavoratore sul VPS,
   Claude Code headless). Trigger: «/loop ciclo-triage», «giro di triage»,
   «triage delle idee».
-version: 2.1.0
+version: 2.2.0
 ---
 
 # Skill: ciclo-triage
@@ -17,6 +17,7 @@ version: 2.1.0
 > Riferimenti: `FLUSSO.md` punto 0 (triage), MaestroWeb #2281 (disegno),
 > #2334 (la coda condivisa e il lavoratore), #2336 (la macchina sul VPS),
 > #2754 («Pronte» divisa in «Pronte auto» e «Pronte supervisionate»),
+> #2768 (le card dei To Do a cui il proponente risponde tornano in coda),
 > `docs/triage-vps.md` nel repo MaestroWeb (operatività del servizio).
 > Questa skill è **autonoma**: sul VPS non c'è la skill `ascanio` né `curl`, quindi
 > il *come* di ogni passo sta qui dentro.
@@ -78,6 +79,25 @@ npm run -s triage:leggi -- --coda    # le altre card aperte in Idee (id, S<n>, t
 Il pannello ne mostra solo una parte: **la fonte è la tabella**. Se c'è già un
 commento di Claudio e il proponente ha risposto dopo, riparti dalla sua risposta,
 non da capo.
+
+### 1b. Card riaccodate dai To Do (#2768)
+
+Non tutte le card che prendi sono in «Idee». Se `triage:leggi` mostra
+`stage = todo` e `origine = risposta`, è una card che **tu o Claudio avevate
+messo nei To Do** con una domanda, e che il **proponente ha appena risposto**.
+Il trigger l'ha rimessa in coda: nessun altro l'avrebbe vista.
+
+Leggi il thread intero, poi:
+
+| la situazione | cosa fai |
+|---|---|
+| la risposta **basta** | come per una card nuova: issue con AC e `ready` (punto 4), `triage:collega`, e `triage:sposta` verso `pronte_auto` o `pronte_sup` secondo il perimetro (punto 5). `triage:sposta` parte anche da `todo` |
+| la risposta **non basta** | `triage:commenta` con la domanda nuova, scritta come la prima volta (semplice, una cosa sola); la card **resta** in `todo` con `--assigned-to` chi deve rispondere |
+| la card ha già una issue collegata **già in `beta` o chiusa**, oppure la domanda era una **prova sul campo** o una decisione di Davide, e la risposta non cambia il lavoro | **non spostare niente.** Nessun commento di merito: chiudi `fatta` con il motivo («risposta registrata, non è materia del triage») — non è tuo giudicare una prova sul campo |
+
+⛔ Una card riaccodata che esce dal giro ancora in `todo` richiede **un tuo
+commento successivo alla risposta**: senza, `triage:esito --esito fatta` lo
+rifiuta (#2768). Rispondere vuol dire **commentare**, non spostare.
 
 ### 2. Capisci se esiste già
 
