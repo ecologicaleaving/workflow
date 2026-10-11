@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.7.0
+version: 1.8.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -100,8 +100,8 @@ il triage, o una persona.
 Con un checkout **precedente** a #2754 il filtro di `ciclo:card-presa` è ancora
 `stage=eq.pronte`: il comando decide da sé, non correggerlo a mano.
 
-Dopo il merge la card **resta** In Lavorazione col commento «pronta da provare»:
-in Revisione la porta una persona che l'ha provata dal vivo (#1723).
+Dopo il merge la card passa in **In Test** (`card:in-test`, #2772): mergiata in `beta`, manca la
+prova dal vivo. In Revisione la porta una persona che l'ha provata (#1723).
 
 - precheck con exit 1 → non lanciare il loop. Commento sulla issue con il
   segnale del precheck, label `ready` **tolta**, esito `ferma`.
@@ -194,9 +194,11 @@ dice a Davide che c'è una migration che aspetta lui.
   npm run -s ciclo:etichetta -- --issue N
   ```
 
-- Card collegata (`qa_task_issues`): resta **In Lavorazione**, con un commento
-  «In beta dalla PR #…, pronta da provare: <cosa guardare>». **Mai** in
-  Revisione: la prova dal vivo è del pezzo 3, che è umano.
+- Card collegata (`qa_task_issues`): `npm run -s card:in-test -- --pr <PR> --dry-run`, poi senza
+  `--dry-run`. Porta la card da **In Lavorazione** a **In Test** solo se la PR è mergiata in
+  `beta` e la CI del merge è verde, e ci scrive il commento «Cosa provare». Se rifiuta (CI non
+  ancora verde, card in un'altra sezione) **non forzare**: la card resta dov'è e il motivo va nel
+  resoconto. **Mai** in Revisione: la prova dal vivo è del pezzo 3, che è umano (#2772).
 - Nessuna card: niente da spostare.
 - `npm run -s deps:schede` se hai commentato una card.
 
