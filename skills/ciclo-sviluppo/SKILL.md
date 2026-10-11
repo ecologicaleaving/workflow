@@ -7,7 +7,7 @@ description: >
   CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
   Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.6.0
+version: 1.7.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -15,7 +15,8 @@ version: 1.6.0
 > Riferimenti: `FLUSSO.md` punti 2-4, skill `dev-loop` (il *come* della singola
 > issue), skill `commit`, MaestroWeb #2281 (disegno e decisioni di Davide del
 > 21/09/2026), #2304 (lo strumento `ciclo:sviluppo`), skill `ciclo-triage`
-> (pezzo 1, la sessione gemella).
+> (pezzo 1, la sessione gemella), #2754 (prende solo da «Pronte auto»; le
+> «Pronte supervisionate» sono della skill `loop-supervisionato`).
 
 ## Perché esiste
 
@@ -37,7 +38,7 @@ dura di più tiene il lock, e il giro successivo esce `noop`.
 ### 0. Può partire?
 
 ```bash
-cd C:\Users\KreshOS\Documents\00-Progetti\MaestroWeb
+cd ~/Documents/00-Progetti/MaestroWeb
 git fetch -q origin beta
 npm run -s ciclo:sviluppo -- --json --lock
 ```
@@ -65,17 +66,39 @@ npm run -s ciclo:sviluppo -- --registra '{"issue":N,"esito":"avviata"}'
 npm run issue:precheck N
 ```
 
-**Se la issue ha una card collegata, la card è in «Pronte» — e prenderla
-significa spostarla (#2335):**
+**Se la issue ha una card collegata, la card è in «Pronte auto»
+(`pronte_auto`) — e prenderla significa spostarla (#2335, #2754):**
 
 ```bash
 npm run -s ciclo:card-presa -- --task <uuid della card>
 ```
 
-Sposta da **Pronte a In Lavorazione** e lascia un commento firmato dal ciclo. Il
-filtro è nel comando (`stage=eq.pronte`): se la card non era in Pronte non
-sposta niente, e zero righe toccate vuol dire che qualcun altro l'ha già presa —
-in quel caso **lascia stare quella issue** e chiudi il giro, non forzare.
+Sposta da **Pronte auto a In Lavorazione** e lascia un commento firmato dal
+ciclo. Il filtro è nel comando (`stage=eq.pronte_auto`): se la card non era in
+Pronte auto non sposta niente, e zero righe toccate vuol dire che qualcun altro
+l'ha già presa — in quel caso **lascia stare quella issue** e chiudi il giro,
+non forzare.
+
+**Il ciclo autonomo prende SOLO da «Pronte auto» (#2754, Davide 10/10/2026).**
+«Pronte» è divisa in due: `pronte_auto` (questo ciclo) e `pronte_sup` (il loop
+supervisionato, con Davide presente: migration, Edge Function, cron, vendor).
+La coda (`ciclo-sviluppo-coda.ts`) lo fa rispettare da sé, fail-closed:
+
+- una issue con una card **aperta** in `pronte_sup` **non entra mai** in coda,
+  nemmeno se ha anche una card in `pronte_auto` (vince la supervisione);
+- una card ancora nella vecchia `pronte` («Pronte (da riclassificare)») tiene
+  fuori la sua issue finché una persona non la sposta in una delle due;
+- `coda_pos` conta solo in `pronte_auto` (le due code sono distinte);
+- le issue `ready` **senza nessuna card** restano prendibili come prima
+  (decidono la label `ready` e il perimetro).
+
+Il motivo di ogni scarto lo stampa `ciclo:sviluppo` («scheda S<n> in «Pronte
+supervisionate»: la lavora il loop supervisionato»). **Non** spostare tu una
+card da `pronte_sup` a `pronte_auto` per farla entrare: la sezione la sceglie
+il triage, o una persona.
+
+Con un checkout **precedente** a #2754 il filtro di `ciclo:card-presa` è ancora
+`stage=eq.pronte`: il comando decide da sé, non correggerlo a mano.
 
 Dopo il merge la card **resta** In Lavorazione col commento «pronta da provare»:
 in Revisione la porta una persona che l'ha provata dal vivo (#1723).
