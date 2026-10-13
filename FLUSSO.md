@@ -321,6 +321,32 @@ Dettaglio completo: skill `approva`.
 
 ---
 
+## I cicli autonomi: come si lanciano (standard dal 13/10/2026)
+
+MaestroWeb ha tre cicli autonomi. Si lanciano **tutti allo stesso modo**; chi ne
+crea uno nuovo segue questo schema, non ne inventa un altro.
+
+| Ciclo | Skill | Trigger | Cosa fa un giro | Interruttore |
+|---|---|---|---|---|
+| Triage | `ciclo-triage` | `/loop ciclo-triage` | una card di «Idee» | riga `ciclo_config.triage` (DB) |
+| Sviluppo | `ciclo-sviluppo` | `/loop ciclo-sviluppo` | una issue fino a `beta` | `"sviluppo": true` in `~/.claude/ciclo-autonomo.json` |
+| Prova | `ciclo-prova` | `/loop ciclo-prova` | una card di «In Test» | `"prova": true` in `~/.claude/ciclo-autonomo.json` |
+
+**Lo schema:**
+
+1. **Una skill per ciclo**, con il trigger `/loop ciclo-<nome>` (e una frase per il giro singolo). Le *regole* stanno nel codice del progetto; la skill dice solo come condurre il giro.
+2. **Una sessione Claude Code dedicata per ciclo**, mai due cicli nella stessa sessione. Si apre nella cartella del progetto e si scrive `/loop ciclo-<nome>`; la sessione resta aperta.
+3. **Ritmo: un giro ogni 60 minuti, un solo elemento per giro.** Un giro che dura di più tiene il lock e il successivo esce `noop`.
+4. **Interruttore spento di default.** Spento (assente, illeggibile, valore stringa) = `{"ciclo":"spento"}`, exit 0, zero rete, zero lock. **L'accensione è di Davide.**
+5. **Un comando di lettura** (`npm run ciclo:<nome> -- --json --lock`) sceglie l'elemento e prende il lock; `--unlock` lo rilascia; `--registra` scrive l'esito nel log. Ogni uscita del giro, anche uno stop, rilascia il lock.
+6. **Scrive solo con script stretti**, ognuno con il filtro sul PATCH e senza `--force`, sempre con `--dry-run` per primo.
+7. **Visibile in `npm run ciclo:log`.**
+8. **Un solo PC acceso per volta** per i cicli con lock su file (sviluppo e prova). Il triage è coordinato dal DB e può girare su più macchine.
+
+**Per aggiungere un ciclo nuovo:** issue con AC, la skill `ciclo-<nome>`, il comando `ciclo:<nome>`, l'interruttore, una riga in questa tabella. Dopo almeno 3 giri osservati con Davide presente lo accende Davide.
+
+---
+
 ## Le verifiche, in ordine
 
 | # | Quando | Cosa | Chi | Comando / esito atteso |
