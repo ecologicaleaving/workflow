@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-12 — Ciclo autonomo di sviluppo su MaestroWeb: due issue in beta, coda vuota
+
+**In produzione:** niente da questa sessione.
+**In beta, aspetta:** #2777 (PR #2782, ordine lista impianti per gravità della categoria, card S273) e #2779 (PR #2801, riquadri allarmi chiusi all'apertura, card S275): entrambe in «In Test», serve la prova dal vivo (AC7).
+**Aperto:** possibile tie-break di tipo SOH/pacco/temperatura anche con ordinamento «Problemi» (oggi vale solo con «Nome»): da vedere nella prova di S273, poi issue nuova o decisione di Davide. Le altre issue `ready` erano tutte fuori perimetro (es. #2789: `supabase/ops/`, Edge Function, cron).
+
+**Ha funzionato:** 2 giri, 2 merge al primo tentativo del developer (nessun retry), CI verde con E2E (unit ~9 min, E2E ~23 min), verificatore AC1-AC6 pass su entrambe. Allineamento a `beta` controllato prima della CI e prima del merge: 0 commit di ritardo entrambe le volte. Coda vuota al terzo giro, lock rilasciato.
+**Non ha funzionato → regola nuova:** (1) la sessione era partita prima che Node entrasse nel PATH utente: `npm` non trovato, perso un giro di diagnosi; si risolve premettendo il percorso winget (memoria). (2) Questa sessione non ha lo strumento `Workflow`: il dev-loop si è eseguito con tre `Agent` distinti (planner, developer in worktree, verificatore), tutti Sonnet 5.5; il flusso regge ma la skill andrebbe aggiornata. (3) `--registra` con JSON in PowerShell vuole le virgolette escapate (`\"`), altrimenti «JSON non valido».
+**Decisioni di Davide:** nessuna in sessione («avvia il loop auto di sviluppo», poi «chiudi la sessione»).
+**Errori miei:** nessuno rilevante; ho dovuto cercare l'uuid della card con uno script temporaneo (rimosso, working copy pulita) perché `ciclo:sviluppo` non lo stampa.
+**Numeri:** 2 issue in beta, 2 giri, 1 tentativo medio, 0 incidenti, `audit:card-ferme` pulito.
+
+---
+
 ## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
 
 **In produzione:** niente da questa sessione.
