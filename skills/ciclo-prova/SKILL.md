@@ -3,13 +3,14 @@ name: ciclo-prova
 description: >
   Ciclo autonomo, pezzo 3 (MaestroWeb #2791): a ogni giro prende LA PRIMA card
   in «In Test» (mergiata in beta, CI verde, manca la prova dal vivo), scrive ed
-  esegue su beta uno spec Playwright per ogni punto di «Cosa provare», e poi la
-  porta in Revisione (tutti i punti osservati), la fa rientrare nella coda da
-  cui era partita (almeno un difetto) o la lascia in In Test con un commento
-  (qualcosa non è verificabile). Una card alla volta, mai `main`, mai scritture
+  esegue su beta uno spec Playwright per ogni punto di «Cosa provare» che può
+  provare, e poi la porta in Revisione (nessun difetto: i punti che non può
+  provare restano per la persona che rivede), la fa rientrare nella coda da cui
+  era partita (almeno un difetto) o la lascia in In Test con un commento (esito
+  malformato o punti non coperti). Una card alla volta, mai `main`, mai scritture
   su Supabase. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da triage e sviluppo. Trigger: «/loop ciclo-prova», «giro di prova».
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Skill: ciclo-prova
@@ -34,8 +35,12 @@ vince il codice.
 - strumento: **Playwright** con i conti di prova dall'ambiente, contro **beta**;
 - esito KO: la card torna nella coda **da cui era partita** (`pronte_auto` se
   partiva da lì, `pronte_sup` se partiva dal loop supervisionato);
-- esito OK: **Revisione solo se OGNI punto è stato osservato**. Un punto non
-  automatizzabile → la card resta in In Test con un commento su cosa manca.
+- esito OK (cambiato il 13/10/2026, MaestroWeb #2830): il ciclo **esaurisce le
+  prove che può fare** e, **se nessun punto è KO**, la card va in **Revisione**.
+  I punti che non può provare (`[Azione]`, `[Campo]`, dati assenti nel sito di
+  prova, ruolo senza conto) restano nel commento come «da provare a mano»: li
+  prova la persona che rivede. Prima era «solo se OGNI punto è osservato»: una
+  card con un `[Azione]` non arrivava mai in Revisione.
 
 ⚠️ Questo **supera**, per questo ciclo soltanto, la regola «in Revisione la
 porta una persona che ha provato» (#1723). Ogni altro comando automatico
@@ -156,9 +161,9 @@ lanciare. Sempre `--dry-run` per primo.
 
 | verdetto | comando | cosa fa |
 |---|---|---|
-| **ok** (ogni punto `ok`, con test, nessuno `[Campo]`/`[Azione]`) | `npm run -s card:in-revisione -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | In Test → **Revisione**, commento «Claudio · ciclo» con una riga per punto |
+| **ok** (nessun `ko`, ogni punto atteso ha la sua voce; i `non-verificabile` non bloccano) | `npm run -s card:in-revisione -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | In Test → **Revisione**, commento «Claudio · ciclo» con una riga per punto: superato dal ciclo oppure da provare a mano |
 | **ko** (almeno un punto `ko`) | vedi punto 5 | issue di fix + rientro |
-| **incompleto** (mancanti, `non-verificabile`, declassati) | `npm run -s card:prova-incompleta -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | la card **resta in In Test**; un commento con il marcatore «Prova dal vivo del ciclo» elenca i punti non provati |
+| **incompleto** (punti senza voce nell'esito, o voci in più: esito da rifare) | `npm run -s card:prova-incompleta -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | la card **resta in In Test**; un commento con il marcatore «Prova dal vivo del ciclo» elenca i punti non provati |
 
 Se scegli il comando sbagliato il codice rifiuta (con `ok` rimanda a
 `card:in-revisione`, con `ko` a `card:rientro-prova`): **non forzare**, non
