@@ -7,7 +7,7 @@ description: >
   Assorbe la guardia beta: un /approva su una feature significa beta, non
   produzione, finché Davide non approva esplicitamente la beta.
   Trigger: Davide scrive /approva.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: approva
@@ -118,8 +118,11 @@ gh pr merge <PR> --repo ecologicaleaving/<repo> --merge
    **tutti** i suoi commit (non solo quello in conflitto) e si riparte da
    dove si era arrivati — è un'esclusione a gruppi, non un file alla volta.
    Itera finché non resta nulla di irrisolvibile.
-6. Alla fine, `package.json` + `package-lock.json` presi **interi** da
-   `beta` (non merge riga per riga).
+6. Alla fine, `package-lock.json` preso **intero** da `beta`. `package.json`
+   NO (#2818): la versione di `beta` resta ferma, prenderla intera riporterebbe
+   `main` indietro. Sul branch promote si lancia `npm run versione:rilascio`
+   (commit `chore(release): vX.Y.Z`, calcolato dai Conventional Commits promossi);
+   gli script nuovi di `package.json` si portano a mano.
 7. PR verso `main` **a mano**, con tutti i `Closes #N` delle issue
    effettivamente incluse nel body.
 8. I conflitti veri che restano dopo aver isolato tutto il resto sono

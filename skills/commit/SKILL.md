@@ -4,7 +4,7 @@ description: >
   Convenzioni di commit e PR per i progetti 8020 Solutions — Conventional
   Commits, versioning semantico, dove va il "Closes #N", trailer di
   attribuzione. Trigger: qualunque commit o push in un progetto 8020.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: commit
@@ -107,8 +107,11 @@ Branch di lavoro: `feature/issue-N-slug`, `fix/nome-issue`,
 
 ## PROJECT.md
 
-Verifica che `PROJECT.md` esista e sia aggiornato: versione coerente col
-tipo di commit, backlog corrente. Se manca o è incompleto, segui la
+Verifica che `PROJECT.md` esista e sia aggiornato (backlog corrente).
+**Su MaestroWeb la PR non alza `version` in `package.json`** (#2818): la versione
+sale una sola volta, alla promozione verso `main`, calcolata dai Conventional
+Commits (`approva-promote` / `npm run versione:rilascio`). La CI segnala una PR
+che la modifica. Se manca o è incompleto, segui la
 checklist in `~/.claude/CLAUDE.md` → «PROJECT.md — Controllo all'avvio».
 
 ---
