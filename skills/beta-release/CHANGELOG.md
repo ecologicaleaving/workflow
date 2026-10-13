@@ -1,5 +1,9 @@
 # Changelog — beta-release
 
+## v2.1.0 (2026-10-13)
+
+MaestroWeb #2818: prima di ogni merge in `beta` si lancia `pr:sovrapposizione` (exit 0 merge senza rifare l'E2E, 1 riallinea, 2 stop). Le PR non alzano più `version`.
+
 ## v2.0.0 (2026-09-04)
 
 Portata nel workflow v2 — aggiornati i riferimenti (`issue-run`→`dev-loop`, `WORKFLOW.md`→`FLUSSO.md`), aggiunto lo Step 3.5 esplicito (prova dal vivo + card Ascanio + `deps:schede`), prima implicito nella skill `dev-loop-opus-sonnet` di MaestroWeb.

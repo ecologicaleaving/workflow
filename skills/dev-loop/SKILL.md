@@ -9,7 +9,7 @@ description: >
   tutti verdi o si raggiunge il tetto di tentativi. Repo come parametro —
   vale per qualunque progetto 8020, non solo MaestroWeb.
   Trigger: "implementa issue #N", "risolvi issue #N".
-version: 2.6.0
+version: 2.7.0
 ---
 
 # Skill: dev-loop
@@ -338,9 +338,30 @@ Un giro dura decine di minuti; se nel frattempo entra un'altra PR, il branch
 risulta indietro di quei commit senza che il lavoro sia sbagliato. Lì si
 riallinea, non si butta:
 
+Prima di decidere, MaestroWeb ha un criterio (#2818), non più «riallinea sempre»:
+
+```bash
+npm run -s pr:sovrapposizione -- <PR>
+```
+
+- exit **0**: `beta` non è avanzata, oppure è avanzata su file diversi da quelli
+  della PR. Non serve riallineare: si può mergiare senza rifare l'E2E.
+- exit **1**: `beta` ha toccato gli stessi file della PR (li elenca). Si riallinea
+  con `gh pr update-branch <PR>` PRIMA di aspettare la CI.
+- exit **2**: errore dello strumento (gh, fetch, PR non aperta). Ci si ferma,
+  mai «0 per default».
+
+Negli altri progetti, dove lo script non c'è, resta il vecchio comportamento:
+
 ```bash
 gh pr update-branch <PR>
 ```
+
+**Le PR non alzano più `version` in `package.json` (#2818).** Era la riga che
+andava in conflitto fra PR parallele (15 merge su 24 su `beta` la toccavano). La
+versione sale una volta sola, alla promozione verso `main`. Su MaestroWeb la CI
+della PR segnala un cambio di `version` (`scripts/controlla-versione-pr.ts`):
+si riporta la riga al valore di `beta`.
 
 **E si fa PRIMA di mettersi ad aspettare la CI.** Aspettare la CI e scoprire
 dopo che il branch era indietro vuol dire buttare quel giro di verifiche — 16

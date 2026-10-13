@@ -6,7 +6,7 @@ description: >
   che `beta` sia pubblicato sull'ambiente test su dati reali, e avvisa Davide che è pronta da
   testare. Il merge finale `beta`→`main` (prod) resta SEMPRE dietro `/approva` di Davide.
   Trigger: /beta-release [repo], o a fine di un'ondata di issue lavorate.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Skill: beta-release
@@ -54,6 +54,11 @@ Per ogni PR di feature verso `beta` con **CI `Build & Deploy Test` verde** (`MER
 ```bash
 gh pr merge <PR> --repo ecologicaleaving/<repo> --merge --delete-branch=false
 ```
+- **Prima di ogni merge, su MaestroWeb (#2818):** `npm run -s pr:sovrapposizione -- <PR>`.
+  Exit 0 (beta non avanzata, o avanzata su file diversi) → si mergia senza rifare l'E2E.
+  Exit 1 (stessi file toccati) → `gh pr update-branch <PR>`, poi si aspetta la CI. Exit 2 → ci si
+  ferma. La CI del push su `beta` resta la rete di sicurezza per le dipendenze fra file diversi.
+  Le PR non alzano più `version` in `package.json`: sale alla promozione (`approva-promote`).
 - Merge **autonomo** dopo test verdi: `beta` è branch di integrazione **non produttivo**, mergiarci non pubblica in prod. (Vedi [[project_beta_release_flow]].)
 - **Conflitti**: se una PR diventa `CONFLICTING` (feature che toccano gli stessi file), riprendi il subagente che l'ha scritta (`SendMessage`) per fare `git merge origin/beta` + risolvere mantenendo ENTRAMBE le feature + ri-test + push. NON risolvere alla cieca.
 - Se emerge un **flaky/regressione pre-esistente** che blocca la CI, fixalo con una PR mirata verso `beta` prima di proseguire.
