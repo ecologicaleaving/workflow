@@ -54,6 +54,16 @@ codice attuale**:
 
 ---
 
+## ⛔ Passo 0: la card va in «In Lavorazione» PRIMA di lanciare il loop
+
+Appena un loop parte su una issue con una card collegata (`Scheda S<n>` in prima riga del body), la card si porta in «In Lavorazione» — non a fine giro, non «quando c'è la PR». Il 10/10/2026 due loop girarono per ore con S258 nei To Do e S236 in Revisione: nessuno vedeva che ci stavamo lavorando.
+
+```bash
+npm run -s card:in-lavorazione -- --card S258 --issue 2733   # MaestroWeb (#2752)
+```
+
+Parte da Pronte (auto o supervisionate), `todo`, `da_concludere`, `in_test` o `revisione`; già in Lavorazione = non fa nulla. Il lancio del `Workflow` passa da qui: nel template, un `agent()` a effort basso come PRIMO passo (`phase('Presa in carico')`) esegue questo comando e riporta l'esito; se fallisce, il loop si ferma e lo dice. Il ciclo autonomo continua a usare `ciclo:card-presa` (solo da Pronte).
+
 ## Quando si attiva
 
 Claudio lo invoca quando Davide chiede di implementare una issue GitHub
