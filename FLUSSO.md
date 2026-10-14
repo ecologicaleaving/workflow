@@ -70,6 +70,9 @@ un'anagrafica nata come quindici issue sorelle).
 **Quando parte il lavoro:** card → **In Lavorazione** (punto 2). Quando è
 in `beta` e provata → **Revisione** (punto 4). Il lavoro tecnico che nasce
 strada facendo (bug nostri, refactor) **non ha card**: sta solo su GitHub.
+Se però ha una **card madre** (la scheda di Ascanio che ne subisce il rischio),
+la si dichiara a mano con `--card S<n>` nel comando `issue:tecnica-approvata`
+(sezione 6): il collegamento in `qa_task_issues` non si usa per dedurla.
 
 Dettaglio (template della issue, come si leggono allegati e commenti):
 skill `ascanio`.
@@ -291,11 +294,24 @@ Dettaglio, sezioni del pannello, come si crea la issue dalla card: skill
 
 ## 6. `/approva` di Davide
 
-1. Claudio mette la label `qa-approved` sulle issue approvate da Ascanio
-   **e, senza chiedere, su ogni issue tecnica già implementata e provata**
-   (decisione di Davide, 12/09/2026: le tecniche non hanno card, quindi
-   non hanno un'approvazione di Ascanio da aspettare — entrano nel giro da
-   sé). Il `/promuovi` di Davide riguarda le schede di Ascanio, non loro.
+1. Le label che portano una issue nel giro (MaestroWeb #2838):
+   - `qa-approved` sulle issue approvate da Ascanio: la mette il bottone
+     «Approva» del pannello (Edge Function `qa-card-approve`), mai Claudio a mano.
+   - `qa-tech-approved` sulle **issue tecniche** già in `beta` con CI verde e
+     provate. **Non** si mette più `qa-approved` a mano sulle tecniche (cambia la
+     decisione del 12/09/2026). La mette solo
+     `npm run issue:tecnica-approvata -- --pr <n> --verdetto <file.json>
+     (--card S<n> | --senza-card) [--dry-run]`, che pretende il verdetto del
+     verificatore (tutti gli AC `[Codice]` verdi), PR mergiata in `beta` e CI verde.
+     Con `--card` scrive sulla card madre il «Rischio aggiunto», che il ciclo di
+     prova e `card:in-test` leggono come punti da provare; con `--senza-card` il
+     test di Claudio è l'unica prova. Se la issue è già coperta da una card
+     (collegata o figlia di un'epica collegata) la label non serve: prevale
+     l'approvazione della card. Nessuna migration, nessun `--force`, mai `stage`.
+   - **Il `/promuovi` di Davide resta l'unico cancello verso `main`.**
+     `approva-promote` elenca le tecniche in una sezione a parte («Entrano senza
+     approvazione umana»), con il motivo; una `qa-tech-approved` messa a mano senza
+     il commento dello scrittore è trattata come non approvata.
 2. `npx tsx scripts/approva-promote.ts --dry-run` — sempre prima del run
    reale. Se esclude gruppi «per conflitto»: quasi sempre è
    `package.json`/`PROJECT.md` (versione/changelog), non un conflitto reale.
