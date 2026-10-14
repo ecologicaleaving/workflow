@@ -46,18 +46,19 @@ che presuppongono `beta` già pronta (skill `beta-release` completata).
 Metti la label sulle issue che Ascanio ha approvato dal pannello (card
 `revisione` → `backlog`, vedi `FLUSSO.md` punto 5).
 
-⛔ **E su OGNI issue tecnica già implementata e provata, senza chiederlo a
-Davide.** Le issue tecniche (bug nostri, refactor, CI, smoke test) non hanno
-card, quindi non c'è nessuna approvazione di Ascanio da attendere: entrano
-nel giro da sé. Chiedere conferma ogni volta è il difetto che questa riga
-corregge — decisione di Davide del 12/09/2026, ripetuta il 14/09: «le issue
-tecniche, una volta che sono testate, possono sempre essere promosse; il
-`/promuovi` si riferisce solo a quelle di Ascanio».
+⛔ **Le issue tecniche NON ricevono `qa-approved` da Claudio** (maestroweb#2838,
+decisione di Davide del 14/10/2026). Non hanno una card di Ascanio, ma la label
+umana dice «una persona ha approvato»: su una tecnica non l'ha fatto nessuno.
+Claudio le prova (dal vivo su `test-maestro` per ciò che si può provare, non CI
+verde) e poi lancia `npm run issue:tecnica-approvata` (MaestroWeb), che applica
+`qa-tech-approved` con un commento firmato su cosa è stato provato e cosa no, e
+scrive nel «Cosa provare» della card madre le modifiche e il rischio aggiunto.
+`approva-promote` le ammette e le elenca a parte nel riepilogo; il `/promuovi`
+di Davide resta l'unico cancello verso `main`. Se la tecnica eredita
+`qa-approved` dall'epica (sub-issue), `qa-tech-approved` non serve.
 
-«Provata» vuol dire provata da Claudio dal vivo su `test-maestro`, non CI
-verde: il verde dice che i test passano, non che la cosa funziona.
-
-In entrambi i casi:
+Per le issue di Ascanio, `qa-approved` la applica il bottone «Approva» (#2393);
+a mano, solo come via di recupero:
 
 ```bash
 gh issue edit <N> --repo ecologicaleaving/<repo> --add-label qa-approved
