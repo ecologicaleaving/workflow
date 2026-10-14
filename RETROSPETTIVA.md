@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-14 — Il ciclo autonomo lavora anche le migration e si ferma in «Da concludere»
+
+**In produzione:** migration `20261013140000` (CHECK a 14 valori su `qa_tasks.stage`, applicata con ok di Davide). Nient'altro: il resto è in beta.
+**In beta, aspetta:** epica #2821 completa (#2822 sezione Da concludere, #2823 perimetro a tre classi, #2824 scrittore `ciclo:card-da-concludere`), #2825 audit per categoria, #2836 secret Stripe a gruppo, #2820 DDI esterno (S254), #2764 Luogo installazione (S271). Aspetta: Davide (leggere B e C, poi accendere il ciclo); Ascanio S254 [Campo] e S271 AC6 (in Revisione).
+**Aperto:** S264 Stripe: il conto SumUp non è accettato da Stripe, decisione di Ascanio (card nei suoi To Do, commento scritto). S261 in In Test: mancano AC7 e scroll mobile, li provo io. Token Management API di questo PC non valido (401).
+
+**Ha funzionato:** epica scomposta in tre PR (A/B/C) con CI verde e riallineamento a beta prima di ogni merge; skill `ciclo-sviluppo` 1.9.0 mergiata nel repo `workflow` (PR #72); S254/S271 provate dal vivo su Green Energie e rimesse ai valori iniziali.
+**Non ha funzionato → regola nuova:** la CI di beta era rossa perché i secret Stripe non ancora impostati contano come mancanti → #2836 (`GRUPPI_AD_ATTIVAZIONE`, un gruppo di secret si attiva da solo). Regola: «In Test = la prova la fa Claudio», non Ascanio (memoria/CLAUDE.md già allineati).
+**Decisioni di Davide:** `--admin` sulla PR workflow#72; la decisione sul conto per Stripe sta ad Ascanio; «In Test: se le deve provare Ascanio vanno in Revisione».
+**Errori miei:** presentato S254/S271 come prove di Ascanio mentre erano in In Test (corretto); detto che S264 era in Lavorazione quando era già nei To Do di Ascanio (verificato sui dati e corretto). Si evita rileggendo la card nei dati prima di descriverla.
+**Numeri:** 14 PR in beta in due giorni, 0 loop attivi a fine sessione, In Lavorazione a zero card.
+
+---
+
 ## 2026-09-29 (sera) — Sessione breve: progettazione del sistema di pagamento per le aziende
 
 **In produzione:** niente da questa sessione.
