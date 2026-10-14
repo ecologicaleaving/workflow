@@ -10,7 +10,7 @@ description: >
   malformato o punti non coperti). Una card alla volta, mai `main`, mai scritture
   su Supabase. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da triage e sviluppo. Trigger: «/loop ciclo-prova», «giro di prova».
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Skill: ciclo-prova
@@ -90,9 +90,18 @@ npm run -s ciclo:prova -- --registra '{"card":N,"esito":"avviata"}'
 
 Leggi la PR (`gh pr view <pr>`), la issue e il diff: capisci **dove** sta la
 cosa da provare (route, schermata, ruolo che la vede). Se un punto richiede un
-ruolo per cui non c'è un conto di prova (God, installatore: i nomi delle
-variabili d'ambiente non sono ancora definiti, #2791) **non lo provi**: sarà
-`non-verificabile`. Non cercare credenziali, non leggere `.env.local`, non
+ruolo senza conto sul PC (`contoDisponibile: false` nel JSON della coda) **non
+lo provi**: sarà `non-verificabile`. I ruoli (#2850, tabella `RUOLI_PROVA` in
+`src/lib/ciclo-prova-ruoli.ts`): `azienda` (`E2E_SUPABASE_EMAIL`/`_PASSWORD`),
+`superadmin` (`E2E_SUPABASE_ADMIN_*`), `proprietario` (`E2E_SUPABASE_PROP_*`);
+`installatore`, `tecnico`, `azienda-base` non hanno conto (sempre non
+verificabili). Per un ruolo diverso da `azienda` lo spec usa
+`test.use({ ruolo: '<nome>' })` **solo a livello di file** (Playwright lo
+rifiuta in un describe), mai `process.env` né `storageState`. Il punto porta
+`ruolo`/`ruoloFonte` nel JSON (marcatura `[ruolo: <nome>]` oppure inferenza).
+Limite: la guardia di rete lascia passare solo le **letture**: le pagine che
+leggono via RPC (POST `/rest/v1/rpc/*`) restano non verificabili anche col
+superadmin, e per il superadmin non c'è screenshot, solo l'esito testuale. Non cercare credenziali, non leggere `.env.local`, non
 copiare un valore.
 
 ### 2. Scrivi gli spec — fuori dal repo
@@ -262,8 +271,10 @@ una prova inconcludente: aspetta una persona o un nuovo commit.
 
 - Un solo PC con l'interruttore acceso: il lock è un file locale, non c'è una
   presa nel DB (come lo sviluppo prima di #2712).
-- I nomi delle variabili d'ambiente per i conti di altri ruoli (God,
-  installatore) non sono definiti: finché mancano, i punti che li richiedono
-  restano `non-verificabili` e la card resta in In Test.
+- Installatore, tecnico e azienda base non hanno un conto di prova (#2850): i
+  punti che li richiedono restano `non-verificabili`, da provare a mano in
+  Revisione. Un conto proprietario che non ha accettato l'accordo utente resta
+  fermo sull'`AgreementGate` (accettare è una scrittura bloccata):
+  non-verificabile.
 - L'accensione dell'interruttore è di **Davide**, dopo **almeno 3 giri**
   osservati con lui presente (AC11).
