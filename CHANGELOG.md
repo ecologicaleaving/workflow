@@ -1,5 +1,9 @@
 # Changelog
 
+## ciclo-sviluppo 1.10.0 (2026-10-14)
+
+Punto 0: controllo di allineamento prima del giro (MaestroWeb #2848), esito `{"errore":"allineamento: ..."}` e fetch di `origin master` del repo workflow. Il ciclo si ferma e non sincronizza da solo.
+
 ## v2.0.0 (2026-09-04)
 
 Workflow ricostruito dai sette punti del flusso reale deciso da Davide.

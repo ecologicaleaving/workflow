@@ -8,7 +8,7 @@ description: >
   mai integrare una PR «prepara» (migration, Edge Function non hardware: si ferma
   prima del merge e passa la card a «Da concludere»), mai Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.9.0
+version: 1.10.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -41,16 +41,20 @@ dura di più tiene il lock, e il giro successivo esce `noop`.
 ```bash
 cd ~/Documents/00-Progetti/MaestroWeb
 git fetch -q origin beta
+git -C ../workflow fetch -q origin master
 npm run -s ciclo:sviluppo -- --json --lock
 ```
 
 | esito | cosa fai |
 |---|---|
 | lo script non esiste (`Missing script`) | #2304 non è ancora in `beta`: fine, `noop`. Non improvvisare la selezione a mano |
+| `{"errore":"allineamento: ..."}`, exit 1 | fine, `noop`, **nessun `--unlock`** (il lock non è stato preso). Riporta a Davide l'errore così com'è. **Non sincronizzare mai da solo**: né `git pull`, né `sync.ps1` (decisione di Davide, 14/10/2026, #2848) |
 | `{"ciclo":"spento"}` | fine, `noop`. Interruttore: `~/.claude/ciclo-autonomo.json` → `"sviluppo": true` |
 | exit 2 «giro già in corso» | fine, `noop`. Il lock è di un altro giro: non toccarlo |
 | `"prossima": null` | `--unlock`, fine, `noop` |
 | `"prossima": {numero, ...}` | vai al punto 1 con quella, **solo quella** |
+
+Prima di tutto il resto, `ciclo:sviluppo` controlla, in sola lettura, che questo PC sia allineato (#2848): HEAD della radice contro `origin/beta`, il repo `workflow` contro `origin/master`, e la `version` delle skill installate `ciclo-sviluppo` e `dev-loop` contro quella nel repo `workflow`. Fail-closed: se qualcosa non è allineato o non si legge, il giro non parte. L'esito dello stesso controllo è nella sezione «== sviluppo, allineamento ==» di `npm run -s ciclo:log`.
 
 Non c'è più un tetto giornaliero (decisione di Davide del 23/09/2026, #2325): il
 ciclo non esce mai con `{"ciclo":"tetto"}`. `npm run -s ciclo:log` mostra
