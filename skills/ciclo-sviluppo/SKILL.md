@@ -4,10 +4,11 @@ description: >
   Ciclo autonomo, pezzo 2 (MaestroWeb #2281/#2304): a ogni giro prende LA PRIMA
   issue `ready` della coda e la porta fino a `beta` col flusso normale —
   precheck, dev-loop (Opus pianifica e verifica, un secondo Opus scrive), PR verso beta,
-  CI verde con E2E, merge. Una issue alla volta, mai `main`, mai migration, mai
-  Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
+  CI verde con E2E, merge. Una issue alla volta, mai `main`, mai applicare migration,
+  mai integrare una PR «prepara» (migration, Edge Function non hardware: si ferma
+  prima del merge e passa la card a «Da concludere»), mai Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.8.0
+version: 1.9.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -106,10 +107,12 @@ prova dal vivo. In Revisione la porta una persona che l'ha provata (#1723).
 - precheck con exit 1 → non lanciare il loop. Commento sulla issue con il
   segnale del precheck, label `ready` **tolta**, esito `ferma`.
 - La issue è già stata filtrata dal perimetro (#2304 AC4), ma se leggendola
-  ti accorgi che tocca migration, Edge Function, secret, cron, automation
-  engine, vendor, deploy o VPS: **ferma**, label `needs-decision`, `ready`
-  tolta, esito `fuori-perimetro`. La lista è uno sbarramento minimo, non ti
-  esonera dal leggere.
+  ti accorgi che tocca secret, cron da accendere, automation engine, vendor,
+  deploy, VPS, Edge Function «hardware» o non dichiarate nel manifesto: **ferma**, label `needs-decision`, `ready`
+  tolta, esito `fuori-perimetro`. Le **migration additive**, le Edge Function
+  «non hardware» e gli schedule scritti in `supabase/ops/` (classe «prepara», #2821)
+  si lavorano: il ciclo le scrive ma non le applica e non mergia (punto 3).
+  La lista è uno sbarramento minimo, non ti esonera dal leggere.
 
 ### 2. Il dev-loop
 
@@ -139,7 +142,9 @@ Opus, al massimo 4 tentativi.
 1. tutti gli AC `[Codice]`/`[UI]` **pass** dal verificatore (i `[Campo]` e
    `[Azione]` restano aperti, non bloccano);
 2. `npm run -s ciclo:sviluppo -- --verifica-pr <PR> --json` → exit 0 (il diff
-   vero non tocca il perimetro);
+   vero è tutto di classe «libero»). **Exit 3** = classe «prepara»: vedi il ramo
+   «prepara» qui sotto, non si mergia. **Exit 1** = escluso o migration rifiutata
+   dal controllo statico: esito `ferma`/`fuori-perimetro`;
 3. la PR punta a `beta` e il body ha `Closes #N` (skill `commit`);
 4. **l'allineamento si verifica PRIMA di aspettare la CI, non dopo.** Un
    dev-loop dura decine di minuti e `beta` intanto si muove: se aspetti la CI
@@ -166,9 +171,24 @@ Opus, al massimo 4 tentativi.
 Allora: `gh pr merge <PR> --merge` (mai `--squash`, mai `--admin`), esito
 `mergiata`.
 
-Se la PR contiene una **migration additiva** passata dal piano con la riga
-`RISCHIO:` della issue, **non** la applichi: il merge avviene, e il resoconto
-dice a Davide che c'è una migration che aspetta lui.
+#### Il ramo «prepara» (`--verifica-pr` esce 3, #2821)
+
+La PR contiene migration additive, Edge Function «non hardware» o schedule
+scritti: il lavoro è fatto ma **non lo integri tu**. Il merge in `beta` lo facciamo
+noi dal PC di Davide, dopo aver letto il diff: la migration si applica PRIMA del
+merge (beta legge il database di produzione) e le Edge Function, al merge,
+vengono deployate subito come `-beta`.
+
+Fai comunque i passi 3-5 (`Closes #N`, allineamento, CI verde con E2E), poi **non**
+mergiare e non applicare nulla:
+
+- con la card collegata: `npm run -s ciclo:card-da-concludere -- --task <uuid> --pr <PR> --dry-run`,
+  poi lo stesso senza `--dry-run`. Porta la card in **Da concludere**, assegnata a
+  Davide, con il commento «Cosa fare» (migration da applicare prima, funzioni che
+  verranno deployate, schedule che restano spenti, NOMI dei secret nuovi). Se
+  rifiuta, **non forzare**: il motivo va nel resoconto;
+- senza card: la PR resta aperta e va nel resoconto a Davide;
+- esito: `--registra '{"issue":N,"esito":"da-concludere","pr":P}'`.
 
 ### 4. Dopo il merge
 
@@ -227,6 +247,10 @@ aspetta il giro a ora fissa. Se qualcosa non va — un rosso che torna, un
 planner che si blocca, una issue scritta male — ripartire subito vuol dire
 ripetere lo stesso errore più in fretta, e senza che nessuno lo guardi.
 
+L'esito `da-concludere` **non** chiude la catena: la PR è pronta e aspetta noi, la
+coda non riprende quella issue (la sua card è in «Da concludere») e il giro dopo
+può partire.
+
 ## Divieti (non derogabili)
 
 - **Mai** `main`: né merge, né push, né PR con `--base main`. La produzione
@@ -237,6 +261,9 @@ ripetere lo stesso errore più in fretta, e senza che nessuno lo guardi.
 - **Mai** più di una issue per giro, mai due giri insieme (il lock).
 - **Mai** spostare una card in Revisione né in BackLog; mai mettere
   `qa-approved`.
+- **Mai** integrare una PR la cui `--verifica-pr` esce 3, e mai applicare una
+  migration, nemmeno «additiva e innocua». Una card si porta in «Da concludere»
+  solo con `ciclo:card-da-concludere`: mai a mano, mai con un altro comando.
 - **Mai** installare dipendenze nella radice del repo: i worktree si collegano
   allo store con `npm run worktree:link` e si rimuovono con `npm run
   worktree:remove` (CLAUDE.md di MaestroWeb).
