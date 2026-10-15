@@ -8,7 +8,7 @@ description: >
   mai integrare una PR «prepara» (migration, Edge Function non hardware: si ferma
   prima del merge e passa la card a «Da concludere»), mai Revisione. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da quella del triage. Trigger: «/loop ciclo-sviluppo», «giro di sviluppo».
-version: 1.10.0
+version: 1.11.0
 ---
 
 # Skill: ciclo-sviluppo
@@ -101,6 +101,18 @@ Il motivo di ogni scarto lo stampa `ciclo:sviluppo` («scheda S<n> in «Pronte
 supervisionate»: la lavora il loop supervisionato»). **Non** spostare tu una
 card da `pronte_sup` a `pronte_auto` per farla entrare: la sezione la sceglie
 il triage, o una persona.
+
+**Card a binari (#2860, #2863).** Se la card è divisa in parti (sotto-issue con
+label `ciclo:auto` / `ciclo:super`), la coda lavora **per parte**: `prossima` è
+una parte `ciclo:auto` libera (dipendenze in `beta`, dentro il perimetro) di una
+card in `pronte_auto`, e porta `prossima.card.taskId`. Si usa **quello** per
+`ciclo:card-presa -- --task <prossima.card.taskId>` (invariato). Zero righe
+toccate = un altro PC ha già preso la card: lascia la parte e chiudi il giro. Le
+parti `ciclo:super`, quelle che aspettano una parte super, quelle fuori
+perimetro e le card con binari illeggibili non entrano mai in coda: il motivo lo
+stampa `ciclo:sviluppo` (sezioni «parti in attesa di una parte supervisionata»,
+«parti ciclo:auto scartate dal perimetro», «altre parti non prendibili»). Le card
+senza label `ciclo:*` funzionano come prima.
 
 Con un checkout **precedente** a #2754 il filtro di `ciclo:card-presa` è ancora
 `stage=eq.pronte`: il comando decide da sé, non correggerlo a mano.
@@ -218,7 +230,15 @@ mergiare e non applicare nulla:
   npm run -s ciclo:etichetta -- --issue N
   ```
 
-- Card collegata (`qa_task_issues`): `npm run -s card:in-test -- --pr <PR> --dry-run`, poi senza
+- **Parte di una card a binari** (la issue ha la label `ciclo:auto`/`ciclo:super`, #2863):
+  **solo a merge fatto e CI del push su `beta` verde** (`gh run watch` sul run di
+  `deploy-test.yml`), `npm run -s ciclo:card-prossima-sezione -- --task <uuid> --dry-run`,
+  poi lo stesso senza `--dry-run`, **al posto di** `card:in-test` (lo scrittore copre
+  anche il passaggio a In Test). Se rifiuta (CI non ancora verde, nessuna sezione
+  possibile) **non forzare**: la card resta in Lavorazione e il motivo va nel
+  resoconto. Prima della CI verde la parte risulta ancora «in corso» e la risposta
+  sarebbe «nessuna».
+- Card collegata senza binari (`qa_task_issues`): `npm run -s card:in-test -- --pr <PR> --dry-run`, poi senza
   `--dry-run`. Porta la card da **In Lavorazione** a **In Test** solo se la PR è mergiata in
   `beta` e la CI del merge è verde, e ci scrive il commento «Cosa provare». Se rifiuta (CI non
   ancora verde, card in un'altra sezione) **non forzare**: la card resta dov'è e il motivo va nel
