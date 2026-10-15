@@ -1,5 +1,9 @@
 # Changelog
 
+## ciclo-triage 2.3.0 (2026-10-15)
+
+Card a due binari (MaestroWeb #2860, parte D #2864): ogni parte (sotto-issue) con label `ciclo:auto`/`ciclo:super` e riga di dipendenza; la sezione di partenza si sceglie sulle parti (`triage:binari`, `triage:sposta`). Versione minima richiesta dal lavoratore: 2.3.0 (`TRIAGE_SKILL_VERSIONE_MINIMA`): la skill va sul VPS PRIMA del merge in `beta`.
+
 ## aggiorna-pc 1.0.1 (2026-10-15)
 
 Passo 2: `git pull --ff-only` prima di `sync.ps1` e gestione dei codici di uscita del nuovo sync a tre vie (5: `-SoloDalRepo`; 6 e 3: ci si ferma). Dopo il sync che cancellò 11 file il 15/10.

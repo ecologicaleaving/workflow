@@ -9,7 +9,7 @@ description: >
   «giro» (sessione locale con `/loop`) e «card singola» (lavoratore sul VPS,
   Claude Code headless). Trigger: «/loop ciclo-triage», «giro di triage»,
   «triage delle idee».
-version: 2.2.0
+version: 2.3.0
 ---
 
 # Skill: ciclo-triage
@@ -91,7 +91,7 @@ Leggi il thread intero, poi:
 
 | la situazione | cosa fai |
 |---|---|
-| la risposta **basta** | come per una card nuova: issue con AC e `ready` (punto 4), `triage:collega`, e `triage:sposta` verso `pronte_auto` o `pronte_sup` secondo il perimetro (punto 5). `triage:sposta` parte anche da `todo` |
+| la risposta **basta** | come per una card nuova: issue con AC e `ready` (punto 4), `triage:collega`, e `triage:sposta` verso `pronte_auto` o `pronte_sup` secondo le **parti** della card (punto 5, «Card a due binari»). `triage:sposta` parte anche da `todo` |
 | la risposta **non basta** | `triage:commenta` con la domanda nuova, scritta come la prima volta (semplice, una cosa sola); la card **resta** in `todo` con `--assigned-to` chi deve rispondere |
 | la card ha già una issue collegata **già in `beta` o chiusa**, oppure la domanda era una **prova sul campo** o una decisione di Davide, e la risposta non cambia il lavoro | **non spostare niente.** Nessun commento di merito: chiudi `fatta` con il motivo («risposta registrata, non è materia del triage») — non è tuo giudicare una prova sul campo |
 
@@ -112,8 +112,8 @@ costosi se saltati.
 
 | la card… | cosa scrivi | dove va la card |
 |---|---|---|
-| è chiara e fattibile, e la issue **passa il perimetro** del ciclo autonomo (punto 5) | issue con AC e `ready` (punto 4), poi `triage:collega` | `triage:sposta -- --stage pronte_auto` |
-| è chiara e fattibile, ma la issue **tocca il perimetro** (punto 5), o hai un dubbio | issue con AC e `ready` (punto 4), riga `RISCHIO:`, poi `triage:collega` | `triage:sposta -- --stage pronte_sup` |
+| è chiara e fattibile, e **almeno una parte passa il perimetro** del ciclo autonomo ed è libera (punto 5, «Card a due binari») | issue con AC e `ready` (punto 4), ogni parte con la sua label `ciclo:auto` o `ciclo:super`, poi `triage:collega` e `triage:binari` | `triage:sposta -- --stage pronte_auto` |
+| è chiara e fattibile, ma **nessuna parte è automatizzabile e libera** (tutte toccano il perimetro, o la prima parte è da supervisionare), o hai un dubbio | issue con AC e `ready` (punto 4), label di esecuzione su ogni parte, riga `RISCHIO:`, poi `triage:collega` | `triage:sposta -- --stage pronte_sup` |
 | ha un dubbio che solo chi l'ha scritta può sciogliere | `triage:commenta` con le domande | `triage:sposta -- --stage todo --assigned-to <proponente>` |
 | ripete una card già aperta | `triage:commenta` «Confluisce nella scheda S…» | `triage:sposta -- --stage obsolete` |
 | è già fatta altrove / non più valida | `triage:commenta` che dice dove e perché | `triage:sposta -- --stage obsolete` |
@@ -149,6 +149,38 @@ usa `--stage pronte_sup`. `pronte_sup` accetta le issue escluse dal perimetro
 (è il suo mestiere), ma rifiuta anche lei `needs-decision` e un perimetro non
 verificabile. **Mai** applicare la label `perimetro-verificato` per far passare
 una card in `pronte_auto`: la mette solo una persona.
+
+**Card a due binari: la sezione si sceglie sulle PARTI (#2860, Davide 15/10/2026).**
+Il perimetro non si giudica più sulla card intera ma su ognuna delle sue parti: la
+card è un'epica, le parti sono le sue sotto-issue (una card con una sola issue ha
+una parte sola, la issue stessa). La card poi **rimbalza da sola** fra le due code:
+la lavora il ciclo autonomo per le parti automatizzabili, quando ha finito passa
+al loop supervisionato per le altre, e così via finché tutte sono in beta. Dopo
+il triage non la sposti più tu: la sposta `ciclo:card-prossima-sezione`.
+
+- Ogni parte porta **UNA sola** label di esecuzione. `ciclo:auto` **solo** se la
+  parte passa il perimetro del ciclo e non ha `needs-decision`; `ciclo:super` in
+  ogni altro caso e **nel dubbio**. Mai `ciclo:auto` per far passare una card
+  (come `perimetro-verificato`, la label è una dichiarazione: il perimetro la
+  ricontrolla e una parte `ciclo:auto` esclusa vale `super`).
+  `gh issue edit N --add-label ciclo:auto` (o `ciclo:super`).
+- **Dipendenze:** una sola riga `Dipende da: #N, #M`, **da sola su una riga**,
+  solo verso parti della stessa card. L'espressione «dipende da» **non compare
+  altrove** nel corpo (nemmeno in prosa): il lettore è severo di proposito, una
+  riga che non sa leggere ferma la card. Una parte automatizzabile che serve
+  qualcosa di una supervisionata (una migration applicata, un secret) la
+  dichiara come dipendenza.
+- Le sotto-issue vanno **agganciate all'epica** come sub-issue GitHub. Se non
+  riesci ad agganciarle da qui, dillo nel commento: la card andrà in
+  `pronte_sup` (fail-closed) e una persona le aggancia con `subissue:collega`.
+- Prima di spostare: `npm run -s triage:binari` (sola lettura) mostra le parti,
+  le label, le dipendenze, lo stato e la **sezione di partenza**.
+- **Sezione di partenza:** `pronte_auto` **solo** se esiste almeno una parte
+  `ciclo:auto` libera (nessuna dipendenza aperta da altre parti); altrimenti
+  `pronte_sup`. `triage:sposta -- --stage pronte_auto` rifiuta nel caso
+  contrario, con i motivi. Una card vecchia senza label di esecuzione si
+  comporta come prima (tutta la card in un binario) e `pronte_auto` le
+  chiede la label.
 
 `--stage pronte` (la vecchia sezione unica) **non è più una destinazione**:
 il codice la rifiuta con un messaggio che nomina le due nuove. Le card rimaste
@@ -200,6 +232,7 @@ npm run -s triage:sposta -- --stage pronte_auto   # o pronte_sup: punto 3
 # cambia prima quello, non questa riga.
 npm run -s triage:sposta -- --stage backlog --status done
 npm run -s triage:collega -- --issue 2345
+npm run -s triage:binari   # sola lettura: parti, label, dipendenze, sezione di partenza (#2860)
 ```
 
 `triage:sposta` accetta **solo** `stage`/`status`/`assigned_to` e **solo se la card
@@ -221,6 +254,8 @@ questi script accetta una card diversa da quella presa.
   clienti finali.
 - Card = epica: se ne escono più issue, un'epica più sotto-issue con
   `(sub-issue di #N)` nel titolo; nella card si collega **solo l'epica**.
+  Ogni sotto-issue ha la sua label di esecuzione e, se serve, la sua riga di
+  dipendenza (punto 5, «Card a due binari»).
 - `npm run -s issue:precheck <N>`: label `ready` (con `gh issue edit --add-label
   ready`) **solo** se verde **e** senza una decisione aperta (`needs-decision`).
   Dal #2754 il perimetro non decide più la `ready`, decide la **sezione**
