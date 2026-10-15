@@ -8,7 +8,7 @@ description: >
   «Pronte auto». Porta ogni issue fino a `beta`, applica le migration additive
   con Davide davanti, e lo avvisa appena serve lui. Mai `main`. Trigger:
   «/loop-supervisionato», «loop supervisionato», «macina le pronte, ci sono io».
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Skill: loop-supervisionato
@@ -48,6 +48,22 @@ coda ordinabile (`coda_pos`, due code distinte).
 Con un checkout **precedente** a #2754 esiste solo `pronte`: la coda è il
 punto 3 da solo.
 
+**Card a binari (#2860, #2863).** Per le card in `pronte_sup` divise in parti
+(label `ciclo:auto` / `ciclo:super` sulle sotto-issue) la coda non si legge più
+da `card:stato`: si chiede allo strumento, in sola lettura (nessun lock, nessuna
+presa, vale anche a interruttore `sviluppo` spento):
+
+```bash
+npm run -s ciclo:sviluppo -- --binario super --json
+```
+
+L'uscita è `{prossima, scartate, senzaBinari}`. `prossima` è la prima parte
+`ciclo:super` libera (o `ciclo:auto` fuori perimetro, che vale super) di una card
+aperta in `pronte_sup`, con `prossima.card.taskId`; le parti `ciclo:auto` libere
+sono scartate (la card andrebbe in Pronte auto: `ciclo:card-prossima-sezione`).
+Le card in `senzaBinari` non hanno label `ciclo:*`: seguono la procedura di
+sempre qui sotto (coda dei punti 1-4, una card = un binario).
+
 Si **salta** (e si segnala a Davide al punto 6) una issue con:
 - label `needs-decision`;
 - dipendenza da un'altra issue non ancora in `beta` (la si riprende quando lo è);
@@ -67,7 +83,8 @@ serve al ciclo autonomo, non a questo ramo.
    `ciclo:card-presa`: è del ciclo autonomo, filtra `stage=eq.pronte_auto` e
    su una card in `pronte_sup` non sposta niente (#2754). `card:in-lavorazione`
    è in `beta` (non ancora in `main`): lancialo da un checkout allineato a
-   `origin/beta`. `npm run issue:precheck N`: exit 1 → salta, segnala.
+   `origin/beta`. Per una parte a binari: `--task <prossima.card.taskId> --issue N`.
+   `npm run issue:precheck N`: exit 1 → salta, segnala.
 2. **Dev-loop** (skill `dev-loop`) col Workflow, con in più questo vincolo nei
    prompt di planner, developer e verificatore:
    > Modalità SUPERVISIONATA. Migration ed Edge Function si SCRIVONO nel
@@ -113,6 +130,13 @@ serve al ciclo autonomo, non a questo ramo.
    `main`). Poi `npm run -s card:in-test -- --pr <PR>` (prima con `--dry-run`): la card passa
    da «In Lavorazione» a «In Test» solo con PR mergiata in `beta` e CI del merge verde
    (#2772). In «Revisione» la porta chi l'ha provata dal vivo (#1723).
+
+   **Parte di una card a binari (#2863):** invece di `card:in-test`, a merge fatto
+   e CI del push su `beta` verde (`gh run watch`), lancia lo stesso scrittore del
+   ciclo autonomo: `npm run -s ciclo:card-prossima-sezione -- --task <uuid> --dry-run`,
+   poi senza `--dry-run`. Decide lui dove va la card (anche In Test, o la coda
+   dell'altro binario). Un rifiuto non si forza: la card resta dov'è e il motivo
+   va nel resoconto a Davide. Le card senza binari continuano con `card:in-test`.
 7. Log: `npm run -s ciclo:sviluppo -- --registra '{"issue":N,"esito":"...","pr":P,"motivo":"supervisionato"}'`.
    Poi subito la issue successiva.
 
