@@ -1,5 +1,9 @@
 # Changelog
 
+## ciclo-triage 2.4.0 (2026-10-15)
+
+`triage:aggancia` (MaestroWeb #2872): chi crea le sotto-issue le aggancia all'epica, con guardie (epica della card, figlia nata nella presa corrente). Versione minima richiesta dal lavoratore: 2.4.0 (`TRIAGE_SKILL_VERSIONE_MINIMA`): la skill va sul VPS PRIMA del merge in `beta` di #2868 e #2874.
+
 ## ciclo-triage 2.3.0 (2026-10-15)
 
 Card a due binari (MaestroWeb #2860, parte D #2864): ogni parte (sotto-issue) con label `ciclo:auto`/`ciclo:super` e riga di dipendenza; la sezione di partenza si sceglie sulle parti (`triage:binari`, `triage:sposta`). Versione minima richiesta dal lavoratore: 2.3.0 (`TRIAGE_SKILL_VERSIONE_MINIMA`): la skill va sul VPS PRIMA del merge in `beta`.
