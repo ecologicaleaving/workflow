@@ -1,5 +1,9 @@
 # Changelog
 
+## aggiorna-pc 1.0.1 (2026-10-15)
+
+Passo 2: `git pull --ff-only` prima di `sync.ps1` e gestione dei codici di uscita del nuovo sync a tre vie (5: `-SoloDalRepo`; 6 e 3: ci si ferma). Dopo il sync che cancellò 11 file il 15/10.
+
 ## aggiorna-pc 1.0.0 (2026-10-15)
 
 Skill nuova (MaestroWeb #2858): «aggiorna il PC» allinea repo `workflow`, `claude-config-maestro` e radice MaestroWeb su `beta`, a ciclo spento. Fail-closed, solo `--ff-only`, mai `npm ci`, nessun interruttore toccato.
