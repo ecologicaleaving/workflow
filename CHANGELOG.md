@@ -1,5 +1,9 @@
 # Changelog
 
+## aggiorna-pc 1.0.0 (2026-10-15)
+
+Skill nuova (MaestroWeb #2858): «aggiorna il PC» allinea repo `workflow`, `claude-config-maestro` e radice MaestroWeb su `beta`, a ciclo spento. Fail-closed, solo `--ff-only`, mai `npm ci`, nessun interruttore toccato.
+
 ## ciclo-sviluppo 1.10.0 (2026-10-14)
 
 Punto 0: controllo di allineamento prima del giro (MaestroWeb #2848), esito `{"errore":"allineamento: ..."}` e fetch di `origin master` del repo workflow. Il ciclo si ferma e non sincronizza da solo.

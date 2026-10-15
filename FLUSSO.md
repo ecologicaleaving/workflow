@@ -416,3 +416,5 @@ powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 ```
 
 Dettaglio: skill `claudio`.
+
+Per riallineare un PC in un colpo solo (repo `workflow`, `claude-config-maestro`, radice MaestroWeb su `beta`), a ciclo spento: skill `aggiorna-pc` («aggiorna il PC»). Il ciclo autonomo, se il PC non è allineato, si ferma (#2848): non si sincronizza da solo.
