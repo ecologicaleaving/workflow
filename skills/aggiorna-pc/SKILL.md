@@ -1,6 +1,6 @@
 ---
 name: aggiorna-pc
-version: 1.0.0
+version: 1.0.1
 description: >
   Allinea questo PC in un colpo solo, a ciclo spento: repo `workflow` (master) con
   `sync.ps1`, `claude-config-maestro` con `sync.ps1`, radice MaestroWeb su `beta`
@@ -60,12 +60,27 @@ non su master» e aspetti una persona.
 
 ```powershell
 cd $env:USERPROFILE\Documents\00-Progetti\claude-config-maestro
+git branch --show-current            # deve dire: main
+git status --porcelain --untracked-files=no   # deve essere vuoto
+git pull --ff-only origin main       # PRIMA: lo script che gira deve essere quello nuovo
 powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 ```
 
-Lo script si ferma da solo su un segreto o su un conflitto: se esce con codice diverso
-da 0, riporta il suo messaggio com'è (senza valori) e **fermati**. Se la cartella non
-c'è, fermati e dillo (non la cloni da sola).
+Dal 15/10/2026 `sync.ps1` lavora a tre vie e ricorda l'ultimo allineamento di questo PC
+(`~/.claude/.sync-config-maestro`): un PC rimasto indietro non può più cancellare né
+riportare indietro il lavoro dell'altro (il 15/10 il PC di Ascanio cancellò 11 file di
+memoria). Se esce diverso da 0, riporta il suo messaggio com'è (senza valori) e
+**fermati**. Casi che conosci:
+
+- **codice 5** («questo PC non ha ancora un punto di allineamento»): è un PC nuovo o mai
+  allineato con la versione nuova. Chiedi alla persona se sul PC ci sono modifiche di
+  memoria da non perdere; se NON ce ne sono, rilancia con `-SoloDalRepo` (prende tutto dal
+  repo, non manda nulla). Se ce ne sono, fermati e dillo a Claudio.
+- **codice 6** («cancellerebbe N file dal repo»): quasi sempre un PC rimasto indietro. Non
+  usare mai `-ConfermaCancellazioni` da sola: fermati.
+- **codice 3** (lo stesso file cambiato sui due PC) o **codice 2** (segreto in chiaro): fermati.
+
+Se la cartella non c'è, fermati e dillo (non la cloni da sola).
 
 ### Passo 3 — radice MaestroWeb
 
@@ -109,7 +124,8 @@ cd $env:USERPROFILE\Documents\00-Progetti\workflow
 git checkout master; git pull origin master
 powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
 cd $env:USERPROFILE\Documents\00-Progetti\claude-config-maestro
-powershell -ExecutionPolicy Bypass -File scripts\sync.ps1
+git pull --ff-only origin main
+powershell -ExecutionPolicy Bypass -File scripts\sync.ps1 -SoloDalRepo   # solo la prima volta, se il PC non ha mai fatto il sync nuovo
 ```
 
 Da quel momento basta la frase «aggiorna il PC» in una sessione Claude Code; le
