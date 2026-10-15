@@ -9,7 +9,7 @@ description: >
   «giro» (sessione locale con `/loop`) e «card singola» (lavoratore sul VPS,
   Claude Code headless). Trigger: «/loop ciclo-triage», «giro di triage»,
   «triage delle idee».
-version: 2.3.0
+version: 2.4.0
 ---
 
 # Skill: ciclo-triage
@@ -170,9 +170,14 @@ il triage non la sposti più tu: la sposta `ciclo:card-prossima-sezione`.
   riga che non sa leggere ferma la card. Una parte automatizzabile che serve
   qualcosa di una supervisionata (una migration applicata, un secret) la
   dichiara come dipendenza.
-- Le sotto-issue vanno **agganciate all'epica** come sub-issue GitHub. Se non
-  riesci ad agganciarle da qui, dillo nel commento: la card andrà in
-  `pronte_sup` (fail-closed) e una persona le aggancia con `subissue:collega`.
+- Le sotto-issue le **aggancia chi le crea, cioè tu** (Davide, 15/10/2026): dopo
+  aver creato l'epica (e `triage:collega --issue <epica>`), crei ogni
+  sotto-issue col titolo «… (sub-issue di #<epica>)» e **subito dopo** lanci
+  `npm run -s triage:aggancia -- --epica <epica> --figlia <n>`. Exit 0 muto =
+  già agganciata. Exit 1 = **non riprovare in giro**: scrivi il motivo nel
+  commento; la card andrà in `pronte_sup` (fail-closed) e una persona aggancia
+  con `subissue:collega`. Lo script aggancia solo issue create nella tua presa
+  corrente, solo a un'epica collegata alla card che stai trattando.
 - Prima di spostare: `npm run -s triage:binari` (sola lettura) mostra le parti,
   le label, le dipendenze, lo stato e la **sezione di partenza**.
 - **Sezione di partenza:** `pronte_auto` **solo** se esiste almeno una parte
@@ -232,6 +237,7 @@ npm run -s triage:sposta -- --stage pronte_auto   # o pronte_sup: punto 3
 # cambia prima quello, non questa riga.
 npm run -s triage:sposta -- --stage backlog --status done
 npm run -s triage:collega -- --issue 2345
+npm run -s triage:aggancia -- --epica 2860 --figlia 2861   # aggancia una sotto-issue appena creata (#2872)
 npm run -s triage:binari   # sola lettura: parti, label, dipendenze, sezione di partenza (#2860)
 ```
 
