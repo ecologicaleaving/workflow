@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-16 — Il ciclo di prova verifica anche il codice; lucchetto di merge su beta
+
+**In produzione:** niente (tutto in beta).
+**In beta, aspetta:** #2875 guardia di rete supervisionata (#2866), #2880 `prices-proxy` sola lettura (#2873), #2884 lucchetto di merge (#2883), #2886 verifica del codice nel ciclo di prova (#2885), #2894 tag `AC<n> [Codice]` senza grassetto (#2893). Aspetta: `/promuovi` di Davide; Ascanio: S275 in Revisione (7 punti, 1 browser + 6 codice, nessuno da provare a mano).
+**Aperto:** #2837 (SOH, S273 in Lavorazione, presa del ciclo attiva); S270, S162, S272 in coda al ciclo di prova (nessuna sessione `/loop ciclo-prova` ancora lanciata); AC5 di #2873 (`cron.job` su `prices-proxy`, atteso 0 righe, di Davide prima del `/promuovi`); AC9 di #2883 (adozione del lucchetto nelle skill/FLUSSO.md); sync della skill 1.3.0 sul PC di Ascanio.
+
+**Ha funzionato:** giro S275 completo end-to-end (7 punti, 6 verificati sul codice da un Opus distinto + tsc/lint/vitest sul commit di merge); lucchetto provato su origin vero (prendi → merge → rilascia); #2894 5/5 AC al secondo tentativo.
+**Non ha funzionato → regola nuova:** il primo giro di S275 dava «6 da provare a mano» perché `tagDa` scartava `AC1 [Codice]` senza grassetto (#2893/#2894): i punti `[Codice]` erano persi alla fonte. Regola: mai concatenare con `;` il controllo `pr:sovrapposizione` e il merge (exit 1 non ferma un `;`): due passaggi separati, leggendo l'esito. Mai `timeout N` davanti a `prova:codice --verifica` (uscita 143). Una guardia ad allowlist manuale non scala → modalità supervisionata calcolata (#2866).
+**Decisioni di Davide:** «tutto approvato» sulle due scelte del planner di #2885 (prova del codice incompleta + KO browser = «incompleto»; PR in `PERIMETRO_GUARDIA` lavorata in supervisionato); «procedi» al merge di #2894; «lascia il ciclo prova acceso che lo teniamo in test»; `--admin` su workflow#82.
+**Errori miei:** un merge partito insieme al controllo di sovrapposizione concatenato con `;` (danno nullo, CI beta verde); ho detto «6 da provare a mano» come esito finale senza prima chiedermi perché fossero 6. I permessi hanno bloccato `--admin` e `worktree:remove`: non li ho aggirati, Davide ha aggiunto le regole e sono passati.
+**Numeri:** 5 PR mergiate in beta MaestroWeb (#2886, #2894, #2895, #2896 + #2884/#2875/#2880 nelle fasi precedenti) e workflow#82; 0 issue chiuse (chiudono al `/promuovi`); 6 issue GoodWe aperte (#2887-#2892, non mie); `audit:card-ferme` pulito.
+
+---
+
 ## 2026-10-14 — Il ciclo autonomo lavora anche le migration e si ferma in «Da concludere»
 
 **In produzione:** migration `20261013140000` (CHECK a 14 valori su `qa_tasks.stage`, applicata con ok di Davide). Nient'altro: il resto è in beta.
