@@ -7,10 +7,12 @@ description: >
   provare, e poi la porta in Revisione (nessun difetto: i punti che non può
   provare restano per la persona che rivede), la fa rientrare nella coda da cui
   era partita (almeno un difetto) o la lascia in In Test con un commento (esito
-  malformato o punti non coperti). Una card alla volta, mai `main`, mai scritture
+  malformato o punti non coperti). Dal 16/10/2026 (MaestroWeb #2885) verifica
+  anche i punti `[Codice]` sul codice, con un verificatore Opus distinto e i
+  controlli sul commit di merge. Una card alla volta, mai `main`, mai scritture
   su Supabase. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da triage e sviluppo. Trigger: «/loop ciclo-prova», «giro di prova».
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Skill: ciclo-prova
@@ -40,7 +42,11 @@ vince il codice.
   I punti che non può provare (`[Azione]`, `[Campo]`, dati assenti nel sito di
   prova, ruolo senza conto) restano nel commento come «da provare a mano»: li
   prova la persona che rivede. Prima era «solo se OGNI punto è osservato»: una
-  card con un `[Azione]` non arrivava mai in Revisione.
+  card con un `[Azione]` non arrivava mai in Revisione;
+- i punti **`[Codice]`** (cambiato il 15/10/2026, MaestroWeb #2885): il ciclo
+  **ripete le verifiche che faceva Claudio dopo l'implementazione**. La card che
+  esce da In Test o va in Revisione, o torna nel ciclo di lavorazione. Un
+  `[Codice]` non si prova nel browser: si verifica sul codice (punto 3b).
 
 ⚠️ Questo **supera**, per questo ciclo soltanto, la regola «in Revisione la
 porta una persona che ha provato» (#1723). Ogni altro comando automatico
@@ -75,9 +81,11 @@ provando, così un secondo giro la riconosce (`giro-in-corso`).
 
 La `prossima` porta: `cardNo`, `titolo`, `pr`, `issue`, `partenza` (la sezione
 da cui la card è arrivata e da dove l'ha letta), `cosaProvare` e **`punti`**
-(`n`, `testo`, `tag`, `automatizzabile`). **I punti sono quelli, non li
-riscrivi e non ne aggiungi**: un punto in più nell'esito rende l'esito
-`incompleto`.
+(`n`, `testo`, `tag`, `automatizzabile`, e per i `[Codice]` `fonte: "codice"` con
+`codice: {issue, ac, testoHash}`) più **`codice`**: l'elenco delle PR da verificare
+sul codice (`[{pr, issue}]`). **I punti sono quelli, non li riscrivi e non ne
+aggiungi**: un punto in più nell'esito rende l'esito `incompleto`. I punti
+`fonte: "codice"` **non hanno uno spec**: non scrivere test per loro.
 
 Da qui in poi, **qualunque uscita** passa dal punto 6 (lock rilasciato, riga
 nel log).
@@ -163,14 +171,61 @@ difetto dell'app: se il fallimento viene da te, correggi lo spec e riesegui
 Se un riesame manuale ti convince che un `ko` è un falso positivo, **non** lo
 trasformi in `ok` a mano: correggi lo spec e riesegui.
 
+### 3b. Verifica i punti `[Codice]` (MaestroWeb #2885)
+
+Per **ogni PR** nell'elenco `codice` della coda (se è vuoto, salta il passo).
+Le regole stanno nel codice (`docs/ciclo-prova-codice.md` di MaestroWeb): tu
+orchestri.
+
+```bash
+npm run -s prova:codice -- --prompt --pr <n> --cartella <cartella>
+# → <cartella>/prompt-verificatore-<n>.md
+```
+
+1. **Un agente Opus distinto** da chi ha scritto il codice e da te esegue il
+   prompt: giudica ogni AC `[Codice]` sul **diff reale** della PR mergiata
+   (non sulla descrizione) e salva il suo JSON in `<cartella>/verdetto.json`.
+   Non dargli la descrizione né i commit del developer. Il verificatore non
+   scrive su GitHub, non fa commit né push, non installa dipendenze (solo
+   `worktree:link`, e il worktree si toglie con `worktree:remove`).
+2. I **controlli li esegue il ciclo**, non l'agente, sul commit di merge in
+   beta (tsc, lint, vitest sui file toccati, `deno test` se il diff tocca
+   `supabase/functions/`):
+
+```bash
+npm run -s prova:codice -- --verifica --pr <n> --verdetto <cartella>/verdetto.json --cartella <cartella>
+# → <cartella>/prova-codice-<n>.json
+```
+
+Dura **5-15 minuti** e tsc può superare i due minuti: lancialo **senza**
+`timeout` davanti (un `timeout 115` lo uccide con uscita 143 e la prova non si
+scrive) e, se la tua shell ha un limite, in background. Un solo lavoro pesante
+alla volta oltre al browser.
+
+Poi, **dopo** il passo 3 (e a prescindere da quanti punti ha il browser):
+
+```bash
+npm run -s ciclo:prova -- --componi <cartella> --card S<n>
+# → <cartella>/esito.json (punti del browser + prove del codice)
+```
+
+Un `[Codice]` è `ok` solo con verdetto `pass` su QUELL'AC, CI di beta verde sul
+commit di merge e controlli verdi; un `fail` o un controllo rosso lo rende `ko`
+(la card rientra come per un ko del browser); tutto il resto è «da provare a
+mano» o `incompleto`. Un `[Codice]` dichiarato `ok` con fonte `browser` il
+codice lo declassa. **Se il verificatore non risponde o il verdetto è illeggibile
+non inventare un `pass`**: la prova resta incompleta (punto 4).
+
 ### 4. Scegli lo scrittore (uno solo, sempre prima `--dry-run`)
 
 Il verdetto lo calcola il codice; ti serve solo per sapere quale comando
-lanciare. Sempre `--dry-run` per primo.
+lanciare. Sempre `--dry-run` per primo. Con la prova del codice incompleta il
+verdetto è **incompleto** anche se il browser ha trovato un ko: la card non si
+sposta (decisione di Davide del 16/10/2026).
 
 | verdetto | comando | cosa fa |
 |---|---|---|
-| **ok** (nessun `ko`, ogni punto atteso ha la sua voce; i `non-verificabile` non bloccano) | `npm run -s card:in-revisione -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | In Test → **Revisione**, commento «Claudio · ciclo» con una riga per punto: superato dal ciclo oppure da provare a mano |
+| **ok** (nessun `ko`, ogni punto atteso ha la sua voce; i `non-verificabile` non bloccano) | `npm run -s card:in-revisione -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | In Test → **Revisione**, commento «Claudio · ciclo» a tre gruppi: verificato dal browser, verificato sul codice (verdetto, commit di merge, controlli), da provare a mano (solo `[Campo]`, `[Azione]` e punti non verificabili, col motivo) |
 | **ko** (almeno un punto `ko`) | vedi punto 5 | issue di fix + rientro |
 | **incompleto** (punti senza voce nell'esito, o voci in più: esito da rifare) | `npm run -s card:prova-incompleta -- --card S<n> --esito <cartella>/esito.json [--dry-run]` | la card **resta in In Test**; un commento con il marcatore «Prova dal vivo del ciclo» elenca i punti non provati |
 
@@ -252,6 +307,13 @@ una prova inconcludente: aspetta una persona o un nuovo commit.
   mai scrivere «Revisione» con altro che `card:in-revisione`.
 - **Mai** un punto `[Campo]` o `[Azione]` come `ok`: richiedono un impianto vero
   o una persona (e il codice lo declassa comunque).
+- **Mai** un `[Codice]` come `ok` senza il verdetto di un verificatore distinto e la
+  prova del codice completa: niente `pass` inventati, niente verdetti scritti a
+  mano o dal developer.
+- **Mai** impostare `CICLO_PROVA_MODO` (nemmeno `CICLO_PROVA_MODO=… npm run`, né in
+  uno spec, né in `.env.local`): la modalità supervisionata della guardia di rete
+  (MaestroWeb #2866) la accende solo una persona, nell'ambiente della sessione.
+  Il ciclo gira sempre in modalità autonoma.
 - **Mai** una scrittura verso Supabase dalla prova, né una richiesta diretta
   che aggiri la fixture. Beta è il DB di produzione.
 - **Mai** una credenziale negli argomenti, negli spec, nei commenti, nei log o
@@ -259,7 +321,8 @@ una prova inconcludente: aspetta una persona o un nuovo commit.
   variabili d'ambiente, non chiedere i valori.
 - **Mai** modificare codice del repo, aprire PR, migration, workflow GitHub, VPS.
   Le uniche scritture consentite sono: gli spec nella cartella di prova (fuori
-  dal repo), i tre script `card:*`, `ciclo:prova --registra|--lock|--unlock`, la
+  dal repo), i tre script `card:*`, `ciclo:prova --registra|--lock|--unlock|--componi`,
+  `prova:codice --prompt|--verifica` (scrivono solo nella cartella di prova), la
   issue di fix.
 - **Mai** più di una card per giro, mai due giri insieme (il lock).
 - Se qualcosa non torna (`gh` non autenticato, DB irraggiungibile, beta non
