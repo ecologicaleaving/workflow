@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-17 — Curve per stringa (S178): storico e falde in beta; due rossi che non erano delle PR
+
+**In produzione:** niente (tutto in beta). Applicate in produzione, con ok di Davide una alla volta, le migration `20261017150000` (storico per stringa, #2910) e `20261017120000` (falde↔stringhe, #2911).
+**In beta, aspetta:** #2916 storico per stringa (#2910), #2915 falde↔stringhe e cablaggio MPPT (#2911), #2921 E2E onboarding con P.IVA unica (#2920), #2923 ripiego `--use-api` sul rate limit del pull Docker (#2922), più #2907/#2908/#2909/#2919 della mattina. `/promuovi` di Davide per le scritture dello storico; sweep dello storico NON acceso; tipi di `historical_readings_strings` scritti a mano finché `gen:types` non gira.
+**Aperto:** #2922 (AC5: tre merge `-beta` di fila senza rilanci; il merge di #2923 non ha ridistribuito funzioni, quindi non prova nulla); #2912 (C, `ciclo:auto`, S178 in Pronte auto, lasciata al ciclo); poi #2913 e #2914; S162 in Lavorazione con PR #2715 mergiata il 07/10 senza `card:in-test` (segnalata da `audit:card-ferme`, non toccata).
+
+**Ha funzionato:** la trace Playwright del job (`data/<hash>.zip` → `0-trace.network`) ha mostrato il 409/23505 in pochi minuti dove tre giri di ipotesi non erano arrivati. La PR vuota di controllo (#2918) ha provato in modo pulito che il rosso non era di #2915. I due loop (#2920, #2922) al primo o al secondo tentativo; il planner di #2922 ha corretto la mia stessa diagnosi leggendo 11 run.
+**Non ha funzionato → regola nuova:** (1) una P.IVA sintetica costante nello spec su un DB di test condiviso rompe tutti i run dopo il primo interrotto: valori unici per run + bonifica dei residui nel `beforeAll` (#2920). (2) Ho dato per verdi due deploy leggendo che il comando di attesa era uscito, non la conclusione del run: `gh run watch` esce 0 anche su un run rosso. Regola: dopo ogni attesa si legge `gh run view <id> --json conclusion` e si dice quello. Scritta in memoria. (3) Un `gh pr checks --watch` che esce 1 con l'E2E ancora `pending` non è un esito: non si mergia sopra.
+**Decisioni di Davide:** «Perché cancelli il branch in ogni caso? Se non funziona dobbiamo sistemarlo» (il branch diag si cancella solo quando non serve più; il problema si sistema con una issue); «Aprila» (issue #2922 sul rate limit); «Lasciala al ciclo» (#2912). Ok ai rilanci `--failed` del deploy beta e dell'E2E, uno per volta.
+**Errori miei:** ipotesi sbagliata sulla causa dell'E2E verificata sul DB di PRODUZIONE invece che su quello di test; proposta di riprodurre in locale con `.env.local`, che è produzione (e lo spec scrive con la service role); nella issue #2922 avevo scritto «rate limit del registry Supabase» e «le funzioni sono estranee alla PR»: entrambe false (è il limite sui pull anonimi di ECR Public, e le funzioni erano nel deploy set per `database.types.ts` e `string-history.ts`). Come si evita: prima di scrivere una causa in una issue, il log del passo che fallisce, non il nome del passo.
+**Numeri:** 8 PR in beta oggi (4 di questa tranche); 2 migration applicate; 2 loop con precheck pulito (#2920 attempt 2, #2922 attempt 1); 2 deploy rossi per rate limit, 1 E2E rosso per difetto del test; 0 issue chiuse (chiudono al `/promuovi`).
+
+---
+
 ## 2026-10-16 — Il ciclo di prova verifica anche il codice; lucchetto di merge su beta
 
 **In produzione:** niente (tutto in beta).
