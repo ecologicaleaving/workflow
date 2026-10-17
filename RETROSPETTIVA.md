@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-17 (sera) — Ciclo di prova autonomo: S269 in Revisione, S162 non si chiude con un ricalcolo
+
+**In produzione:** niente.
+**In beta, aspetta:** #2908 (test handler resync Sungrow), #2909 (verificatore col contesto della PR, #2906), #2919 (guardia di rete: contatore God ammesso, nota sui [Campo] di produzione, aggancio della fix come sub-issue, #2917). S269 in Revisione (7 punti su 7 verificati dal ciclo, nessuno a mano); S276 in Revisione, con il `[Campo]` di produzione a mio carico dopo `/promuovi` e giro delle 03:00.
+**Aperto:** #2750 (S162) — AC4 senza token valido per `audit:rollup-energia`; AC5 aspetta Davide (lasciare 63 righe raw o cancellarle). S162 in Lavorazione: `card:in-test --pr 2715` rifiuta per due epiche (#2159, #2750).
+
+**Ha funzionato:** il ciclo ha portato S263, S273, S276 e S269 in Revisione con pochi punti a mano; il verificatore col contesto della PR ha sostituito la lettura manuale. #2919 mergiata dopo un E2E rosso risolto in due passi: il fix (#2921) era già in beta, bastava `update-branch`.
+**Non ha funzionato → regola nuova:** (1) un E2E rosso su una PR che non tocca l'app si confronta con i commit entrati in beta DOPO l'avvio del run, prima di parlare di guasto di beta (memoria `feedback_esito_del_run_si_legge_non_si_deduce`). (2) Prima di proporre una scrittura di manutenzione si legge la definizione viva della funzione e si misura l'effetto in sola lettura (memoria `feedback_leggere_la_funzione_prima_di_proporre_scrittura`).
+**Decisioni di Davide:** «Non devi portare la card in revisione, quello che posso verificare io, lo puoi verificare anche te dal browser e devi verificarlo prima»; «la 1 e la 2 mi sembrano corrette dobbiamo riuscire a rendere il ciclo automatizzabile e semplice» (poche PR, issue sul tooling solo se bloccano il giro); «Procedi come hai proposto» su S162.
+**Errori miei:** ho proposto il ricalcolo dell'oraria di due impianti con `populate_historical_readings_hourly(date)` senza aver letto che lavora su tutta la flotta e che la regola vieta di rilanciarla sui giorni spazzati; l'ho scoperto prima di scrivere (394 ore su 61 impianti sarebbero state riscritte su raw parziale; le 63 ore «senza rollup» hanno 1 campione raw ciascuna). Un commento su S276 diceva di aspettare il giro notturno prima di approvare: sbagliato, corretto con un secondo commento.
+**Numeri:** PR mergiate in beta da questa sessione: 3 (#2908, #2909, #2919); issue aperta: #2917; E2E di #2919 verde in 22 min dopo un rerun per rete (download dei font Google fallito).
+
+---
+
 ## 2026-10-17 — Curve per stringa (S178): storico e falde in beta; due rossi che non erano delle PR
 
 **In produzione:** niente (tutto in beta). Applicate in produzione, con ok di Davide una alla volta, le migration `20261017150000` (storico per stringa, #2910) e `20261017120000` (falde↔stringhe, #2911).
