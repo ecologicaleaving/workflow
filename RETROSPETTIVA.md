@@ -8,6 +8,18 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-19 — Alternative a Stripe per S264: Paddle e Mollie proposte ad Ascanio
+
+**In produzione:** niente.
+**In beta, aspetta:** niente di nuovo (sessione di sola ricerca).
+**Aperto:** S264 (pagamento aziende, Stripe non accetta il conto SumUp) — nei To Do di Ascanio con il confronto Paddle/Mollie scritto oggi; epica #2783 da riscrivere per il fornitore che sceglie.
+
+**Ha funzionato:** la domanda di Davide («un'alternativa semplice e sicura») è diventata un confronto con costi e un esempio in euro; rileggendo il thread della card è emerso un conflitto che la chat non vedeva (Paddle fattura a ogni pagamento, Ascanio ha chiesto fattura unica a fine anno).
+**Non ha funzionato → regola nuova:** nessuna.
+**Decisioni di Davide:** «proponi queste due alternative ad Ascanio nella card, scegliendo risponde anche alle tue domande, spiegale come le hai spiegate a me».
+**Errori miei:** nella prima risposta ho dato Paddle e Mollie senza aver letto il thread di S264; la tariffa l'ho cercata solo alla seconda domanda. Prima di proporre una soluzione a un tema con una card aperta si legge la card.
+**Numeri:** prezzi da siti di confronto, non da contratto (Paddle 5% + 0,50 €; Mollie SEPA 0,25 €, carta aziendale SEE 2,90% + 0,25 €); verifica sui listini ufficiali ancora da fare. Dubbi aperti: Paddle accetta un'associazione? Mollie accetta il conto SumUp? Non misurato altro.
+
 ## 2026-10-17 (sera) — Ciclo di prova autonomo: S269 in Revisione, S162 non si chiude con un ricalcolo
 
 **In produzione:** niente.
