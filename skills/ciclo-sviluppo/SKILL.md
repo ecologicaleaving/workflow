@@ -26,7 +26,9 @@ issue restano in coda finché una sessione con Davide presente non le prende una
 per una. Qui la coda si svuota da sola **fino a `beta`**, e si ferma lì: la
 prova dal vivo, la Revisione di Ascanio e la produzione restano umane.
 
-**Davide ha deciso (21-22/09/2026):** a step; solo su questa macchina; una
+**Davide ha deciso (21-22/09/2026):** a step; su più PC dal 06/10/2026
+(#2712: la presa della issue sta nel DB, `ciclo_sviluppo_prese`, hostname
+distinto per ogni PC; prima era «solo su questa macchina»); una
 sessione per il triage e una per lo sviluppo; la coda sono **tutte** le issue
 `ready` aperte, con o senza scheda; si accende **dopo** una settimana di solo
 triage (AC9 di #2281).
@@ -51,6 +53,7 @@ npm run -s ciclo:sviluppo -- --json --lock
 | `{"errore":"allineamento: ..."}`, exit 1 | fine, `noop`, **nessun `--unlock`** (il lock non è stato preso). Riporta a Davide l'errore così com'è. **Non sincronizzare mai da solo**: né `git pull`, né `sync.ps1` (decisione di Davide, 14/10/2026, #2848) |
 | `{"ciclo":"spento"}` | fine, `noop`. Interruttore: `~/.claude/ciclo-autonomo.json` → `"sviluppo": true` |
 | exit 2 «giro già in corso» | fine, `noop`. Il lock è di un altro giro: non toccarlo |
+| exit 1, `{errore}` che nomina il DB o la migration #2712 | fine, `noop`. Le prese degli altri PC non sono leggibili: il giro non parte, non improvvisare |
 | `"prossima": null` | `--unlock`, fine, `noop` |
 | `"prossima": {numero, ...}` | vai al punto 1 con quella, **solo quella** |
 
@@ -252,6 +255,11 @@ mergiare e non applicare nulla:
 npm run -s ciclo:sviluppo -- --registra '{"issue":N,"esito":"...","pr":P,"motivo":"..."}'
 npm run -s ciclo:sviluppo -- --unlock
 ```
+
+`--unlock` rilascia il lock locale **e** la presa della issue nel DB (#2712). Se
+dice che la presa non è stata rilasciata (DB giù, gettone non coincidente), il
+lock locale è comunque tolto e la presa scade da sé dopo 6 h: riportalo nel
+resoconto, senza insistere.
 
 In chat, **solo se è successo qualcosa**: la issue, l'esito, la PR, e le cose
 che aspettano Davide (migration, `needs-decision`, rossi). `noop: false` in
