@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-20 — Promozione v2.85.0, smoke col conto dedicato, S200 ferma sull'accesso GoodWe
+
+**In produzione:** #2738, #2764, #2767, #2776, #2777, #2779, #2780, #2837 (PR #2957, v2.85.0; deploy, Edge Function e Migrations da zero verdi; smoke 84 ok, 0 ko)
+**In beta, aspetta:** #2953, #2955, #2958, #2959, #2962 (strumenti: si chiudono con la prossima promozione)
+**Aperto:** #2887 (S200, ricognizione SEMS) — la sblocca un accesso GoodWe valido o il documento API di SEMS+; #2958: lo script SQL dell'azienda di prova si applica dopo la promozione di S279
+
+**Ha funzionato:** 117 worktree dei loop portati a 0 con `worktree:remove`; il conflitto sulla sola riga `version` ora si risolve da solo (#2955); `approva:card-in-produzione --issue` ha portato S198/S228/S229 fuori da «Approvate» (3 su 3).
+**Non ha funzionato → regola nuova:** (1) la promozione completa di beta non nomina le issue nella riga «Issue promosse»: le card restavano ferme → `--issue` (#2962, CLAUDE.md «Approvate»). (2) `@<(jq …)` non funziona su Git Bash Windows: JWT vuoto nello smoke → pipe (#2959). (3) Il PDF «API» ricevuto era di SolarEdge, non di GoodWe: si controlla il fornitore prima di leggerlo.
+**Decisioni di Davide:** «Bandiera del conto dedicato mi piace, e togliamo i controlli dello smoke, però con un reminder»; «Ok procedi creando l'utente» (utente di smoke in produzione).
+**Errori miei:** ho dato per buona una descrizione («il comando legge le closing keyword») senza leggere il corpo della PR; la lettura dei fatti prima di affermare evita il rimedio sbagliato. Sul GoodWe ho provato il login 4 volte sull'account di un terzo: il limite andava fissato a 2 e poi chiesto a Davide una prova dal browser.
+**Numeri:** 8 issue in produzione; 6 PR in beta, 1 in main; 5 issue aperte per strumenti; login SEMS: 4 tentativi, 0 riusciti.
+
+---
+
 ## 2026-10-19 — Alternative a Stripe per S264: Paddle e Mollie proposte ad Ascanio
 
 **In produzione:** niente.
