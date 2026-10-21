@@ -1,4 +1,21 @@
-# Retrospettiva delle sessioni
+# Re## 2026-10-04/06 — Promozione completa, sei card in Revisione, Google acceso, secondo PC, un errore d ordine sulle migration
+
+**In produzione:** promozione completa di beta (#2698, 76 issue, 05/10), fra cui #2690 pagina Allarmi, #2634 accordi utenti, #2639 Zucchetti da promuovere, #2661 fase 1 seriali batteria, #2469/#2625 base Google (spente fino alla chiave). Migration applicate a mano in prod: #2712 (ciclo_sviluppo_prese), #2159 1/5 e 2/5. Google configurato da Davide (chiavi, quote, budget, CSP prod, cron `google-solar-batch` jobid 137).
+**In beta, aspetta:** /promuovi di Davide per #2701 (fleet-economics, migration del cron alla promozione), #2703, #2704, #2707, #2710, #2642, #2666, #2712, #2661 AC5. Card in Revisione per Ascanio: S177 S231 S241 S244 S252 S256 S257 (+ le 13 del 05/10).
+**Aperto:** #2159 (S162) PR #2715 con migration 3-5 da presentare una alla volta + ricalcolo rollup giorni 31-90; S198/S228 aspettano la prima notte Google (07/10 01-05 UTC) per la prova dal vivo; #2712 sul secondo PC si accende dopo la promozione.
+
+**Ha funzionato:** loop supervisionati quasi tutti verdi al 1° tentativo (#2703, #2704, #2707, #2710, #2642, #2666, #2712, #2661); #2159 al 4°. La skill `miei-todo` ha chiuso 5 decisioni di Davide in un pomeriggio. Prova AC4 Zucchetti (FC03 0x9044 qty 55) riuscita al primo colpo appena il logger GE è tornato: seriale e ancora di verifica (412 cicli) combaciano.
+**Non ha funzionato → regola nuova:**
+- Migration 2/5 di #2159 applicata PRIMA del ricalcolo del rollup sul passato: `max_inverter_temp_c` NULL in produzione su /things finché non ho ricalcolato 30 giorni (deroga #2155). Regola: una migration che legge colonne nuove del rollup si applica solo dopo il ricalcolo dei giorni che legge (commento su #2159).
+- Card che aspettano una persona lasciate in Pronte/Lavorazione e chiesto a Davide se spostarle → regola: si spostano SUBITO nei To Do di quella persona (memoria `feedback_tocca_a_davide_subito_nei_todo`).
+- Developer del loop ha committato direttamente su `master` del repo workflow → spostato in PR #62 (bozza). Da tenere d occhio nel prompt del loop.
+**Decisioni di Davide:** «quando tocca a me, DEVONO essere spostate nei todo… se aspetta ascanio, la devi spostare ad ascanio»; secondo PC dedicato a MaestroWeb, memoria in repo privato `claude-config-maestro`, ciclo «su entrambi» (→ #2712); S162 «A, codice ora, cancellazione spenta»; Google «la faccio ora»; S248 «prova Zucchetti adesso», su GE; immagini S252 approvate.
+**Errori miei:** opzione presentata a Davide come se la migration non fosse rieseguita dal deploy (lo è, idempotente); messaggio ad Ascanio su S248 che dava per «in partenza» lavoro già in produzione (corretto); ordine migration/ricalcolo di #2159 (sopra).
+**Numeri:** 21 PR mergiate (20 in beta, 1 in main); 8 loop supervisionati + 1 autonomo; tentativi medi ~1,4; incidenti: 1 (temperature /things, ~1 h, rientrato).
+
+---
+
+trospettiva delle sessioni
 
 Una voce per sessione, la più recente in cima. La scrive Claudio a fine
 sessione con la skill `chiusura-sessione`. Contiene ciò che le issue non
