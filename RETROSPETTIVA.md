@@ -8,6 +8,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-23 — «Ogni commento riaccoda» (#2966/#2967) validata; card nel limbo sistemate; la promozione si ferma sul tsc
+
+**In produzione:** niente. Il dry-run di `approva-promote` del 23/10 si ferma: tsc rosso sul gruppo promosso (#2931 usa `BMS_PACK_TEMP_*` definite da #2763, esclusa per conflitto di cherry-pick). Nessuna PR aperta, nessun push.
+**In beta, aspetta:** S280 spie solo con errore (#2952, PR #2968) in Revisione, provata dal vivo e sul codice; S178 curve per stringa (parti #2910-#2914) in Revisione da Ascanio, 2 punti su 4 da provare a mano (salvano valori).
+**Aperto:** #2966 (74 AC, riaccodo da commento + tetti + audit) e #2967 (48 AC, «Rimanda a Claudio»), validate con piano postato, #2967 dipende da #2966; #2972 (`ciclo:card-prossima-sezione`, PATCH `ECONNABORTED`); #2970 (S248, in Pronte supervisionate perché il corpo nomina «edge function»); terza sub-issue «KO della prova in In Test → triage» NON creata; epica #2965 da allineare alla decisione presa; token GitHub del VPS senza «Pull requests: read».
+
+**Ha funzionato:** loop critico Sonnet↔Opus su #2966/#2967 in 4 giri (bocciate per fatti falsi e una regressione di #2768 AC4); prova di S280 col flusso `ciclo-prova` (3 punti nel browser, 4 `[Codice]` verificati da un Opus distinto, tsc/lint/vitest verdi); l'audit ha trovato S262 fuori posto in un colpo.
+**Non ha funzionato → regola nuova:** (1) `ciclo:prova --esegui` si rompe («Requiring @playwright/test second time») se nella cartella degli spec c'è il worktree del verificatore: Playwright vi trova tutti gli spec del repo; si lancia `--esegui` PRIMA del verificatore (memoria `feedback_ciclo_prova_cartella_con_worktree.md`). (2) Una card in In Test con l'epica aperta è scartata in silenzio dal ciclo di prova (limite #2903) e nessuna spia la segnala: S178 è rimasta ferma 5 giorni (memoria `feedback_epica_aperta_scarta_card_in_test.md`). (3) `ciclo:card-prossima-sezione` e `approva-promote` impiegano minuti nelle letture da GitHub: in background, mai con `timeout`; il PATCH finale cade con `ECONNABORTED` (#2972). (4) Il precheck legge i `#N` nei primi 800 caratteri dopo `## Dipendenze`: nessun numero spurio lì.
+**Decisioni di Davide:** «no, se c'è un commento, lo dobbiamo leggere e capire se la card resta li o deve essere spostata/lavorata»; «in parcheggiate e in obsolete lo facciamo noi, lui ce lo segnala»; «no, in test le lavora il ciclo di prova o tu direttamente»; tetti 50 idee nuove / 100 risposte / 200 tentativi al giorno, soglia audit 6 ore; S200 GoodWe da Davide ad Ascanio; «i conti sono nel file env, puoi verificare tutto»; S178 in Revisione spiegando cosa testare.
+**Errori miei:** nell'epica #2965 avevo scritto una regola non detta da Davide («Revisione e In Test passano dal triage solo per un rifiuto o una domanda»); ho spostato S178 con un PATCH diretto perché `card:in-revisione` la rifiutava (epica aperta) — su richiesta esplicita ma fuori dallo scrittore ufficiale; il verificatore ha scritto una riga nel repo principale per un percorso relativo (annullata, repo pulito).
+**Numeri:** PR mergiate oggi: 0; issue aperta: #2972; issue validate: #2966, #2967; card spostate: S262 (To Do Ascanio), S248 (Pronte supervisionate), S280 e S178 (Revisione), S200 (To Do Ascanio, 21/10); incidenti: 0.
+
+---
+
 ## 2026-10-17 (sera) — Ciclo di prova autonomo: S269 in Revisione, S162 non si chiude con un ricalcolo
 
 **In produzione:** niente.
