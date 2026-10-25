@@ -1,6 +1,6 @@
 ---
 name: aggiorna-pc
-version: 1.0.1
+version: 1.1.0
 description: >
   Allinea questo PC in un colpo solo, a ciclo spento: repo `workflow` (master) con
   `sync.ps1`, `claude-config-maestro` con `sync.ps1`, radice MaestroWeb su `beta`
@@ -82,6 +82,27 @@ memoria). Se esce diverso da 0, riporta il suo messaggio com'è (senza valori) e
 
 Se la cartella non c'è, fermati e dillo (non la cloni da sola).
 
+**Esclusioni per PC (15/10/2026 → 25/10/2026).** `sync.ps1` allinea anche
+`~/.claude/CLAUDE.md` (le istruzioni globali di Davide) e `~/.claude/agents`. Su un PC di
+un'altra persona (es. quello di Ascanio, col suo account) il suo `CLAUDE.md` **non si
+tocca**: né si sovrascrive né si manda al repo. La voce da lasciare fuori sta nel file
+locale `~/.claude/.sync-config-maestro-esclusi` (un nome per riga: `CLAUDE.md`, `agents`,
+`maestro` o `memory`; `#` per i commenti). **Prima di lanciare `sync.ps1`:**
+
+```powershell
+$esclusi = "$env:USERPROFILE\.claude\.sync-config-maestro-esclusi"
+if (Test-Path $esclusi) { Get-Content $esclusi } else { "(nessuna esclusione)" }
+```
+
+- Se il file c'è, `sync.ps1` lo rispetta da solo e lo scrive nell'output
+  («escluse su questo PC: …»): riportalo nella riga finale. **Non lo modifichi e non lo
+  cancelli mai.**
+- Se il file **non c'è**, il PC è di Davide: nessuna esclusione, si procede.
+- Se `sync.ps1` stampa «ATTENZIONE: '…' non corrisponde a nessuna voce», riportalo com'è:
+  il nome nel file è sbagliato, lo corregge una persona.
+- Non sei tu a decidere che un PC è «di un'altra persona»: lo ha detto Davide creando il
+  file (comando nella sezione «La prima volta»). Nel dubbio non indovinare, fermati.
+
 ### Passo 3 — radice MaestroWeb
 
 ```powershell
@@ -128,12 +149,24 @@ git pull --ff-only origin main
 powershell -ExecutionPolicy Bypass -File scripts\sync.ps1 -SoloDalRepo   # solo la prima volta, se il PC non ha mai fatto il sync nuovo
 ```
 
+**PC di un'altra persona (es. quello di Ascanio): una volta sola, PRIMA di ogni
+sync**, per non toccare il suo `CLAUDE.md`:
+
+```powershell
+Set-Content "$env:USERPROFILE\.claude\.sync-config-maestro-esclusi" "CLAUDE.md" -Encoding ascii
+```
+
+Poi si può fare il bootstrap sopra. Senza quel file la versione vecchia della skill (che
+gira finché `sync.ps1` non l'ha aggiornata) sincronizzerebbe anche il suo `CLAUDE.md`.
+
 Da quel momento basta la frase «aggiorna il PC» in una sessione Claude Code; le
 versioni future della skill si aggiornano con lo stesso `sync.ps1`.
 
 ## Cosa questa skill NON fa
 
 - Non accende, non spegne e non modifica i cicli.
+- Non sincronizza il `CLAUDE.md` (né le altre voci) di un PC che ha il file
+  `.sync-config-maestro-esclusi`: lì si lascia com'è.
 - Non applica migration, non deploya, non tocca Supabase, la VPS o i secret.
 - Non risolve conflitti, non cambia ramo, non butta via modifiche locali: se serve, lo
   fa una persona.
