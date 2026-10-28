@@ -1,4 +1,29 @@
-# Re
+# Retrospettiva delle sessioni
+
+Una voce per sessione, la più recente in cima. La scrive Claudio a fine
+sessione con la skill `chiusura-sessione`. Contiene ciò che le issue non
+dicono: cosa ha funzionato, cosa no e quale regola ne è nata, le decisioni di
+Davide, gli errori. Le regole nuove vivono poi in `FLUSSO.md` o nelle skill;
+qui restano la data e il perché.
+
+
+---
+
+## 2026-10-28 — Epica #3086 (utente in più aziende) tutta in beta, binario tecnico, prove dal vivo con un conto in due aziende
+
+**In produzione:** solo il DB: la migration `20261027160000` (#3089: `user_company_ids()` set-based e policy RLS a unione) è stata applicata il 28/10, verificata in sola lettura (0 policy ancora su `user_company_id()`, 9 a unione). Codice: niente.
+**In beta, aspetta:** #3089-#3093 (epica #3086), #3094 (binario tecnico), #3076 (tipi DB) — tutte con `qa-tech-approved` e un commento che dice cosa è provato dal vivo e cosa no — in attesa del `/promuovi` di Davide. Poi, **di Davide**: deploy delle Edge Function (prima le 9 di #3090, poi le 3 di #3093) e operazione sul dato di Sergiu. PR di questa parte: #3095, #3098, #3102, #3110, #3111, #3118, #3125.
+**Aperto:** #1393 (prossima della coda tecnica, il corpo nomina la VPS: serve la lettura di Davide e forse `perimetro-verificato`); 76 issue «da chiudere dopo verifica» nella coda tecnica (già chiuse da una PR in beta, ancora OPEN); 22 issue `ciclo:*` senza card; S287/S137/S91 in Pronte supervisionate con righe `Dipende da:` illeggibili (#3126, #3127, #3131); #3094 AC8 (skill `loop-tecniche` nel repo `workflow`, PR a parte); #3083 (tasto passa a Davide/Ascanio) da riallineare; #3008 (prova a vuoto di Davide su `sposta-impianti-3008.sql`).
+**Dati di prova lasciati in produzione, per scelta di Davide:** azienda vuota `[PROVA] multi-azienda 3086` (id `1a983c00-db5a-4fe9-a4bd-c338971659be`) con il conto E2E azienda come unico `admin`: finché c'è, gli E2E in CI usano un conto con due aziende. Si tolgono su richiesta (membership, poi la riga).
+
+**Ha funzionato:** cinque dev-loop sull'epica, #3092 e #3093 al primo tentativo con tutti gli AC `[Codice]` verdi; la guardia fail-closed della migration #3089 ha impedito danni alla prima applicazione (regex che non riconosceva la forma viva di `zcs_credentials_select`: transazione annullata, nulla cambiato); la lettura di `pg_policies` autorizzata ha dato il fatto che serviva. Prova dal vivo con un conto reale in due aziende: `user_company_ids()` = 2, RLS ad unione, nessuna riga di un'azienda non propria, 409 `company_required` / 400 / 403 sulle Edge `-beta`, `company-member-create-beta` 200 `membership_added` (prima 409), selettore e filtro azienda attiva nel browser (A, B, C, E su 6). Il dry-run di `issue:tecnica-approvata` ha accettato 7 PR su 7.
+**Non ha funzionato → regola nuova:** (1) un `vitest related` del verificatore ha mancato un test che legge i sorgenti con una regex (#3090, CI rossa): per le PR che toccano molti file si impone la suite completa (`npx vitest run`) nel messaggio al dev-loop. (2) Il `pr:sovrapposizione` dice cosa fare e va seguito alla lettera (vedi errori). (3) Il lucchetto di merge dura 60 minuti: se la CI è lunga scade; si riprende e si rifà `pr:sovrapposizione` prima di mergiare. (4) Un'attesa lunga in background (`gh pr checks --watch`) è stata fermata dal sistema per poca memoria: si usa un ciclo `until` leggero con un solo `gh` ogni 2 minuti. (5) Una scrittura su dati di produzione oltre l'autorizzazione data è bloccata dal sistema dei permessi: l'autorizzazione di una scrittura non copre la successiva, si chiede per ciascuna (memoria `feedback_scritture_prova_su_prod_una_per_volta`).
+**Decisioni di Davide:** «autorizzo la lettura» (solo `pg_policies` in produzione); «procedi con #3090 e #3091»; «confermo la regola» di `company-member-invite` per utenti condivisi (409 `already_active_shared` / `revoke_shared`, reinvio consentito a chi non è mai entrato); «metti il tecnico di prova in due aziende e vedi se funziona» → conto E2E azienda + «nuova azienda vuota di prova» + «lasciale per ora»; «1» (scritture della seconda azienda di prova per provare la #3093); «sì, solo la #3090» e poi «sì» alla prova nel browser per #3091/#3092.
+**Errori miei:** ho mergiato la #3102 con `pr:sovrapposizione` che segnalava «riallinea PRIMA di aspettare la CI» (file `database.types.ts` in comune) senza riallineare né aspettare: poi ho verificato che `beta` era a posto, ma la regola è seguirlo. Ho lanciato la coda tecnica con `| tail -c 6000` e il JSON è arrivato troncato (rifatto su file). Ho preparato una scrittura di prova più larga di quanto approvato (seconda azienda e conto superadmin) e il sistema l'ha fermata; ripetuta solo dopo il «1» di Davide. Durante la pulizia il conto E2E ha avuto per qualche minuto tre aziende mentre l'agente provava il selettore (esito invariato). Evitare: leggere l'esito del controllo e seguirlo; scrivere i dati di prova passo per passo con l'ok per ciascun passo.
+**Numeri:** 7 PR mie mergiate in beta; 7 issue con `qa-tech-approved`; coda tecnica: 1 prossima, 76 da chiudere, 123 scartate; 12 worktree rimossi con `worktree:remove`; sonda finale backend 200 in 0,30 s; 1 migration applicata in produzione (con 1 tentativo fallito e annullato); 1 agente di prova (browser), 5 dev-loop.
+
+---
+
 ## 2026-10-25 — Triage in produzione (D chiuso), promozione manuale di 17 gruppi, sito inchiodato e riavviato
 
 **In produzione:** promozione #3051 (merge `0745e269`): mappa riposizionabile e zoom (#2741, #2765), resa FV dalla configurazione Google (#2733), statistiche allarmi (#2740), DDI esterno (#2807), temperature batteria e spie impianto (#2763, #2931, #2952), Sungrow con app per riga (#2933-#2937), barre di scorrimento col tema (#2930), select «Sezione» senza «In Lavorazione» (#2985), taglio dei 7 giorni in UTC (#3033). 8 card in BackLog (S258, S261, S259, S270, S267, S254, S278, S280). Nessuna migration nuova: le cinque dei gruppi erano già applicate.
@@ -11,16 +36,6 @@
 **Decisioni di Davide:** «s264 andiamo con paddle»; «accoda 178 e attiva il ciclo triage su vps»; «vai con 3, poi con 2» (#3033 con opzione A, poi il pezzo B #2993); «risolvi i conflitti e anche 2763»; #3033 dentro la promozione («sì»); `/promuovi` il 25/10; «verifica che non ci siano altre corrispondenze per 262 e procedi».
 **Errori miei:** ho scritto «rollup fermo da prima del guasto» senza considerare il ritmo notturno del job; ho riletto un commento di S211 e la App key Huawei è comparsa nell'output (non copiata, segnalata); ho lanciato un `merge-tree` senza senso prima di cercare i dati. Evitare: leggere prima lo schedule di un job prima di parlare di ritardo; non stampare commenti di card interi quando possono contenere credenziali.
 **Numeri:** PR mergiate 25/10: #3031, #3038, #3050 in beta, #3051 in main; issue aperte nel giorno: #3052 (le altre sono del triage); incidente DB 06:28→riavvio Supabase da Davide (causa non accertata); loop: D 2 giri; promozione: 21 commit su 40 + 2 commit in più.
-
----
-
-rospettiva delle sessioni
-
-Una voce per sessione, la più recente in cima. La scrive Claudio a fine
-sessione con la skill `chiusura-sessione`. Contiene ciò che le issue non
-dicono: cosa ha funzionato, cosa no e quale regola ne è nata, le decisioni di
-Davide, gli errori. Le regole nuove vivono poi in `FLUSSO.md` o nelle skill;
-qui restano la data e il perché.
 
 ---
 
