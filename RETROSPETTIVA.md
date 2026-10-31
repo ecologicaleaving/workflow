@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-10-31 — v2.87.0 in produzione: promozione manuale del lotto tooling (15 tecniche)
+
+**In produzione:** #2817, #2823, #2824, #2826, #2862, #2863, #2864, #2865, #2872, #2883, #2962, #2972, #2980, #2994, #3002 (PR #3196, v2.87.0, tutto tooling: nessuna novità visibile per gli utenti; nessuna migration, nessuna Edge Function). Prima: hotfix migration #3182 (PR #3183 beta, #3184 main), chiusi #2785/#2786.
+**In beta, aspetta:** #3005 (#3001, pannello «Rimanda») e #3050 (#2995) per il giro dopo; #3186, #3189, #3191 (PR #3188, #3190, #3192) mergiate in beta, tecniche da provare.
+**Aperto:** #3167 (approva-promote dopo un revert), #3166 (vitest prima del merge), #3141; #3187, #3193, #3194, #3195, #3197 nate oggi. Card ferme dall'audit: S285, S295, S297, S306, S312, S287, S321.
+
+**Ha funzionato:** lotto stretto (variante B) scelto da Davide dopo aver visto che il blocco era più largo di 4 issue; prova a vuoto del lotto largo con tre agenti distinti (developer, verificatore, controlli) ha scovato 3 dipendenze mancanti e il manifesto da ritoccare PRIMA della PR; vitest completo sul ramo (914 file, 16645 passati, 0 falliti), tsc e lint verdi; PR senza sorprese in CI.
+**Non ha funzionato → regola nuova:** (1) `approva-promote` dopo il revert #3160 tratta i commit come «non promosso per conflitto» e `tsc` resta rosso: promozione a mano, issue #3167 (memoria `feedback_promozione_vitest_prima_e_trappola_revert`). (2) Il deploy Edge «appeso» per 52 minuti era in realtà FALLITO per il limite di download di `public.ecr.aws` (`toomanyrequests`): prima di cancel/force-cancel si legge `gh run view --log-failed`; bastava `rerun --failed` (memoria `project_promozione_2870_lotto_stretto`). (3) Lo smoke dalla radice su `beta` contro la produzione dà un falso FAIL su funzioni solo-beta (`huawei-oauth`): si usa lo script di `main`.
+**Decisioni di Davide:** «b» (lotto stretto, senza #3005 e #3050); «3» (per #2826 controllare gli E2E di beta prima dell'etichetta); «Promuovi» (/promuovi per il lotto B); «procedi» (rerun del job Edge); «vai con lo smoke e concludi il ciclo».
+**Errori miei:** avevo letto il job Edge come appeso e chiesto il permesso di cancellarlo senza leggere prima il log: ho perso un giro di domande; da ora log prima. Falsi «finito» del Monitor su una condizione già vera (controllo sul processo invece che sul file).
+**Numeri:** 15 issue in produzione, 1 PR di promozione, 4 hotfix/PR di contorno oggi, 1 rerun del deploy; incidenti: 1 (deploy Edge, nessun effetto su utenti, sito già pubblicato). Smoke produzione: 85 PASS, 1 FAIL spiegato, 6 SKIP (credenziali di Davide), 0 TOOLERR. Sonda backend: non misurata (richiede la chiave di servizio, non in questo ambiente).
+
+---
+
 ## 2026-10-28 — Epica #3086 (utente in più aziende) tutta in beta, binario tecnico, prove dal vivo con un conto in due aziende
 
 **In produzione:** solo il DB: la migration `20261027160000` (#3089: `user_company_ids()` set-based e policy RLS a unione) è stata applicata il 28/10, verificata in sola lettura (0 policy ancora su `user_company_id()`, 9 a unione). Codice: niente.
