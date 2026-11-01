@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-01 — I miei To Do di Davide (6 card decise), backfill Solis acceso su beta
+
+**In produzione:** niente di nuovo nel codice. Sul DB di produzione: il job pg_cron `solis-historical-backfill` (jobid 141, 02:45 UTC, punta a `solis-historical-backfill-cron-beta`), schedulato da Claudio con l'ok di Davide per questo compito.
+**In beta, aspetta:** #3191 (PR #3192, riga «Supera:» del ciclo di prova) e #3198 (PR #3199, skill revisione-promozione), tecniche da provare; S137 portata in Revisione dal ciclo di prova (aspetta Ascanio).
+**Aperto:** S264 Paddle (Ascanio: prezzi e prodotti caricati, mail, fattura → poi live e /promuovi); S314 (Ascanio: segno di `batteryPower`, poi issue per `SOLIS_BATTERY_POWER_SIGN`); S319/#3178 (banco Green Energie e impianto di prova, poi epica con sotto-issue `ciclo:super`); S309 la rimette Davide in Revisione; #3194 (S154) e #3193 (S316) `ready` in Pronte supervisionate, #3194 dopo #3197. Card ferme dall'audit invariate: S285, S295, S297, S306, S312, S287, S321.
+
+**Ha funzionato:** la skill miei-todo su 6 card, una alla volta, con i fatti verificati prima delle opzioni (merge-base per Paddle, testo del tutorial Solis cercato nei chunk di test-maestro, `decideAgreementRequirement` letto per la riaccettazione); il pezzo 1 del backfill eseguito in sola lettura prima di scrivere; primo scatto del backfill: 200, 411 buchi, 665 punti, 8 chiamate, 0 errori (letture 24 h da 130/134 a 213 per impianto).
+**Non ha funzionato → regola nuova:** (1) avevo messo `Dipende da: #3197` nella #3194, ma #3197 è di un'altra card (S321): i binari rifiutano una dipendenza fuori dalla card e S154 si sarebbe bloccata; tolta, l'ordine resta in prosa senza le parole «dipende da» (`leggiDipendenze` prende ogni riga che le contiene) — memoria `feedback_dipende_da_solo_dentro_la_card`. (2) `issue:precheck` vuole le caselle `- [ ]` sugli AC: AC senza casella = «senza AC verificabili».
+**Decisioni di Davide:** S264 «prima ascanio, aggiungi verifica di prezzi e prodotti caricati»; S154 titolare tra [ ], prima i testi, riaccettazione; S309 «Va bene, in Revisione»; S314 «Chiedo ad Ascanio» e backfill «Ora, con me presente»; S316 tutti i portali, stessa chiave/utenza, il tecnico lo valuta God, censisco e autorizzo; S319 ZCS, cloud FC10 + rilettura, soglie in %, «Anche a mano»; backfill: «Schedula e scatto ora».
+**Errori miei:** la riga `Dipende da` sbagliata (sopra), corretta con un commento sulla issue; script inline con apici annidati rotti in bash (da ora file nello scratchpad).
+**Numeri:** 6 card decise (2 in Pronte supervisionate, 3 nei To Do di Ascanio, 1 resta a Davide), 3 issue aggiornate (#3178, #3193, #3194), 1 cron schedulato + 1 scatto manuale; 35 issue `needs-decision` senza card; sonda finale backend 200 in 0,39 s.
+
+---
+
 ## 2026-10-31 — v2.87.0 in produzione: promozione manuale del lotto tooling (15 tecniche)
 
 **In produzione:** #2817, #2823, #2824, #2826, #2862, #2863, #2864, #2865, #2872, #2883, #2962, #2972, #2980, #2994, #3002 (PR #3196, v2.87.0, tutto tooling: nessuna novità visibile per gli utenti; nessuna migration, nessuna Edge Function). Prima: hotfix migration #3182 (PR #3183 beta, #3184 main), chiusi #2785/#2786.
