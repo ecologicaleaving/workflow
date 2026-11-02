@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-02 — v2.88.0 e v2.89.0 in produzione (promozione a lotti), In Test svuotata, chiave Sungrow in chiaro tolta
+
+**In produzione:** v2.88.0 (PR #3201: S283, S289, S294, S296, S305 + #2983, #2995, #3001) e v2.89.0 (PR #3202: S293, S211, S279, S290, S178 + ciclo di prova, multi-azienda #3086, Sungrow per riga #2932); 10 card in BackLog. Sul DB di produzione: migration #3193 (connessioni condivise) e #3177 (conferma rischi algoritmi), ops connessioni-condivise (6 autorizzazioni), migration #3172 (chiave Sungrow in chiaro → NULL, 4 cifrati intatti).
+**In beta, aspetta:** in Revisione, ad Ascanio: S285, S306, S297, S317, S320, S321, S316, S154, S277; S291 (Solis) aspetta un account SolisCloud vero. PR #3176 (#3172) in CI verso beta.
+**Aperto:** #3223 Solarman fermo dal 27/09 (appId «insufficient allowance»: serve il portale sviluppatori Solarman, Davide o Ascanio); S310/#3104 (6 impianti con potenza in W, To Do di Ascanio); S295 (richiesta nuova di Ascanio del 31/10: foto dalla fotocamera nelle note della dashboard, solo «anomalia» nella dashboard utente, da trasformare in issue); S326/S327/S325/S287 sezione sbagliata secondo l'audit (altro loop); coda Backfill Sungrow manuale morta; #3179/#3180 risultati delle query slot sulle issue.
+
+**Ha funzionato:** promozione a lotti a mano (cherry-pick -x dei commit originali, «beta meno le issue estranee» come insieme cumulativo, controllo di coerenza) dopo che approva-promote non reggeva il revert; due release in un giorno senza rollback. Ciclo di prova lanciato a mano: In Test da 9 card a 0. Loop supervisionato: 7 PR in beta (#3203, #3204/#3214, #3206, #3209, #3215, #3218, #3219). Query degli slot calcolate da Claudio via REST: D1 confermato (fase ZCS scrive `empty` per le altre marche), ZCS con righe fuori griglia e gemelle.
+**Non ha funzionato → regola nuova:** (1) `approva:card-in-produzione` non segue le sotto-issue: S289, S279, S178 spostate a mano (proposta di issue non ancora approvata). (2) `next/font/google` ha fatto cadere il build 4 volte → #3217, font dal repo (PR #3218). (3) Il ciclo di prova deduce un ruolo azienda/proprietario anche su pagine solo-God, e un AC tolto ma rimasto nel corpo (#3047) fa rientrare la card senza difetto: memoria `project_ripartenza_0111_sera`. (4) Un [Campo]/[Azione] senza voce nell'esito lo rende «incompleto»: va scritto `non-verificabile`. (5) Le resa OpenSolar (#3048) erano già applicate: la prova in sola lettura l'ha detto prima di scrivere.
+**Decisioni di Davide:** «sì a #2846 e #2905»; «vai con la risoluzione dei lotti in ciclo automatico fino a smaltimento completo»; «1- unico; 2 altro loop; 3 procedi con tutto»; «confermo tutto» (/promuovi #3201 e #3202); «fai il ciclo prova (e spegnere quello di sviluppo)»; «calcola tu le query rimaste e apri la issue Solarman»; #3047 AC tolti segnati superati; migration #3193, #3177, #3172 «Applicala ora».
+**Errori miei:** inventario della promozione incompleto al primo giro (il resoconto di approva elenca solo una parte: rifatto da git log); adattamenti persi nei cherry-pick (test Sungrow, guardia supervisionata, database.types) recuperati da beta; spec S285 sbagliati due volte (titolo e dialog); `git cherry-pick -q` non esiste.
+**Numeri:** 2 release in produzione, 13 PR in beta, 55 issue chiuse, 9 card portate in Revisione, 10 in BackLog, 3 migration + 1 ops applicate, 1 issue nuova di guasto (#3223); incidenti utente: 0 (Solarman scoperto oggi, fermo dal 27/09). Sonda backend: 200 in 0,31 s.
+
+---
+
 ## 2026-11-01 — I miei To Do di Davide (6 card decise), backfill Solis acceso su beta
 
 **In produzione:** niente di nuovo nel codice. Sul DB di produzione: il job pg_cron `solis-historical-backfill` (jobid 141, 02:45 UTC, punta a `solis-historical-backfill-cron-beta`), schedulato da Claudio con l'ok di Davide per questo compito.
