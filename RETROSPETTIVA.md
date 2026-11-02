@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-02 (sera) — Loop supervisionato: sei issue in beta, #3048 applicata in produzione (17 rese)
+
+**In produzione:** sul DB, 17 rese attese OpenSolar (#3048: 11 + 6 «sicuri», solo dove `expected_yield_kwh` era NULL), applicate con `run-migration.yml` dopo la prova. Nessun codice nuovo in `main`.
+**In beta, aspetta:** PR #3185/#3200/#3205 (#3048, S306), #3216 (#3197, S321), #3220 (#3194, S154), #3221 (#3207, S323), #3222 (#3213, S328), #3226 (#3211, S327), #3229 (#3212, S326). S154, S306, S321 sono già in Revisione; S323, S326, S327, S328 in In Test (prova dal vivo di Ascanio).
+**Aperto:** #3227 (energia sottostimata a passo misto) e #3228 (KPI «Giorno» a 1/12), mie, senza `ready`: l'ordine lo decide Davide. Quattro domande per Ascanio sul testo commerciale (PR #3220). Batteria sbagliata del Sommario Dashboard Utente (Solarman/Afore, ZCS trading, Huawei): issue proposta, non aperta.
+
+**Ha funzionato:** 7 PR mergiate in beta con CI verde sul commit finale e deploy di test verde; per ogni issue planner Opus, developer Sonnet, verificatore Opus; i bug veri li ha presi il verificatore (#3222: confronto per sottostringa che scartava comune e provincia).
+**Non ha funzionato → regola nuova:** (1) `deny` su `gh workflow`/`gh run rerun` in `.claude/settings.local.json` batte ogni `allow`: lancio negato quattro volte prima di leggere il file; si legge il file subito e si chiede a Davide di togliere la riga, non si aggira. (2) Test statici che scorrono l'albero vanno in timeout a freddo e passano al rilancio; E2E rossi per rete (Google Fonts) e `theme-panel-speed` instabile: rerun, ma si legge il log prima di dire «flaky».
+**Decisioni di Davide:** «Sì, applicalo tu» (#3048 in produzione); «sì, procedi con i sei» (impianti sicuri); tasto «Immissioni zero» resta sugli ZCS string collaudati; AC3 di #3212 = «uguale al Sunto a meno dell'ultima cifra»; due issue separate sui difetti noti; chip «kW adesso · kWh periodo» senza opacità.
+**Errori miei:** campo CSV sbagliato nella prima lettura (`kwh_anno` invece di `kwhAnno`, stampava `undefined`; i dati scritti non c'entravano); registrazione doppia di #3154 nel log (innocua); percorso `/c/...` non risolto da `tsx` su Windows.
+**Numeri:** 7 PR in beta, 6 issue di codice + #3048, 17 rese scritte, 1 giro di correzione del developer su #3220 (lint) e 1 su #3222 (bug del verificatore), 3 rerun di CI (tutti verdi), 2 issue nuove mie. Non misurato: tempo per issue.
+
+---
+
 ## 2026-11-02 — v2.88.0 e v2.89.0 in produzione (promozione a lotti), In Test svuotata, chiave Sungrow in chiaro tolta
 
 **In produzione:** v2.88.0 (PR #3201: S283, S289, S294, S296, S305 + #2983, #2995, #3001) e v2.89.0 (PR #3202: S293, S211, S279, S290, S178 + ciclo di prova, multi-azienda #3086, Sungrow per riga #2932); 10 card in BackLog. Sul DB di produzione: migration #3193 (connessioni condivise) e #3177 (conferma rischi algoritmi), ops connessioni-condivise (6 autorizzazioni), migration #3172 (chiave Sungrow in chiaro → NULL, 4 cifrati intatti).
