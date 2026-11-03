@@ -9,6 +9,38 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-03 — Promozioni v2.90.0 e v2.91.0 (6 card in produzione); «Cosa provare» tradotti per chi rivede
+
+**In produzione:**
+- v2.90.0 (PR #3257): S285 tutorial Sungrow, S286 loghi in Connessioni (GoodWe «in arrivo» senza #2888).
+- v2.91.0 (PR #3258): S297 letture Artuso (niente zeri finti, letture parziali che non cancellano le complete, ora del cambio d'ora, giorni falliti che si riprovano), S288 «In attesa della prima lettura» al posto di «Disconnessione logger», S329 «Collaudato · immissioni zero» dopo un autotest riuscito, S327 tendina Bozza/Collaudato.
+- Deploy e smoke verdi tutti e due; le 6 card sono in BackLog; issue chiuse con `deployed-prod`.
+**In beta, aspetta:** 14 card in Revisione, ora con «Cosa provare, in parole semplici»; S291 Solis in In Test (prova dal vivo, poi Ascanio).
+**Aperto:**
+- #3180: la parte Solis (34589ba8) arriva col lotto Solis.
+- In Approvate restano S309 e S311 (aspettano S291), S137 (aspetta S291 e GoodWe, #2887) e S162 (senza codice, da spostare a mano in BackLog).
+- Conteggi di copertura di S297 da rilanciare fra uno o due giorni, da confrontare con quelli del 01/11.
+
+**Ha funzionato:**
+- Promozione a lotti col metodo del 01/11 (cherry-pick -x, «beta meno le patch non promosse», commit di appoggio dichiarati nel corpo, vitest completo prima della PR): 6 conflitti risolti, 2 commit di appoggio, vitest 18 977 verdi, deno 132 verdi.
+- Il secondo lotto costruito sopra il primo: versione in sequenza (v2.91.0) e merge uno dopo l'altro, ognuno col suo deploy verde prima del successivo.
+- La traduzione dei «Cosa provare» ha fatto vedere che S297 e S327 erano approvabili subito: approvate in pochi minuti, sbloccando S288.
+
+**Non ha funzionato → regola nuova:**
+- I «Cosa provare» erano illeggibili per chi rivede (S297: sigle AC, file, guardia di rete). Regola: ogni passaggio da In Test a Revisione aggiunge un commento «Cosa provare, in parole semplici». È scritta nella skill `ciclo-prova` 1.4.0, in FLUSSO.md punto 4 e in memoria (`feedback_revisione_cosa_provare_in_parole_semplici`).
+- S327 si appoggiava su #3065, mai approvata: nasceva da S289, già chiusa in produzione. Card nuova S329 per #3065, approvata da Davide. Regola già nota: un'aggiunta dopo l'approvazione è una scheda nuova.
+- `versione:rilascio` calcola la versione da `origin/main`: con un lotto costruito sopra una promozione non ancora integrata dà la stessa versione e fallisce, quindi la versione si è alzata a mano. Nessuna issue aperta.
+
+**Decisioni di Davide:**
+- «scrivi nello step che sposta da test a revisione di tradurre tutte le volte».
+- «sblocchiamo anche 327»: card nuova per #3065, approvata da lui.
+- «lancia tu i merge e controlla, io sono qui»: i merge in main li ha lanciati Claudio, con Davide presente.
+
+**Errori miei:** nessuno di rilievo. Nel primo giro ho chiamato «promuovibili» solo le card già approvate, senza dire che S297 e S327 lo erano di fatto: la traduzione l'ha fatto emergere.
+**Numeri:** 2 promozioni, 6 card e 9 issue in produzione, 16 card tradotte, 1 card creata (S329), 0 incidenti.
+
+---
+
 ## 2026-11-03 — Ciclo di prova: 11 card provate, 8 in Revisione; fix #3244 e guardia #3247 (realtimeData) in beta
 
 **In produzione:** niente.
