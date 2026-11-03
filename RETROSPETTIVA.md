@@ -9,6 +9,54 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-03 — Loop supervisionato (13 PR in beta), giro delle issue tecniche, VPS: IPv6 era aperto
+
+**In produzione:** nessun codice. Sul DB di produzione, con un «Applicala ora» per ciascuna, le migration di #3030, #2889, #3210 e #3245. Sulla VPS: regole firewall IPv6 e porte host 3002/3003/3005 chiuse, poi il riavvio (kernel 6.8.0-147).
+**In beta, aspetta:**
+- Ascanio, In Test: S248 (#3231), S322 (#3232), S262 (#3236), S314 (#3239), S291 (#3242).
+- Davide: S287 (#3237), che aspetta lo script ops lanciato da lui.
+- Ascanio, I miei To Do: S325 (#3243, prova di blackout), S310, S319.
+- Issue tecniche: #3241 (cache Deno), #3250 (GoodWe nel controllo «connessione già in uso»), #3251 (#3246, test del colore instabile), #3253 (#3252, script firewall riallineato).
+**Aperto:**
+- #1393: report sul VPS pubblicato. Restano porte tunedin/normalize/StageConnect#49, token gh di root, backup fuori dalla VPS, password EMQX.
+- La prova IPv6 da una rete vera la fa Davide.
+- coturn da riavviare: il classificatore ha negato il comando.
+- Pulizia Solis #3238, entro il 06/11.
+
+**Ha funzionato:**
+- 13 PR mergiate in beta, tutte col lucchetto e `pr:sovrapposizione`.
+- Il probe temporaneo Solis ha trovato il segno della batteria e un difetto vero: lo sfasamento di 7 h nel backfill (#3238).
+- La coda `--binario tecnico` ha dato UNA sola issue prendibile su ~180. Le altre erano collegate a card o già risolte. 36 issue in produzione ma ancora aperte sono state chiuse.
+- La prova delle porte dall'esterno ha di nuovo trovato quello che `iptables -L` non mostra.
+**Non ha funzionato → regola nuova:**
+- (1) Le regole firewall del 26/07 valevano solo per IPv4. Con Docker senza ipv6, `[::]:porta` passa da `ip6tables INPUT`, che era ACCEPT. Ogni regola va scritta e provata anche in IPv6. Scritta in memoria `project_emqx_dashboard_exposed_1393`.
+- (2) Il riavvio della VPS è partito mentre Davide scriveva «aspetta, c'è del lavoro in corso». Inoltre ha fatto cadere l'E2E di #3251, che usa il DB di test sulla VPS. Prima di un riavvio si chiede se c'è lavoro in corso e si controllano gli E2E in volo. Scritta in memoria `feedback_riavvio_vps_lavoro_in_corso`.
+- (3) Le promozioni a mano (cherry-pick #3181, #3051, #2957) non scrivevano `Closes #N`, quindi le issue restavano aperte. Inoltre `merge-base --is-ancestor` non vede i cherry-pick: va cercata anche la riga «Issue promosse». Scritta in memoria `feedback_promozione_a_mano_closes`.
+- (4) Una AC bloccata non ferma il dev-loop: il punto incerto diventa una costante null più un probe, e lo sblocco lo fa Claudio. Scritta in memoria `feedback_intoppi_non_fermano_il_dev_loop`.
+**Decisioni di Davide:**
+- «se ci sono intoppi, gli agenti possono andare avanti e noi risolvere gli intoppi».
+- S322: «io farei un popup».
+- #3030: contratto di #3194 ampliato.
+- IPv6: «Chiudi subito, poi verifichiamo».
+- Porte Node: «se qualcosa è sicuro, chiudilo», il resto si segnala sulle repo.
+- Riavvio: «bisogna prima verificare che riavviando non si perda nessun dato».
+- La password EMQX non ora.
+**Errori miei:**
+- Ho registrato #3208 «mergiata» prima del merge. Ora la registrazione si fa solo dopo un merge riuscito.
+- Ho detto che S314 richiedeva /promuovi, mentre i cron chiamano `-beta`.
+- Ho lanciato un terzo dev-loop oltre il tetto di 2.
+- Riavvio: vedi la regola (2).
+**Numeri:**
+- 13 PR in beta.
+- 4 migration in produzione.
+- 36 issue chiuse.
+- 5 issue nuove: #3238, #3245, #3246, #3252, StageConnect#49.
+- 4 rerun di CI: 3 esm.sh e 1 per il riavvio.
+- 1 riavvio della VPS: 30 s per tornare su, 46/46 container ripartiti.
+- Non misurato: tempo per issue.
+
+---
+
 ## 2026-11-02 (sera) — Loop supervisionato: sei issue in beta, #3048 applicata in produzione (17 rese)
 
 **In produzione:** sul DB, 17 rese attese OpenSolar (#3048: 11 + 6 «sicuri», solo dove `expected_yield_kwh` era NULL), applicate con `run-migration.yml` dopo la prova. Nessun codice nuovo in `main`.
