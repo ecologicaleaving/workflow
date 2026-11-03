@@ -12,7 +12,7 @@ description: >
   controlli sul commit di merge. Una card alla volta, mai `main`, mai scritture
   su Supabase. Si usa in una sessione Claude Code dedicata con `/loop`, distinta
   da triage e sviluppo. Trigger: «/loop ciclo-prova», «giro di prova».
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Skill: ciclo-prova
@@ -235,6 +235,33 @@ esiste `--force`.
 
 Dopo `card:in-revisione`: `npm run -s deps:schede` (CLAUDE.md di MaestroWeb:
 fa comparire l'avviso «questa dipende da un'altra non ancora in produzione»).
+
+**Poi, ogni volta, traduci (dalla 1.4.0, decisione di Davide del 03/11/2026).**
+Il commento di `card:in-revisione` è per noi: sigle AC, nomi di file, motivi
+della guardia di rete. Chi rivede, Ascanio o Davide, non riesce a leggerlo (i
+«Cosa provare» di S297 erano illeggibili). Subito dopo, sulla stessa card,
+scrivi un secondo commento con
+`npm run -s triage:commenta -- --task <uuid> --come ciclo` e il testo da stdin.
+Il commento:
+
+- apre con la riga «Cosa provare, in parole semplici»;
+- dice **chi** prova (Ascanio, Davide, chi rivede), con **quale conto** e
+  **dove** (menu, pagina), e le avvertenze («su beta si scrive sui dati veri:
+  usa un impianto di prova»);
+- elenca, numerati, i soli punti rimasti da provare a mano: cosa fare e cosa
+  si deve vedere, con le parole dell'app (nomi dei tasti e delle sezioni);
+- non contiene sigle AC né P1, P2, nomi di file, tabelle, Edge Function,
+  «guardia di rete» o «slug»;
+- riassume in una riga ciò che il ciclo ha già verificato («Già verificato dal
+  ciclo sul codice: N controlli ok», con due parole su cosa);
+- se un punto «a mano» è in realtà un lavoro nostro già fatto (un test, uno
+  script lanciato), lo dice invece di chiederlo; se un punto è superato da una
+  decisione successiva, lo riscrive com'è oggi;
+- se non resta nulla da provare, lo scrive: «Niente da provare a mano, si può
+  approvare».
+
+Non inventare: quello che non sai (il testo esatto di un avviso, un dato) non
+lo descrivi. Lo stesso vale per una card che porti in Revisione a mano.
 
 ### 5. Esito KO: issue di fix, poi rientro
 

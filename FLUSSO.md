@@ -236,6 +236,14 @@ GitHub → Test. **Poi**, non prima:
 2. Solo dopo aver visto che funziona: card di Ascanio → `revisione`, con
    `review_notes` che dice cosa guardare e dove cliccare, in italiano
    comune — non un changelog.
+   **Ogni volta che una card passa da In Test a Revisione** (a mano o col
+   ciclo di prova) si scrive sulla card un commento che apre con «Cosa
+   provare, in parole semplici» e traduce i punti rimasti da provare: chi
+   prova, dove, cosa fare e cosa deve vedere. Niente sigle AC, nomi di file,
+   tabelle, Edge Function o «guardia di rete». I punti già fatti o già
+   verificati sul codice si dicono in una riga. Se non resta niente da
+   provare, lo si scrive. Decisione di Davide del 03/11/2026: i «Cosa
+   provare» di S297 erano illeggibili.
 3. `npm run deps:schede` — calcola gli avvisi di dipendenza tra schede non
    ancora in produzione. Va lanciato **in questo momento**, non prima: è un
    giro notturno più esecuzioni a mano, e dopo 72 ore l'avviso smette da sé
