@@ -9,6 +9,41 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-03 — Ciclo di prova: 9 card provate, 7 in Revisione; fix #3244 e guardia #3247 (realtimeData) in beta
+
+**In produzione:** niente.
+**In beta, aspetta:**
+- Ascanio, Revisione (provate dal ciclo): S328, S327, S323, S322, S262, S287, S314, S326. Più S291, spostata a mano da Davide su un ko storico già corretto.
+- Tecniche: #3249 (#3244, diagramma flussi a 1280 px), #3254 (#3247,  ammessa come lettura nella guardia;  rideployata dopo un refactor).
+**Aperto:**
+- #3248 (ciclo di prova: la PR di una sotto-issue oltre i 7 giorni non si trova): tiene S248 fuori dalla prova; Davide può spostarla a mano, la verifica a mano era tutta pass.
+- / bloccano ancora punti nelle pagine impianto: nessuna issue aperta.
+- Conto «proprietario» di prova con una membership d'azienda: i punti «solo cliente» non si provano.
+
+**Ha funzionato:**
+- Prova del codice (#2885) su 13 PR: un verificatore Opus per PR, poi tsc/lint/vitest/deno sul commit di merge. Un solo fail vero, e storico (#3056).
+- La regola «distingui un difetto da una prova malfatta»: 3 spec corretti invece di 3 ko falsi (S262 senza menu su , S326 misurata dopo un resize,  del conto misto).
+- #3247 provata dal vivo dopo il merge: i kW di adesso arrivano,  non è più fra le richieste fermate.
+
+**Non ha funzionato → regola nuova:**
+-  rifiutava S326:  in una sotto-issue di #3212, che per i binari è l'epica, non una parte. Regola già in memoria , estesa all'epica.
+- Esito  non toglie la card dalla coda di prova (S291 ripresa subito): un ko storico già corretto ferma il ciclo finché una persona non decide. Memoria .
+- Un mio commento sulla card = novità AC7: S248 è rientrata in coda per un giro inutile.
+
+**Decisioni di Davide:**
+- S323 #3207 AC1: deroga confermata, «Immissioni zero» resta sugli ZCS string.
+- #3247: «Sì, solo realtimeData»; ok al refactor di  e al rideploy su beta.
+- S291: «Revisione a mano», poi l'ha spostata lui.
+- Prove SSH sulla VPS: autorizzate; il classificatore ha negato la lettura del token, l'ha lanciata Davide con .
+
+**Errori miei:**
+- Spec scritti senza guardare la pagina ( senza  non ha menu;  del conto misto): due riesecuzioni sprecate.
+- Ho proposto il permesso del token GitHub senza provarlo: c'era già, e il token oggi legge le PR. Prima la prova, poi la diagnosi.
+
+**Numeri:** 9 card provate (7 in Revisione dal ciclo, 1 a mano, S248 incompleta), 13 verificatori Opus, 2 loop (#3244, #3247: 1 tentativo ciascuno), 2 PR in beta, 0 incidenti.
+
+---
+
 ## 2026-11-03 — Loop supervisionato (13 PR in beta), giro delle issue tecniche, VPS: IPv6 era aperto
 
 **In produzione:** nessun codice. Sul DB di produzione, con un «Applicala ora» per ciascuna, le migration di #3030, #2889, #3210 e #3245. Sulla VPS: regole firewall IPv6 e porte host 3002/3003/3005 chiuse, poi il riavvio (kernel 6.8.0-147).
