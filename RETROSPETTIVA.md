@@ -9,6 +9,27 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-04 — Backfill Solis: da «0 punti scritti» alla causa vera (fuso 8 dei punti), S291 in Revisione
+
+**In produzione:** nessun codice mio. Sul DB di produzione, con l'autorizzazione di Davide scritta ogni volta: tre rilanci una tantum del backfill Solis su `-beta` (60 h, 100 h, 24 h) e le letture in sola lettura delle risposte.
+**In beta, aspetta:** #3255 (contatori degli scarti, PR #3256), #3259 (accetta il fuso 8 dei punti, PR #3260), #3263 (senza fuso della stazione il punto si scarta, PR #3264). Con #3238 e #3261 formano le correzioni della card S291, ora in Revisione (Ascanio deve provare sul suo impianto Solis, poi Approva, poi `/promuovi` di Davide).
+**Aperto:** nessuna issue mia. Le 22 issue «da chiudere dopo verifica» del binario tecnico sono tutte solo in beta: si chiudono con la promozione, non prima. #1393 (hardening VPS) è l'unica candidata del binario tecnico e serve Davide.
+
+**Ha funzionato:**
+- I contatori degli scarti per motivo nel riepilogo del backfill (#3255) hanno trovato la causa al primo rilancio: 1524 punti letti, 1524 scartati per `timeZoneDiverso`. La mappa `timeZoneVisti` (#3259) l'ha poi provata: `{"8": 1459}`. Tre PR, tre verificatori Opus distinti, nessun fallimento di AC.
+- Il rilancio a 60 ore è passato sotto i 120 s di `pg_net`; il 168 h era andato in timeout.
+- L'aggregato orario dei giorni 30/10–01/11, che pensavo sporco, confrontato con la raw (72 ore per impianto, tolleranza 10%) era coerente: ricalcolo inutile.
+**Non ha funzionato → regola nuova:**
+- (1) Il controllo di coerenza sul `timeStr` era il mio sospetto principale e non c'entrava nulla. Un'ipotesi dal solo codice, senza un dato reale, va dichiarata «sospetto» e il primo passo è strumentare, non correggere: è così che si è trovata la causa in un giro. Scritta in memoria `feedback_strumentare_prima_di_correggere`.
+- (2) Un filtro «di protezione» sul campo di un vendor (qui `timeZone` del punto) che nessuno ha mai visto sui dati reali scarta tutto. Prima di mettere un confronto su un campo vendor, si registra il valore visto. Stessa memoria.
+- (3) Il classificatore blocca ogni lancio su produzione con un semplice «procedi»: serve la frase che nomina l'azione («ti autorizzo a lanciare il backfill Solis a 24 ore»). Già in memoria `feedback_deny_batte_allow_permessi`, confermato tre volte oggi.
+**Decisioni di Davide:** «ti autorizzo a lanciare il backfill Solis a 168 ore» (02/11), «Si autorizza» per le 60 ore, «Sì e poi il sistema quello che devi sistemare, vediamo di chiudere la faccenda», «chiudi le issue e chiudi la sessione».
+**Errori miei:**
+- Ho proposto 48 ore senza controllare che la finestra va da adesso all'indietro: non arrivava al 01/11 alle 09:00 UTC. Corretto a 60 h prima di lanciare.
+- Ho promesso di chiudere 22 issue «risolte»: erano solo in beta, e in beta restano aperte fino alla promozione. Non ne ho chiusa nessuna; l'elenco del binario tecnico dice «dopo verifica», non «già in produzione».
+- Un controllo di attesa con `until ! grep -q pending` è uscito troppo presto: la CI era ancora in corso.
+**Numeri:** 3 PR mie in beta (#3256, #3260, #3264), 3 issue, 3 verificatori, 3 rilanci del backfill, 327 + 5 + 12 punti scritti, 0 incidenti.
+
 ## 2026-11-03 — Promozioni v2.90.0 e v2.91.0 (6 card in produzione); «Cosa provare» tradotti per chi rivede
 
 **In produzione:**
