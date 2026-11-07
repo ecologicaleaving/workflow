@@ -9,6 +9,22 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-07 — Mac nel ciclo di prova: 9 card in Revisione, 20 tecniche qa-tech-approved, promozione selettiva bloccata
+
+**In produzione:** nessuna.
+**In beta, aspetta:** S336, S339, S347, S350, S355, S356, S358 in Revisione (Ascanio, «Approva»); S341 approvata. 20 tecniche con qa-tech-approved (#2400 #2769 #2878 #2881 #2893 #2920 #2941 #2953 #2959 #3069 #3140 #3186 #3198 #3217 #3235 #3246 #3247 #3265 #3271 #3276). Promozione: decisione di Davide.
+**Aperto:** S344 incompleta (ciclo: `prova:codice` dà deno «non-applicabile» a una Edge Function senza test, `ciclo-prova-codice` lo vuole eseguito: serve issue); S342 → #3362; S248 ferma dal 03/11; 10 tecniche da decidere (#3139 #3154 #3191 #2835 #3171 #3172 #3252 #2855 #3096 #2876); gruppi GoodWe S200, S91, #3193, #3210, Stripe #2784-2789.
+
+**Ha funzionato:** ciclo di prova su questo Mac (pc-config fatto): 12 giri, 9 card in Revisione, 1 rientro con fix (S358 → #3371, poi in Revisione al secondo giro), 1 incompleta. 5 verificatori Opus in parallelo su 27 PR tecniche: 20 approvate, 7 con un AC non pass segnalate.
+**Non ha funzionato → regola nuova:**
+- deno assente sul Mac bloccava ogni PR con Edge Function; Homebrew su macOS 12 chiede Xcode → binario ufficiale da GitHub release (memoria reference_mac_deno_binario).
+- Un commento esplicativo di Claudio su una card in In Test dopo la prova conta come «novità» e la riaccoda al giro dopo (S344): dopo il commento si rilancia lo scrittore (`card:prova-incompleta`) o si scrive tutto nel commento dello scrittore (memoria feedback_commento_dopo_prova_riaccoda).
+- Promozione selettiva: 451 commit beta→main, i gruppi già promossi in parte nei lotti 01/11 e 03/11 vanno in conflitto, e GoodWe/#3193/#3210 non approvati tengono fuori la catena Solis e i permessi: tsc rosso (16 errori). Proposta: promozione completa di beta a mano.
+- vitest con 5 verificatori in parallelo dà timeout spuri (S356): una verifica pesante alla volta, o rilancio prima di dare ko.
+**Decisioni di Davide:** «vai con 1, installa deno, poi fai i test e le tecniche»; «spegni il ciclo» (prova: false).
+**Errori miei:** nel primo ciclo ho letto la coda con `2>&1` dentro un parser JSON e ho preso il lock senza vederlo (rilasciato subito); commento su S344 che l'ha riaccodata.
+**Numeri:** 22 PR mergiate in beta oggi (da altre sessioni), 0 in prod, 12 giri del ciclo, 33 verificatori Opus, 0 incidenti.
+
 ## 2026-11-04 — Backfill Solis: da «0 punti scritti» alla causa vera (fuso 8 dei punti), S291 in Revisione
 
 **In produzione:** nessun codice mio. Sul DB di produzione, con l'autorizzazione di Davide scritta ogni volta: tre rilanci una tantum del backfill Solis su `-beta` (60 h, 100 h, 24 h) e le letture in sola lettura delle risposte.
