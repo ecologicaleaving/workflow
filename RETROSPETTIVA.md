@@ -9,6 +9,21 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-08 — Promozione completa di beta (v2.92.0) e fix del ripiego ZCS (v2.92.1)
+
+**In produzione:** v2.92.0 (PR #3388, promozione COMPLETA di beta, 294 issue: 33 card approvate, 25 tecniche qa-tech-approved, il resto senza approvazione per decisione di Davide) e v2.92.1 (PR #3396, #3390: ripiego realtime ZCS ordinato, rado, esito in `devices.metadata.zcs_realtime_fallback_last`). 36 card portate in BackLog.
+**In beta, aspetta:** nulla oltre main (beta = main salvo versione). Card in In Test per Ascanio: S342 (#3362), S248 (#3384), S363 (#3359) e le altre già lì.
+**Aperto:** S316 ricollegare account ZCS/Solis (persona con credenziali); S354 Forza Carica; #3384 accendere il flag 0x9044 su un impianto; cron Solis agli slug di produzione (S291); Malatesta logger muto dal 13/10 (portale da guardare); 11 ZCS con logger mai parlato; S337 14 copie vuote da eliminare (Davide); S310 in BackLog (Davide); S319 prova peak shaving con carico vero (Ascanio); mezzo difetto di #3139 da aprire; disco VPS all'81%.
+
+**Ha funzionato:** audit delle 22 migration non registrate con un agente (tutte applicate e rieseguibili, 3 finestre transitorie), poi Davide le ha registrate a mano: il deploy le ha saltate. Promozione completa con albero = beta (merge-commit costruito con `commit-tree`), CI di beta sullo stesso albero come prova. Loop supervisionati: 5 issue al primo tentativo (#3359, #3362, #3384, #3390, più PR #3382/#3385/#3386/#3394). 11 tecniche verificate da 3 verificatori in parallelo: 7 approvate. Diagnosi del ripiego ZCS in ~8 minuti dai dati (prese Modbus, ordine della scansione).
+**Non ha funzionato → regola nuova:**
+- La selettiva non regge più quando il lavoro approvato sta sopra issue non approvate (879 commit, 79 esclusi per conflitto): via d'uscita la promozione completa decisa da Davide, card per card sul rischio (memoria project_promozione_completa_0811).
+- Un ripiego con tetto per giro va ordinato PRIMA del tetto e deve lasciare l'esito in una tabella: con pg_net a 5 s il corpo della risposta si perde, e un tetto consumato da device morti sembra «non scrive niente» (#3390; memoria feedback_tetto_per_giro_ordinato).
+- Un «flusso ok» mostrato dal live non prova che il dato sia fresco: Malatesta mostrava una fotografia del 13/10 (prima di #3349 il flusso non guardava `lastUpdate`).
+**Decisioni di Davide:** «A: completa, chiudendo il buco»; S316 entra con controllo subito dopo; S248 «interruttore prima»; S342 «faccio #3362 prima»; #2855 «entra con S154»; S358/S355 con la completa; S310 la sposta lui in BackLog; S319 prova con carico vero; S337 le elimina lui dal tasto; «quando è tutto a posto, promuovi»; «promuovi» per #3390.
+**Errori miei:** ho promesso il controllo S316 («ricollego io») senza avere le credenziali: va fatto da chi le ha. Nel primo riepilogo ho dato le migration come 23 (una era già registrata).
+**Numeri:** 2 promozioni in prod (v2.92.0, v2.92.1), 9 PR mergiate (7 beta, 2 main), 9 issue aperte, 5 loop (5/5 al primo tentativo), 9 agenti di verifica/diagnosi, 0 incidenti di produzione (1 difetto trovato e corretto in giornata).
+
 ## 2026-11-07 — Mac nel ciclo di prova: 9 card in Revisione, 20 tecniche qa-tech-approved, promozione selettiva bloccata
 
 **In produzione:** nessuna.
