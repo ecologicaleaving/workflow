@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-09 — Finn web dalla v1.6.1 e predisposizione Cloudflare
+
+**In produzione:** nessun nuovo rilascio Finn in questa sessione.
+**In beta, aspetta:** nessun merge in `test`; PR draft [finn #82](https://github.com/ecologicaleaving/finn/pull/82), commit `db42319`, verso `test`.
+**Aperto:** [finn #81](https://github.com/ecologicaleaving/finn/issues/81): account Cloudflare da autorizzare, poi deploy e prove autenticate tra sito e app.
+
+**Ha funzionato:** stessa base dell'app non pubblicata `release/v1.6.1` (`586eace`), stessi repository e Supabase. 22 test nativi mirati e 1 Chrome IndexedDB passati (0 saltati), build web release e Wrangler dry-run riusciti. Verificatore distinto: 3 smoke test nativi e 1 Chrome passati. Controllati 222 riferimenti offline, nessun file mancante.
+**Non ha funzionato → regola nuova:** il test Flutter/Chrome non arrivava al corpo del test; separare lo store browser puro ha permesso la prova reale con `dart test`, che ha trovato la perdita dei generici nelle liste riletta da IndexedDB. Cloudflare consuma `_headers`: escluderlo dal manifest offline, altrimenti il preload completo richiede una risorsa non servita. Evidenze e procedure sono in `finn/docs/WEB_VERIFICATION.md` e `finn/docs/CLOUDFLARE.md` nel branch della PR.
+**Decisioni di Davide:** prendere l'ultima versione dell'app «non ancora fuori»; destinazione `finn.8020solutions.org` su Cloudflare. Dopo i tentativi di autorizzazione non completati: «ora devo andare, vai avanti col codice e dammi le caratteristiche del dns». Nessun ulteriore tentativo di login dopo questa istruzione.
+**Errori miei:** il primo bootstrap usava file `.g.dart` locali non aggiornati alla 1.6.1; rigenerati con Flutter 3.35.7 prima dei test finali. La suite Chrome non eseguita non è stata conteggiata come verde. Il fallback con credenziali Cloudflare in file è stato rifiutato dal controllo automatico; tentato il flusso cifrato nel portachiavi, senza completare l'autorizzazione.
+**Numeri:** 1 issue Finn aperta, 1 PR Finn draft, 0 merge di produzione, 23 test locali finali passati e 4 verifiche indipendenti passate. Login reale, CRUD incrociato, viewer PDF e ricaricamento completo offline restano da verificare.
+
+---
+
 ## 2026-11-08 — Promozione completa di beta (v2.92.0) e fix del ripiego ZCS (v2.92.1)
 
 **In produzione:** v2.92.0 (PR #3388, promozione COMPLETA di beta, 294 issue: 33 card approvate, 25 tecniche qa-tech-approved, il resto senza approvazione per decisione di Davide) e v2.92.1 (PR #3396, #3390: ripiego realtime ZCS ordinato, rado, esito in `devices.metadata.zcs_realtime_fallback_last`). 36 card portate in BackLog.
