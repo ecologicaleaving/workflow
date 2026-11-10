@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-10 — Finn: titoli corretti nelle spese mensili per categoria
+
+**In produzione:** fix web [finn #83](https://github.com/ecologicaleaving/finn/issues/83), commit `41f8ff4`, su https://finn.8020solutions.org. Il titolo mostra note, negozio storico, categoria o «Spesa»; dati e importi invariati.
+**In beta, aspetta:** [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) verso `test`, ancora draft per le prove utente; nessun merge master o nuovo APK di produzione.
+**Aperto:** conferma visiva dell'utente sui propri dati e altre prove autenticate della #81.
+
+**Ha funzionato:** 11 widget test passati (0 saltati), di cui 5 nuovi con JSON salvato e apertura reale di categoria/mese; verificati anche filtri e navigazione alla spesa. Build web release riuscita. Nuova release `/var/www/finn/releases/20261110-41f8ff4`, tutti i 222 hash offline corrispondenti e cambio atomico del symlink. JavaScript pubblico uguale alla build; vecchio placeholder assente, HTTP 200.
+**Non ha funzionato → regola nuova:** la lista continuava a usare solo `merchant`, anche dopo la rimozione di «Negozio» dal modulo. Nelle viste di riepilogo usare i testi effettivamente raccolti dal form, con fallback per righe storiche o vuote; testare il flusso della categoria, non soltanto una funzione di etichettatura.
+**Decisioni di Davide:** segnalazione «le vedo tutte come spesa senza nome», poi richiesta di riprendere la lavorazione. Correzione sul medesimo branch della versione web, senza migrazioni.
+**Errori miei:** nessun nuovo errore operativo rilevato; il difetto era già nel widget condiviso della base app.
+**Numeri:** 1 fix web pubblicato, 0 merge di produzione, 11 test passati, 222 risorse validate.
+
+---
+
 ## 2026-11-09 — Finn web dalla v1.6.1 e predisposizione Cloudflare
 
 **In produzione:** nuovo sito https://finn.8020solutions.org, release statica dell'app v1.6.1 (`db42319`) su VPS/Nginx con DNS Cloudflare. Nessun merge master o rilascio mobile.
