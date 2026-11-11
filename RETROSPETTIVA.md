@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-11 — Finn: pagante nel dettaglio mensile delle categorie
+
+**In produzione:** [Finn #85](https://github.com/ecologicaleaving/finn/issues/85), sorgente `0623e8c`, su https://finn.8020solutions.org. Le righe di gruppo riportano «Pagato da: Nome» sotto la data; quelle personali restano senza il pagante. Nessuna nuova richiesta backend o modifica ai dati.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) aggiornata e ancora draft. CI del nuovo head `939442a` in corso; CI precedente `f10867a` web e APK completata con successo.
+**Aperto:** conferma visiva della nuova riga e altre prove autenticate della #81. La #84 è confermata da Davide: «ora il gruppo c'è, vedo il nome delle spese».
+
+**Ha funzionato:** patch limitata al widget mensile e ai test. 18 widget test passati anche nella verifica indipendente, 0 saltati; 7 casi nuovi per pagante diverso dall'autore, fallback, righe miste e larghezza 320 px. Analisi mirata exit 0, 0 errori/warning e due informazioni preesistenti. Build release exit 0 in 149,5 s; 222 risorse validate, rilascio atomico e JavaScript pubblico uguale alla build (`d360ccb86e489d8a68ef617dabf32c8aae456fbb0db4011a0610d010fcf6389c`), HTTPS 200 e Cloudflare BYPASS. Release `1937b99` conservata.
+**Non ha funzionato → regola nuova:** —
+**Decisioni di Davide:** indicare anche chi ha fatto la spesa nei dettagli delle categorie delle spese di gruppo. Usata la persona che ha pagato; il creatore è fallback solo se il pagante manca o coincide, per evitare attribuzioni errate.
+**Errori miei:** nessun nuovo errore operativo rilevato. Nessuna nuova automazione del browser avviata dopo il precedente blocco sul controllo dell'URL.
+**Numeri:** 1 funzione web pubblicata, 18 test passati, 0 saltati, 222 risorse validate, 0 merge di produzione e 0 nuovi APK di produzione. Nessuna card Ascanio collegata.
+
+---
+
 ## 2026-11-11 — Finn: gruppo recuperato dopo il refresh del sito
 
 **In produzione:** correzione web [Finn #84](https://github.com/ecologicaleaving/finn/issues/84), sorgente `1937b99`, su https://finn.8020solutions.org. Caricamento automatico dopo il profilo, errori distinti dall'assenza e Riprova; nessuna scrittura a membership o spese.
