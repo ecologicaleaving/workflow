@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-11 — Finn: gruppo recuperato dopo il refresh del sito
+
+**In produzione:** correzione web [Finn #84](https://github.com/ecologicaleaving/finn/issues/84), sorgente `1937b99`, su https://finn.8020solutions.org. Caricamento automatico dopo il profilo, errori distinti dall'assenza e Riprova; nessuna scrittura a membership o spese.
+**In beta, aspetta:** nessun merge `test`/`master`. [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) ancora draft; CI avviata sul commit documentale `f10867a`, conferma dal browser di Davide ancora richiesta.
+**Aperto:** prova autenticata della #84 e confronto CRUD/app-web della #81. Davide conferma che sul telefono, con lo stesso account, il gruppo è presente.
+
+**Ha funzionato:** planner e verificatore hanno confermato la sequenza sessione pronta → profilo pendente → provider del gruppo ricreato senza nuova lettura. Verifica indipendente: 43 test passati, 0 saltati, compresi i titoli mensili #83 e la pulizia al logout. Analisi mirata: 0 errori, 6 warning preesistenti. Build già conclusa durante l'interruzione: verificati 222 hash e sorgenti applicativi invariati dopo la compilazione; evitata una ricompilazione inutile. Attivazione atomica di `/var/www/finn/releases/20261111-1937b99`, vecchia release conservata; HTTPS 200 e JavaScript pubblico uguale alla build, Cloudflare BYPASS.
+**Non ha funzionato → regola nuova:** uno stato iniziale o un errore di lettura non deve diventare «nessun gruppo»; la lettura va legata all'utente disponibile, con retry e isolamento delle risposte tardive. Regola applicata in `group_provider.dart`, test di caricamento/cache e `docs/WEB_VERIFICATION.md`. Il parser Postgrest 2.6.0 richiede `response.request` anche nelle fixture HTTP.
+**Decisioni di Davide:** «adesso non mi vede parte di nessun gruppo»; alla verifica dello stesso account sul telefono: «Sì, nell’app c’è ancora»; riprendere e completare il lavoro.
+**Errori miei:** prima fixture HTTP incompleta, corretta prima della verifica finale. La verifica grafica dell'11 novembre è stata fermata dallo strumento perché non riusciva a identificare con affidabilità l'URL di Chrome; l'accesso al suo account non è dichiarato verificato. Le interruzioni per limite d'uso degli agenti sono registrate senza attribuire loro test non conclusi.
+**Numeri:** 1 fix web pubblicato, 0 merge di produzione, 0 nuovi APK di produzione, 43 test passati, 0 saltati, 222 risorse validate. CI web e due build APK ancora in corso alla chiusura; nessuna card Ascanio collegata in Finn.
+
+---
+
 ## 2026-11-10 — Finn: titoli corretti nelle spese mensili per categoria
 
 **In produzione:** fix web [finn #83](https://github.com/ecologicaleaving/finn/issues/83), commit `41f8ff4`, su https://finn.8020solutions.org. Il titolo mostra note, negozio storico, categoria o «Spesa»; dati e importi invariati.
