@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-12 — Finn: Report mensile, analisi annuale e pagamenti dei componenti
+
+**In produzione:** [Finn #86](https://github.com/ecologicaleaving/finn/issues/86) e [#87](https://github.com/ecologicaleaving/finn/issues/87) sul sito https://finn.8020solutions.org/#/report. Report mensile con categorie, andamento e insight; vista annuale con dodici mesi, confronto precedente e tabella di quanto ha pagato ciascuno. Release corrente `982c1d0`, precedente `df9eccd` conservata; nessuna scrittura ai dati.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `b4f1582`; sul nuovo head documentale `1db4211` in corso.
+**Aperto:** conferma del Report sul conto reale di Davide, oltre alle prove CRUD, PDF e offline della #81. Ripartenza ed evidenze aggiornate in `PROJECT.md` e `docs/WEB_VERIFICATION.md` nel worktree Finn web; nessuna directory di memoria separata fornita.
+
+**Ha funzionato:** #86 verificata con 56 test indipendenti (21 Report e 35 regressioni), #87 con 35 test indipendenti, tutti passati e nessuno saltato; i due conteggi non sono suite disgiunte. Verificati periodi annuali/bisestili, paginazione completa, scope, omonimi, membri a zero e layout 390/1440 px. Analisi Report annuale exit 0, 0 errori/warning, una informazione di stile; test exit 0. Build #86 in 134,5 s e #87 in 214,4 s, entrambe exit 0. Prima di ogni attivazione atomica: 222 risorse validate; HTTPS 200, Cloudflare BYPASS e JS pubblico uguale alla build. SHA corrente `1e02d8567191ab6dfb3e60de3cd92a004764f4db25492abe30b74906c92a5e0e`.
+**Non ha funzionato → regola nuova:** analisi umana multi-file bloccata oltre il timeout; non conteggiata come riuscita. Il controllo successivo a percorso singolo e formato machine è terminato con exit 0, registrato nei log e in `docs/WEB_VERIFICATION.md`. Nessuna verifica autenticata inventata.
+**Decisioni di Davide:** aggiungere Report con grafici, poi analisi dell'anno e divisione tra componenti. Chiarimento testuale: «Quanto ha pagato ciascuno, con importi e percentuali». Nessun calcolo di quote teoriche o conguagli. Il pagante nelle categorie (#85) è confermato: «ok, ottimo!».
+**Errori miei:** tre fixture widget iniziali corrette prima dei 35 test finali; nessun errore applicativo residuo rilevato. Nessun nuovo tentativo di automazione browser dopo il precedente blocco dello strumento.
+**Numeri:** 2 funzionalità web pubblicate, 0 merge di produzione, 0 nuovi APK di produzione, 222 risorse per rilascio. Nessuna card Ascanio collegata in Finn; worktree e branch conservati per le prove della PR draft.
+
+---
+
 ## 2026-11-11 — Finn: pagante nel dettaglio mensile delle categorie
 
 **In produzione:** [Finn #85](https://github.com/ecologicaleaving/finn/issues/85), sorgente `0623e8c`, su https://finn.8020solutions.org. Le righe di gruppo riportano «Pagato da: Nome» sotto la data; quelle personali restano senza il pagante. Nessuna nuova richiesta backend o modifica ai dati.
