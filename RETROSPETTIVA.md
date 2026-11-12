@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-12 — Finn: bilancio del Report con entrate e rimborsi
+
+**In produzione:** [Finn #88](https://github.com/ecologicaleaving/finn/issues/88), sorgente `4c86722`, su https://finn.8020solutions.org/#/report. Bilancio mese/anno con entrate, rimborsi ricevuti e saldo; dettaglio cercabile, filtri, paginazione completa, categorie/persone e grafico a due serie. Aiuti statali tramite i movimenti Entrata di gruppo registrati; fonti previste personali escluse. Release precedente `982c1d0` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`, [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `1db4211`; nuova head documentale `3dc4774` in corso (web 43217604762, APK 43217604893 e 43217592996).
+**Aperto:** prova del nuovo bilancio con i dati reali di Davide; CRUD/PDF/offline della #81 ancora da completare. Report mensile/annuale confermato: «ottimo !!!». Ripartenza e prove in `PROJECT.md` e `docs/WEB_VERIFICATION.md` del worktree Finn web; nessuna memoria esterna indicata.
+
+**Ha funzionato:** 50 test Report passati, seguiti da 52 test indipendenti (50 Report e 2 refresh), 0 saltati/failure, exit 0. Tutti gli 11 AC passano su codice/widget, incluse 45 righe filtrate/paginate e layout 390/1440. Analisi dei quattro sorgenti exit 0 senza diagnostiche; test exit 0, 0 errori/warning e 2 INFO di stile. Build web exit 0 in 231,0 s; 222 risorse e quattro sorgenti invariati verificati, archivio 17.211.633 byte, attivazione atomica. HTTPS pubblico 200 e Cloudflare BYPASS; JS pubblico uguale al locale (`0e017e5006f892ceae2d65322e813634dea59da74d44183d7f8cc20e959aed7b`). Verificatore: quattro sorgenti nelle patch remote PR82 uguali al codice testato.
+**Non ha funzionato → regola nuova:** analisi della cartella bloccata e interrotta con timeout 124, seguita da singoli file tutti conclusi; conservare esiti separati e non contare un timeout come verde. I timestamp rimborso sono istanti: conversione locale anche a mezzanotte UTC e query indipendente dalla data della spesa. Entrate separate e stato rimborso non sono collegati: nessuna deduplica per nome/importo, limite spiegato nel Report. Regole registrate in `docs/WEB_VERIFICATION.md`.
+**Decisioni di Davide:** includere nel bilancio entrate, rimborsi e aiuti statali, ad esempio assegni familiari ricevuti da Giovanna, e vedere il dettaglio delle entrate; poi «riprendi». Il chiarimento su come siano registrati gli assegni non è arrivato: implementati i movimenti effettivi del gruppo, senza convertire previsioni o dati personali.
+**Errori miei:** una nuova asserzione GoRouter sull'URI non rappresentava il push; corretta verificando la schermata aperta, fonte app invariata. L'output della build è arrivato solo al termine e inizialmente l'ho interpretato come blocco prima della compilazione; non ho interrotto il processo e il terminale ha confermato build riuscita. Interruzione degli agenti per limite d'uso ripresa senza inventare esiti. Nessuna nuova automazione browser tentata.
+**Numeri:** 1 estensione web pubblicata, 52 test indipendenti passati, 222 risorse validate; 0 merge di produzione, 0 nuovi APK di produzione, 0 scritture dati/migrazioni/dipendenze/permessi modificati. Nessuna card Ascanio collegata; worktree conservato per la PR draft.
+
+---
+
 ## 2026-11-12 — Finn: Report mensile, analisi annuale e pagamenti dei componenti
 
 **In produzione:** [Finn #86](https://github.com/ecologicaleaving/finn/issues/86) e [#87](https://github.com/ecologicaleaving/finn/issues/87) sul sito https://finn.8020solutions.org/#/report. Report mensile con categorie, andamento e insight; vista annuale con dodici mesi, confronto precedente e tabella di quanto ha pagato ciascuno. Release corrente `982c1d0`, precedente `df9eccd` conservata; nessuna scrittura ai dati.
