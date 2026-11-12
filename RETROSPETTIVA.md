@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-12 — Finn: equilibrio 50/50 per categoria e totale
+
+**In produzione:** [Finn #89](https://github.com/ecologicaleaving/finn/issues/89), sorgente `95d1932`, su https://finn.8020solutions.org/#/report. Primo riquadro con netto, quota e scostamento di due persone per ogni categoria e totale; compensazione del solo periodo. Attribuzioni locali esplicite per i rimborsi, blocco delle conclusioni incomplete e categorie opposte visibili anche quando il totale pareggia. Release `4c86722` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `3dc4774`; nuova head documentale `d8e305a` in corso (web 43286341519, APK 43286341672 e 43286319558).
+**Aperto:** prova del confronto con i dati reali dell'utente e prove autenticate della #81. Ripartenza e prove in `PROJECT.md` e `docs/WEB_VERIFICATION.md`; nessuna directory di memoria separata indicata.
+
+**Ha funzionato:** 68 test Report passati, seguiti da 70 indipendenti (68 Report e 2 refresh), 0 saltati/failure, exit 0. Tutti i 12 AC passano su codice/widget; 343 combinazioni firmate per resti e inversione della coppia, layout 390/1440 e integrazione Mese/Anno. Sei analisi singole exit 0, 0 errori/warning, tre INFO di stile. Build web exit 0 in 151,0 s; 222 risorse e tre sorgenti invariati verificati, archivio 17.218.199 byte. Rilascio atomico, HTTPS pubblico 200, no-store/Cloudflare BYPASS e JS pubblico uguale alla build (`f756e86f70b7c54f065f523eef13b21c05c53053d36ca667a3e18fc39697989f`). Le tre patch applicative remote PR82 coincidono col sorgente testato.
+**Non ha funzionato → regola nuova:** primo giro 67 passati/1 fallito: ExpansionTile con ValueKey leggeva l'offset PageStorage come booleano nel cambio Mese/Anno. Corretto con chiavi PageStorage distinte per tipo/scope/snapshot e provato nell'integrazione reale; non declassato a fixture. La sola attribuzione locale non certifica un rimborso: paid_by è il pagante originale, quindi serve conferma del destinatario; scope e fingerprint impediscono riusi fuori contesto. Regole in `docs/WEB_VERIFICATION.md` e test della #89.
+**Decisioni di Davide:** verificare se il carico suo e di Giovanna è bilanciato; 50% ciascuno dopo entrate/rimborsi ricevuti, per tutte le categorie e per il totale. Esempio confermato: 100 € pagati ciascuno, Giovanna riceve 40 € → netti 100/60, quote 80/80, scostamenti +20/−20, compensazione 20 da Giovanna all'altra persona. Quote budget e percentuali personalizzate escluse dal nuovo criterio.
+**Errori miei:** il conflitto PageStorage della nuova sezione è stato trovato e corretto prima della pubblicazione. Nessun nuovo errore operativo nel rilascio; output della build atteso fino al terminale, senza interrompere un processo solo perché non aveva ancora stampato. Nessuna automazione browser avviata.
+**Numeri:** 1 estensione web pubblicata, 70 test indipendenti passati, 222 risorse validate; 0 merge di produzione, 0 nuovi APK di produzione, 0 nuove query/scritture/migrazioni/dipendenze/permessi. Nessuna card Ascanio collegata; worktree conservato per la PR draft.
+
+---
+
 ## 2026-11-12 — Finn: bilancio del Report con entrate e rimborsi
 
 **In produzione:** [Finn #88](https://github.com/ecologicaleaving/finn/issues/88), sorgente `4c86722`, su https://finn.8020solutions.org/#/report. Bilancio mese/anno con entrate, rimborsi ricevuti e saldo; dettaglio cercabile, filtri, paginazione completa, categorie/persone e grafico a due serie. Aiuti statali tramite i movimenti Entrata di gruppo registrati; fonti previste personali escluse. Release precedente `982c1d0` conservata.
