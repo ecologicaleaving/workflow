@@ -9,6 +9,20 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-14 — Finn: Report grafico e risultato leggibile a colpo d'occhio
+
+**In produzione:** [Finn #90](https://github.com/ecologicaleaving/finn/issues/90), sorgente `eeecc74`, su https://finn.8020solutions.org/#/report. Importo e direzione della compensazione in primo piano, confronto netto/quota, categorie ordinate e dettagli progressivi; 50/50 e soli movimenti di gruppo invariati. Attivata `/var/www/finn/releases/20261114-eeecc74`, precedente `20261112-95d1932` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft, documentazione `5a81eca`. CI web/APK sul nuovo head in corso al controllo (web 43560758904, APK 43560759066 e 43560753557); baseline `d8e305a` verde.
+**Aperto:** conferma di Davide sul conto reale del sito e prove autenticate CRUD/PDF/offline #81. Ripartenza in `PROJECT.md` e `docs/WEB_VERIFICATION.md` del worktree Finn web; nessuna memoria esterna indicata. Nessuna card Ascanio collegata.
+
+**Ha funzionato:** 78 test funzionali passati anche indipendentemente, 0 saltati/failure; sette analisi exit 0, 0 errori/warning e una INFO preesistente. QA nativa 11 test passati, 12 PNG esaminati a 390/1440, testo 1,5, negativi, stati incompleti e importi annuali grandi: widget e shell reali, fixture dichiarate, Segoe locale sostitutivo solo nel helper ignorato. Verificatore sulle quattro patch UI remote: identiche al checkout testato; dominio/loader/provider byte-identici al manifest. Build exit 0 in 139,4 s; 222 asset validati localmente e sul VPS; HTTPS pubblico 200, no-store/Cloudflare BYPASS e JS uguale al locale (`0bab5b41187032b21aad4dc5bb1c39e76c9fa85fc694279fd311c5227590f16a`). Archivio 17.223.017 byte, SHA `6319df07de99904d57c897d88629adf8a996cc4fcc4d703239a2a618c4fbebcb`.
+**Non ha funzionato → regola nuova:** interruzione per quota agenti e riprese dell'utente: ripartiti da log/exit e file congelati, senza rifare le prove già concluse. Un timeout analisi non contato verde; retry mirato ha rimosso decorazione inutilizzata e sole segnalazioni di stile. Le asserzioni iniziali di fixture/Ahem/helper sono state corrette mantenendo controlli di importi e direzione; provenienza e tentativi documentati in `docs/WEB_VERIFICATION.md`. Nessuna prova nativa dichiarata come browser autenticato.
+**Decisioni di Davide:** «dati semplici da leggere anche graficamente e a colpo d'occhio... rendilo bello»; mantenuti criterio 50/50 e solo spese di gruppo già confermati.
+**Errori miei:** un primo comando aggregato commit/push respinto dall'auto-review per destinazione non comprovata; verificate remote e PR esistente, poi commit locale e push mirato accettati con evidenza del workflow richiesto. Nessun aggiramento o destinazione nuova.
+**Numeri:** 1 aggiornamento web pubblicato; 78 test indipendenti, 11 QA native e 12 PNG, 222 risorse; 0 merge, APK di produzione, nuove query, scritture o migrazioni. Worktree pulito conservato per la PR draft.
+
+---
+
 ## 2026-11-12 — Finn: equilibrio 50/50 per categoria e totale
 
 **In produzione:** [Finn #89](https://github.com/ecologicaleaving/finn/issues/89), sorgente `95d1932`, su https://finn.8020solutions.org/#/report. Primo riquadro con netto, quota e scostamento di due persone per ogni categoria e totale; compensazione del solo periodo. Attribuzioni locali esplicite per i rimborsi, blocco delle conclusioni incomplete e categorie opposte visibili anche quando il totale pareggia. Release `4c86722` conservata.
