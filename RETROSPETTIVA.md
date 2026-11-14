@@ -9,6 +9,118 @@ qui restano la data e il perché.
 
 ---
 
+## 2026-11-14 — Finn: Report grafico e risultato leggibile a colpo d'occhio
+
+**In produzione:** [Finn #90](https://github.com/ecologicaleaving/finn/issues/90), sorgente `eeecc74`, su https://finn.8020solutions.org/#/report. Importo e direzione della compensazione in primo piano, confronto netto/quota, categorie ordinate e dettagli progressivi; 50/50 e soli movimenti di gruppo invariati. Attivata `/var/www/finn/releases/20261114-eeecc74`, precedente `20261112-95d1932` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft, documentazione `5a81eca`. CI web/APK sul nuovo head in corso al controllo (web 43560758904, APK 43560759066 e 43560753557); baseline `d8e305a` verde.
+**Aperto:** conferma di Davide sul conto reale del sito e prove autenticate CRUD/PDF/offline #81. Ripartenza in `PROJECT.md` e `docs/WEB_VERIFICATION.md` del worktree Finn web; nessuna memoria esterna indicata. Nessuna card Ascanio collegata.
+
+**Ha funzionato:** 78 test funzionali passati anche indipendentemente, 0 saltati/failure; sette analisi exit 0, 0 errori/warning e una INFO preesistente. QA nativa 11 test passati, 12 PNG esaminati a 390/1440, testo 1,5, negativi, stati incompleti e importi annuali grandi: widget e shell reali, fixture dichiarate, Segoe locale sostitutivo solo nel helper ignorato. Verificatore sulle quattro patch UI remote: identiche al checkout testato; dominio/loader/provider byte-identici al manifest. Build exit 0 in 139,4 s; 222 asset validati localmente e sul VPS; HTTPS pubblico 200, no-store/Cloudflare BYPASS e JS uguale al locale (`0bab5b41187032b21aad4dc5bb1c39e76c9fa85fc694279fd311c5227590f16a`). Archivio 17.223.017 byte, SHA `6319df07de99904d57c897d88629adf8a996cc4fcc4d703239a2a618c4fbebcb`.
+**Non ha funzionato → regola nuova:** interruzione per quota agenti e riprese dell'utente: ripartiti da log/exit e file congelati, senza rifare le prove già concluse. Un timeout analisi non contato verde; retry mirato ha rimosso decorazione inutilizzata e sole segnalazioni di stile. Le asserzioni iniziali di fixture/Ahem/helper sono state corrette mantenendo controlli di importi e direzione; provenienza e tentativi documentati in `docs/WEB_VERIFICATION.md`. Nessuna prova nativa dichiarata come browser autenticato.
+**Decisioni di Davide:** «dati semplici da leggere anche graficamente e a colpo d'occhio... rendilo bello»; mantenuti criterio 50/50 e solo spese di gruppo già confermati.
+**Errori miei:** un primo comando aggregato commit/push respinto dall'auto-review per destinazione non comprovata; verificate remote e PR esistente, poi commit locale e push mirato accettati con evidenza del workflow richiesto. Nessun aggiramento o destinazione nuova.
+**Numeri:** 1 aggiornamento web pubblicato; 78 test indipendenti, 11 QA native e 12 PNG, 222 risorse; 0 merge, APK di produzione, nuove query, scritture o migrazioni. Worktree pulito conservato per la PR draft.
+
+---
+
+## 2026-11-12 — Finn: equilibrio 50/50 per categoria e totale
+
+**In produzione:** [Finn #89](https://github.com/ecologicaleaving/finn/issues/89), sorgente `95d1932`, su https://finn.8020solutions.org/#/report. Primo riquadro con netto, quota e scostamento di due persone per ogni categoria e totale; compensazione del solo periodo. Attribuzioni locali esplicite per i rimborsi, blocco delle conclusioni incomplete e categorie opposte visibili anche quando il totale pareggia. Release `4c86722` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `3dc4774`; nuova head documentale `d8e305a` in corso (web 43286341519, APK 43286341672 e 43286319558).
+**Aperto:** prova del confronto con i dati reali dell'utente e prove autenticate della #81. Ripartenza e prove in `PROJECT.md` e `docs/WEB_VERIFICATION.md`; nessuna directory di memoria separata indicata.
+
+**Ha funzionato:** 68 test Report passati, seguiti da 70 indipendenti (68 Report e 2 refresh), 0 saltati/failure, exit 0. Tutti i 12 AC passano su codice/widget; 343 combinazioni firmate per resti e inversione della coppia, layout 390/1440 e integrazione Mese/Anno. Sei analisi singole exit 0, 0 errori/warning, tre INFO di stile. Build web exit 0 in 151,0 s; 222 risorse e tre sorgenti invariati verificati, archivio 17.218.199 byte. Rilascio atomico, HTTPS pubblico 200, no-store/Cloudflare BYPASS e JS pubblico uguale alla build (`f756e86f70b7c54f065f523eef13b21c05c53053d36ca667a3e18fc39697989f`). Le tre patch applicative remote PR82 coincidono col sorgente testato.
+**Non ha funzionato → regola nuova:** primo giro 67 passati/1 fallito: ExpansionTile con ValueKey leggeva l'offset PageStorage come booleano nel cambio Mese/Anno. Corretto con chiavi PageStorage distinte per tipo/scope/snapshot e provato nell'integrazione reale; non declassato a fixture. La sola attribuzione locale non certifica un rimborso: paid_by è il pagante originale, quindi serve conferma del destinatario; scope e fingerprint impediscono riusi fuori contesto. Regole in `docs/WEB_VERIFICATION.md` e test della #89.
+**Decisioni di Davide:** verificare se il carico suo e di Giovanna è bilanciato; 50% ciascuno dopo entrate/rimborsi ricevuti, per tutte le categorie e per il totale. Esempio confermato: 100 € pagati ciascuno, Giovanna riceve 40 € → netti 100/60, quote 80/80, scostamenti +20/−20, compensazione 20 da Giovanna all'altra persona. Quote budget e percentuali personalizzate escluse dal nuovo criterio.
+**Errori miei:** il conflitto PageStorage della nuova sezione è stato trovato e corretto prima della pubblicazione. Nessun nuovo errore operativo nel rilascio; output della build atteso fino al terminale, senza interrompere un processo solo perché non aveva ancora stampato. Nessuna automazione browser avviata.
+**Numeri:** 1 estensione web pubblicata, 70 test indipendenti passati, 222 risorse validate; 0 merge di produzione, 0 nuovi APK di produzione, 0 nuove query/scritture/migrazioni/dipendenze/permessi. Nessuna card Ascanio collegata; worktree conservato per la PR draft.
+
+---
+
+## 2026-11-12 — Finn: bilancio del Report con entrate e rimborsi
+
+**In produzione:** [Finn #88](https://github.com/ecologicaleaving/finn/issues/88), sorgente `4c86722`, su https://finn.8020solutions.org/#/report. Bilancio mese/anno con entrate, rimborsi ricevuti e saldo; dettaglio cercabile, filtri, paginazione completa, categorie/persone e grafico a due serie. Aiuti statali tramite i movimenti Entrata di gruppo registrati; fonti previste personali escluse. Release precedente `982c1d0` conservata.
+**In beta, aspetta:** nessun merge `test`/`master`, [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `1db4211`; nuova head documentale `3dc4774` in corso (web 43217604762, APK 43217604893 e 43217592996).
+**Aperto:** prova del nuovo bilancio con i dati reali di Davide; CRUD/PDF/offline della #81 ancora da completare. Report mensile/annuale confermato: «ottimo !!!». Ripartenza e prove in `PROJECT.md` e `docs/WEB_VERIFICATION.md` del worktree Finn web; nessuna memoria esterna indicata.
+
+**Ha funzionato:** 50 test Report passati, seguiti da 52 test indipendenti (50 Report e 2 refresh), 0 saltati/failure, exit 0. Tutti gli 11 AC passano su codice/widget, incluse 45 righe filtrate/paginate e layout 390/1440. Analisi dei quattro sorgenti exit 0 senza diagnostiche; test exit 0, 0 errori/warning e 2 INFO di stile. Build web exit 0 in 231,0 s; 222 risorse e quattro sorgenti invariati verificati, archivio 17.211.633 byte, attivazione atomica. HTTPS pubblico 200 e Cloudflare BYPASS; JS pubblico uguale al locale (`0e017e5006f892ceae2d65322e813634dea59da74d44183d7f8cc20e959aed7b`). Verificatore: quattro sorgenti nelle patch remote PR82 uguali al codice testato.
+**Non ha funzionato → regola nuova:** analisi della cartella bloccata e interrotta con timeout 124, seguita da singoli file tutti conclusi; conservare esiti separati e non contare un timeout come verde. I timestamp rimborso sono istanti: conversione locale anche a mezzanotte UTC e query indipendente dalla data della spesa. Entrate separate e stato rimborso non sono collegati: nessuna deduplica per nome/importo, limite spiegato nel Report. Regole registrate in `docs/WEB_VERIFICATION.md`.
+**Decisioni di Davide:** includere nel bilancio entrate, rimborsi e aiuti statali, ad esempio assegni familiari ricevuti da Giovanna, e vedere il dettaglio delle entrate; poi «riprendi». Il chiarimento su come siano registrati gli assegni non è arrivato: implementati i movimenti effettivi del gruppo, senza convertire previsioni o dati personali.
+**Errori miei:** una nuova asserzione GoRouter sull'URI non rappresentava il push; corretta verificando la schermata aperta, fonte app invariata. L'output della build è arrivato solo al termine e inizialmente l'ho interpretato come blocco prima della compilazione; non ho interrotto il processo e il terminale ha confermato build riuscita. Interruzione degli agenti per limite d'uso ripresa senza inventare esiti. Nessuna nuova automazione browser tentata.
+**Numeri:** 1 estensione web pubblicata, 52 test indipendenti passati, 222 risorse validate; 0 merge di produzione, 0 nuovi APK di produzione, 0 scritture dati/migrazioni/dipendenze/permessi modificati. Nessuna card Ascanio collegata; worktree conservato per la PR draft.
+
+---
+
+## 2026-11-12 — Finn: Report mensile, analisi annuale e pagamenti dei componenti
+
+**In produzione:** [Finn #86](https://github.com/ecologicaleaving/finn/issues/86) e [#87](https://github.com/ecologicaleaving/finn/issues/87) sul sito https://finn.8020solutions.org/#/report. Report mensile con categorie, andamento e insight; vista annuale con dodici mesi, confronto precedente e tabella di quanto ha pagato ciascuno. Release corrente `982c1d0`, precedente `df9eccd` conservata; nessuna scrittura ai dati.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) draft aggiornata. CI web e due build APK verdi su `b4f1582`; sul nuovo head documentale `1db4211` in corso.
+**Aperto:** conferma del Report sul conto reale di Davide, oltre alle prove CRUD, PDF e offline della #81. Ripartenza ed evidenze aggiornate in `PROJECT.md` e `docs/WEB_VERIFICATION.md` nel worktree Finn web; nessuna directory di memoria separata fornita.
+
+**Ha funzionato:** #86 verificata con 56 test indipendenti (21 Report e 35 regressioni), #87 con 35 test indipendenti, tutti passati e nessuno saltato; i due conteggi non sono suite disgiunte. Verificati periodi annuali/bisestili, paginazione completa, scope, omonimi, membri a zero e layout 390/1440 px. Analisi Report annuale exit 0, 0 errori/warning, una informazione di stile; test exit 0. Build #86 in 134,5 s e #87 in 214,4 s, entrambe exit 0. Prima di ogni attivazione atomica: 222 risorse validate; HTTPS 200, Cloudflare BYPASS e JS pubblico uguale alla build. SHA corrente `1e02d8567191ab6dfb3e60de3cd92a004764f4db25492abe30b74906c92a5e0e`.
+**Non ha funzionato → regola nuova:** analisi umana multi-file bloccata oltre il timeout; non conteggiata come riuscita. Il controllo successivo a percorso singolo e formato machine è terminato con exit 0, registrato nei log e in `docs/WEB_VERIFICATION.md`. Nessuna verifica autenticata inventata.
+**Decisioni di Davide:** aggiungere Report con grafici, poi analisi dell'anno e divisione tra componenti. Chiarimento testuale: «Quanto ha pagato ciascuno, con importi e percentuali». Nessun calcolo di quote teoriche o conguagli. Il pagante nelle categorie (#85) è confermato: «ok, ottimo!».
+**Errori miei:** tre fixture widget iniziali corrette prima dei 35 test finali; nessun errore applicativo residuo rilevato. Nessun nuovo tentativo di automazione browser dopo il precedente blocco dello strumento.
+**Numeri:** 2 funzionalità web pubblicate, 0 merge di produzione, 0 nuovi APK di produzione, 222 risorse per rilascio. Nessuna card Ascanio collegata in Finn; worktree e branch conservati per le prove della PR draft.
+
+---
+
+## 2026-11-11 — Finn: pagante nel dettaglio mensile delle categorie
+
+**In produzione:** [Finn #85](https://github.com/ecologicaleaving/finn/issues/85), sorgente `0623e8c`, su https://finn.8020solutions.org. Le righe di gruppo riportano «Pagato da: Nome» sotto la data; quelle personali restano senza il pagante. Nessuna nuova richiesta backend o modifica ai dati.
+**In beta, aspetta:** nessun merge `test`/`master`; [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) aggiornata e ancora draft. CI del nuovo head `939442a` in corso; CI precedente `f10867a` web e APK completata con successo.
+**Aperto:** conferma visiva della nuova riga e altre prove autenticate della #81. La #84 è confermata da Davide: «ora il gruppo c'è, vedo il nome delle spese».
+
+**Ha funzionato:** patch limitata al widget mensile e ai test. 18 widget test passati anche nella verifica indipendente, 0 saltati; 7 casi nuovi per pagante diverso dall'autore, fallback, righe miste e larghezza 320 px. Analisi mirata exit 0, 0 errori/warning e due informazioni preesistenti. Build release exit 0 in 149,5 s; 222 risorse validate, rilascio atomico e JavaScript pubblico uguale alla build (`d360ccb86e489d8a68ef617dabf32c8aae456fbb0db4011a0610d010fcf6389c`), HTTPS 200 e Cloudflare BYPASS. Release `1937b99` conservata.
+**Non ha funzionato → regola nuova:** —
+**Decisioni di Davide:** indicare anche chi ha fatto la spesa nei dettagli delle categorie delle spese di gruppo. Usata la persona che ha pagato; il creatore è fallback solo se il pagante manca o coincide, per evitare attribuzioni errate.
+**Errori miei:** nessun nuovo errore operativo rilevato. Nessuna nuova automazione del browser avviata dopo il precedente blocco sul controllo dell'URL.
+**Numeri:** 1 funzione web pubblicata, 18 test passati, 0 saltati, 222 risorse validate, 0 merge di produzione e 0 nuovi APK di produzione. Nessuna card Ascanio collegata.
+
+---
+
+## 2026-11-11 — Finn: gruppo recuperato dopo il refresh del sito
+
+**In produzione:** correzione web [Finn #84](https://github.com/ecologicaleaving/finn/issues/84), sorgente `1937b99`, su https://finn.8020solutions.org. Caricamento automatico dopo il profilo, errori distinti dall'assenza e Riprova; nessuna scrittura a membership o spese.
+**In beta, aspetta:** nessun merge `test`/`master`. [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) ancora draft; CI avviata sul commit documentale `f10867a`, conferma dal browser di Davide ancora richiesta.
+**Aperto:** prova autenticata della #84 e confronto CRUD/app-web della #81. Davide conferma che sul telefono, con lo stesso account, il gruppo è presente.
+
+**Ha funzionato:** planner e verificatore hanno confermato la sequenza sessione pronta → profilo pendente → provider del gruppo ricreato senza nuova lettura. Verifica indipendente: 43 test passati, 0 saltati, compresi i titoli mensili #83 e la pulizia al logout. Analisi mirata: 0 errori, 6 warning preesistenti. Build già conclusa durante l'interruzione: verificati 222 hash e sorgenti applicativi invariati dopo la compilazione; evitata una ricompilazione inutile. Attivazione atomica di `/var/www/finn/releases/20261111-1937b99`, vecchia release conservata; HTTPS 200 e JavaScript pubblico uguale alla build, Cloudflare BYPASS.
+**Non ha funzionato → regola nuova:** uno stato iniziale o un errore di lettura non deve diventare «nessun gruppo»; la lettura va legata all'utente disponibile, con retry e isolamento delle risposte tardive. Regola applicata in `group_provider.dart`, test di caricamento/cache e `docs/WEB_VERIFICATION.md`. Il parser Postgrest 2.6.0 richiede `response.request` anche nelle fixture HTTP.
+**Decisioni di Davide:** «adesso non mi vede parte di nessun gruppo»; alla verifica dello stesso account sul telefono: «Sì, nell’app c’è ancora»; riprendere e completare il lavoro.
+**Errori miei:** prima fixture HTTP incompleta, corretta prima della verifica finale. La verifica grafica dell'11 novembre è stata fermata dallo strumento perché non riusciva a identificare con affidabilità l'URL di Chrome; l'accesso al suo account non è dichiarato verificato. Le interruzioni per limite d'uso degli agenti sono registrate senza attribuire loro test non conclusi.
+**Numeri:** 1 fix web pubblicato, 0 merge di produzione, 0 nuovi APK di produzione, 43 test passati, 0 saltati, 222 risorse validate. CI web e due build APK ancora in corso alla chiusura; nessuna card Ascanio collegata in Finn.
+
+---
+
+## 2026-11-10 — Finn: titoli corretti nelle spese mensili per categoria
+
+**In produzione:** fix web [finn #83](https://github.com/ecologicaleaving/finn/issues/83), commit `41f8ff4`, su https://finn.8020solutions.org. Il titolo mostra note, negozio storico, categoria o «Spesa»; dati e importi invariati.
+**In beta, aspetta:** [PR Finn #82](https://github.com/ecologicaleaving/finn/pull/82) verso `test`, ancora draft per le prove utente; nessun merge master o nuovo APK di produzione.
+**Aperto:** conferma visiva dell'utente sui propri dati e altre prove autenticate della #81.
+
+**Ha funzionato:** 11 widget test passati (0 saltati), di cui 5 nuovi con JSON salvato e apertura reale di categoria/mese; verificati anche filtri e navigazione alla spesa. Build web release riuscita. Nuova release `/var/www/finn/releases/20261110-41f8ff4`, tutti i 222 hash offline corrispondenti e cambio atomico del symlink. JavaScript pubblico uguale alla build; vecchio placeholder assente, HTTP 200.
+**Non ha funzionato → regola nuova:** la lista continuava a usare solo `merchant`, anche dopo la rimozione di «Negozio» dal modulo. Nelle viste di riepilogo usare i testi effettivamente raccolti dal form, con fallback per righe storiche o vuote; testare il flusso della categoria, non soltanto una funzione di etichettatura.
+**Decisioni di Davide:** segnalazione «le vedo tutte come spesa senza nome», poi richiesta di riprendere la lavorazione. Correzione sul medesimo branch della versione web, senza migrazioni.
+**Errori miei:** nessun nuovo errore operativo rilevato; il difetto era già nel widget condiviso della base app.
+**Numeri:** 1 fix web pubblicato, 0 merge di produzione, 11 test passati, 222 risorse validate.
+
+---
+
+## 2026-11-09 — Finn web dalla v1.6.1 e predisposizione Cloudflare
+
+**In produzione:** nuovo sito https://finn.8020solutions.org, release statica dell'app v1.6.1 (`db42319`) su VPS/Nginx con DNS Cloudflare. Nessun merge master o rilascio mobile.
+**In beta, aspetta:** nessun merge in `test`; PR draft [finn #82](https://github.com/ecologicaleaving/finn/pull/82) verso `test`, in attesa delle prove autenticate.
+**Aperto:** [finn #81](https://github.com/ecologicaleaving/finn/issues/81): login reale, CRUD tra sito e app, viewer PDF e ricaricamento completo offline da provare con un account autorizzato.
+
+**Ha funzionato:** stessa base dell'app non pubblicata `release/v1.6.1` (`586eace`), stessi repository e Supabase. 22 test nativi mirati e 1 Chrome IndexedDB passati (0 saltati), build web release e Wrangler dry-run riusciti. Verificatore distinto: 3 smoke test nativi e 1 Chrome passati. Controllati 222 riferimenti offline, nessun file mancante.
+**Non ha funzionato → regola nuova:** il test Flutter/Chrome non arrivava al corpo del test; separare lo store browser puro ha permesso la prova reale con `dart test`, che ha trovato la perdita dei generici nelle liste riletta da IndexedDB. Cloudflare consuma `_headers`: escluderlo dal manifest offline, altrimenti il preload completo richiede una risorsa non servita. Evidenze e procedure sono in `finn/docs/WEB_VERIFICATION.md` e `finn/docs/CLOUDFLARE.md` nel branch della PR.
+**Decisioni di Davide:** prendere l'ultima versione dell'app «non ancora fuori»; destinazione `finn.8020solutions.org` su Cloudflare. Dopo i tentativi di autorizzazione non completati: «ora devo andare, vai avanti col codice e dammi le caratteristiche del dns». Nessun ulteriore tentativo di login dopo questa istruzione. Al chiarimento «di solito vado in dns add records», passaggio al VPS esistente: Davide crea `A finn → 46.225.60.101` proxied e conferma «fatto»; il sito viene pubblicato sul VPS.
+**Errori miei:** il primo bootstrap usava file `.g.dart` locali non aggiornati alla 1.6.1; rigenerati con Flutter 3.35.7 prima dei test finali. La suite Chrome non eseguita non è stata conteggiata come verde. Il fallback con credenziali Cloudflare in file è stato rifiutato dal controllo automatico; tentato il flusso cifrato nel portachiavi, senza completare l'autorizzazione.
+**Numeri:** 1 issue Finn aperta, 1 PR Finn draft, 0 merge di produzione, 23 test locali finali passati e 4 verifiche indipendenti passate. Deploy: HTTPS pubblico e origine 200, HTTP→HTTPS 301, MIME JS/WASM/PDF corretti, cache Cloudflare BYPASS sugli script, 222 file offline con hash corrispondenti. Certificato Finn fino al 07/02/2027; rinnovo staging e hook Nginx dedicato passati. I test autenticati restano da verificare.
+
+---
+
 ## 2026-11-08 — Promozione completa di beta (v2.92.0) e fix del ripiego ZCS (v2.92.1)
 
 **In produzione:** v2.92.0 (PR #3388, promozione COMPLETA di beta, 294 issue: 33 card approvate, 25 tecniche qa-tech-approved, il resto senza approvazione per decisione di Davide) e v2.92.1 (PR #3396, #3390: ripiego realtime ZCS ordinato, rado, esito in `devices.metadata.zcs_realtime_fallback_last`). 36 card portate in BackLog.
