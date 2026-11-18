@@ -369,6 +369,19 @@ crea uno nuovo segue questo schema, non ne inventa un altro.
 
 **Per aggiungere un ciclo nuovo:** issue con AC, la skill `ciclo-<nome>`, il comando `ciclo:<nome>`, l'interruttore, una riga in questa tabella. Dopo almeno 3 giri osservati con Davide presente lo accende Davide.
 
+### Ciclo auto intero (supervisionato, dal 18/11/2026)
+
+Skill `ciclo-auto-intero`, trigger `/ciclo-auto-intero`. **Non è un ciclo
+autonomo** e non sta nella tabella sopra: la lancia Davide, presente, e non legge
+né accende l'interruttore `sviluppo`. Prende le card di «Pronte auto» **una alla
+volta** e porta ciascuna **fino in Revisione** prima della successiva: dev-loop
+col perimetro del ciclo autonomo (`ciclo-autonomo.js`), merge in beta col
+lucchetto, `card:in-test`, un giro di `ciclo-prova` (browser e `[Codice]`),
+Revisione con «Cosa provare, in parole semplici». Si ferma e chiama Davide su
+E2E/CI rossi (un test di guardia non si cambia senza il suo ok), su un ko della
+prova o su una decisione non scritta. La versione senza persona richiede lo
+schema sopra (issue, comando, interruttore, 3 giri osservati).
+
 ---
 
 ## Le verifiche, in ordine
