@@ -1,5 +1,9 @@
 # Changelog
 
+## ciclo-triage 2.5.0 (2026-11-20)
+
+Comandi ammessi dal lavoratore dopo MaestroWeb #3566 (PR #3586): niente `--body-file`/`-F` su `gh issue create|comment|edit` (solo `--body '...'`), `issue:precheck` solo come `-- <N>`, `triage:<nome>` solo nome esatto o con `-- <argomenti>`; evitare la sequenza ` -F` nei testi. Versione minima richiesta dal lavoratore: 2.5.0 (`TRIAGE_SKILL_VERSIONE_MINIMA`): la skill va sul VPS PRIMA o insieme al merge in `beta` di maestroweb#3586.
+
 ## ciclo-triage 2.4.0 (2026-10-15)
 
 `triage:aggancia` (MaestroWeb #2872): chi crea le sotto-issue le aggancia all'epica, con guardie (epica della card, figlia nata nella presa corrente). Versione minima richiesta dal lavoratore: 2.4.0 (`TRIAGE_SKILL_VERSIONE_MINIMA`): la skill va sul VPS PRIMA del merge in `beta` di #2868 e #2874.

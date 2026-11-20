@@ -9,7 +9,7 @@ description: >
   «giro» (sessione locale con `/loop`) e «card singola» (lavoratore sul VPS,
   Claude Code headless). Trigger: «/loop ciclo-triage», «giro di triage»,
   «triage delle idee».
-version: 2.4.0
+version: 2.5.0
 ---
 
 # Skill: ciclo-triage
@@ -43,7 +43,9 @@ modello **non vede mai le chiavi**. Il ciclo di sviluppo (pezzo 2) resta locale.
 | come arriva la card | `npm run -s idee:da-triagiare -- --prendi` | è già presa: `TRIAGE_TASK_ID`, `TRIAGE_QUEUE_ID`, `TRIAGE_PRESA` nell'ambiente |
 | quante | fino a 5 per giro, una alla volta | **una**, poi il processo finisce |
 | chiusura | `triage:esito -- --id <id> --presa <presa>` | `triage:esito` (id e presa li legge dall'ambiente) |
-| strumenti | tutti quelli della sessione | SOLO: `Read`, `Grep`, `Glob`, `git fetch/log/show`, `npm run -s triage:*`, `npm run -s issue:precheck`, `gh issue view/list/create/comment/edit` |
+| strumenti | tutti quelli della sessione | SOLO: `Read`, `Grep`, `Glob`, `git fetch/log/show`, `npm run -s triage:*` (solo nome esatto oppure `triage:<nome> -- <argomenti>`), `npm run -s issue:precheck -- <N>` (con `--`), `gh issue view/list`, `gh issue create/comment/edit` con il testo solo in `--body '...'` (mai `--body-file`, mai `-F`) |
+
+> **Dal 2.5.0 (MaestroWeb #3566)** il lavoratore sul VPS nega tre cose: (1) `gh issue create|comment|edit` con `--body-file` (anche `--body-file -` da stdin) o `-F`: resta solo `--body '...'`; (2) `npm run -s issue:precheck <N>` senza `--`: si scrive `npm run -s issue:precheck -- <N>`; (3) `npm run -s triage:<nome>` con opzioni di npm fra il nome e `--`: ammessi solo il nome esatto o `triage:<nome> -- <argomenti>`. Perché: il modello non deve poter leggere un file arbitrario dentro un commento né passare opzioni a npm. Falso positivo noto: un titolo o un corpo che contengono la sequenza ` -F` (spazio, trattino, F maiuscola) vengono negati: evitala nel testo (scrivi «flag F», «opzione F»). In modalità «giro» (locale) `--body-file <file>` continua a funzionare.
 
 Se sei in modalità **card singola** salta al punto 1: la card è una sola, non
 cercarne altre, e alla fine chiudi con `triage:esito`. **Non chiamare** mai
@@ -262,19 +264,35 @@ questi script accetta una card diversa da quella presa.
   `(sub-issue di #N)` nel titolo; nella card si collega **solo l'epica**.
   Ogni sotto-issue ha la sua label di esecuzione e, se serve, la sua riga di
   dipendenza (punto 5, «Card a due binari»).
-- `npm run -s issue:precheck <N>`: label `ready` (con `gh issue edit --add-label
+- `npm run -s issue:precheck -- <N>` (sempre con `--`): label `ready` (con `gh issue edit --add-label
   ready`) **solo** se verde **e** senza una decisione aperta (`needs-decision`).
   Dal #2754 il perimetro non decide più la `ready`, decide la **sezione**
   (punto 5): una issue `ready` con la card in `pronte_sup` il ciclo autonomo
   non la prende mai (la scarta col motivo «la lavora il loop supervisionato»).
 
 ```bash
-gh issue create --repo ecologicaleaving/maestroweb --title "…" --label "origine:ascanio,feature,priorità:media" --body-file <file>
+gh issue create --repo ecologicaleaving/maestroweb --title "…" --label "origine:ascanio,feature,priorità:media" --body '<corpo>'
 npm run -s triage:collega -- --issue <N>
 ```
 
-(In modalità card singola non puoi scrivere file: passa il body con `--body` e
-virgolette singole, oppure via stdin con `--body-file -`.)
+**Modalità card singola (VPS): il corpo si passa SOLO con `--body '…'`.**
+`--body-file` (anche `--body-file -`) e `-F` sono vietati dal 2.5.0 (#3566). Per
+i corpi lunghi usa le virgolette singole su più righe:
+
+```bash
+gh issue create --repo ecologicaleaving/maestroweb --title "…" --label "origine:ascanio,feature,priorità:media" --body 'Scheda S123
+
+## Contesto
+…
+
+## Acceptance Criteria
+- [ ] [Codice] …'
+```
+
+Un apostrofo dentro le virgolette singole si scrive `'\''` (chiudi, apostrofo
+escapato, riapri): `l'\''impianto`. Evita nel testo la sequenza ` -F` (falso
+positivo che fa negare il comando). In modalità **giro** (sessione locale)
+`--body-file <file>` resta ammesso.
 
 ### 5. Il perimetro sceglie la sezione; una decisione va a Davide (#2754)
 
