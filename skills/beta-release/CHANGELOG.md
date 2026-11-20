@@ -1,5 +1,9 @@
 # Changelog — beta-release
 
+## v2.2.0 (2026-11-20)
+
+MaestroWeb #3584: `run-migration.yml` si lancia solo con `--ref main`; il file SQL si sceglie con `-f ramo_sorgente=<ramo>` (`beta` o `feature/issue-N-slug`). Vale dopo il `/promuovi` di #3584.
+
 ## v2.1.0 (2026-10-13)
 
 MaestroWeb #2818: prima di ogni merge in `beta` si lancia `pr:sovrapposizione` (exit 0 merge senza rifare l'E2E, 1 riallinea, 2 stop). Le PR non alzano più `version`.

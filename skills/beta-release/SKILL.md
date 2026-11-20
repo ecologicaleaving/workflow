@@ -6,7 +6,7 @@ description: >
   che `beta` sia pubblicato sull'ambiente test su dati reali, e avvisa Davide che è pronta da
   testare. Il merge finale `beta`→`main` (prod) resta SEMPRE dietro `/approva` di Davide.
   Trigger: /beta-release [repo], o a fine di un'ondata di issue lavorate.
-version: 2.1.0
+version: 2.2.0
 ---
 
 # Skill: beta-release
@@ -85,8 +85,8 @@ dal vivo dello Step 3.5 non può riuscire finché lo schema di prod non le ha.
 Per ogni file di migration **additivo e idempotente** della PR:
 
 ```bash
-gh workflow run run-migration.yml --repo ecologicaleaving/<repo> --ref beta \
-  -f migration=<file.sql> -f conferma=PRODUZIONE
+gh workflow run run-migration.yml --repo ecologicaleaving/<repo> --ref main \
+  -f ramo_sorgente=beta -f migration=<file.sql> -f conferma=PRODUZIONE
 gh run list --repo ecologicaleaving/<repo> --workflow run-migration.yml --limit 1
 # verifica: la colonna/tabella nuova risponde 200 in prod
 curl -s "$PROD_URL/rest/v1/<tabella>?select=<colonna>&limit=1" -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY"
